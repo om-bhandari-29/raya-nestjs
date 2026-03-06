@@ -23,4 +23,19 @@ export class User {
 
   @Column({ type: 'varchar', nullable: true })
   otp: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  otp_expires_at: Date;
+
+  @Column({ type: 'varchar', nullable: true })
+  google_id: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  facebook_id: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  provider: string; // 'mobile', 'google', 'facebook', 'email'
+
+  @Column({ type: 'varchar', nullable: true })
+  refresh_token: string;
 }
