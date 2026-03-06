@@ -17,11 +17,12 @@ module.exports = {
   },
   ignorePatterns: ['.eslintrc.js'],
   rules: {
-    'prettier/prettier': [
+     'prettier/prettier': [
       'error',
       {
         endOfLine: 'auto',
-      },
+        tabWidth: 2
+      }
     ],
     '@typescript-eslint/interface-name-prefix': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
