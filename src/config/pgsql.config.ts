@@ -12,6 +12,9 @@ export const PGTypeORMconfig: TypeOrmModuleOptions = {
   database: process.env.PG_DB_NAME,
 
   synchronize: false,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 
   migrations: [],
   migrationsRun: false,
