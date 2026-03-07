@@ -1,6 +1,15 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { GenerateOtpDto } from './dto/generate-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
@@ -33,8 +42,14 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  async googleAuthCallback(@Req() req) {
-    return this.authService.googleLogin(req.user);
+  async googleAuthCallback(@Req() req, @Res() res: Response) {
+    const result = await this.authService.googleLogin(req.user);
+
+    // Redirect to frontend with tokens as query parameters
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+    const redirectUrl = `${frontendUrl}/auth/callback?accessToken=${result.data.accessToken}&refreshToken=${result.data.refreshToken}&userId=${result.data.userId}&email=${result.data.email}&name=${result.data.name || ''}`;
+
+    return res.redirect(redirectUrl);
   }
 
   @Get('profile')

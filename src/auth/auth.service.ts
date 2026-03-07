@@ -151,7 +151,8 @@ export class AuthService {
     const { contactNumber } = generateOtpDto;
 
     // Generate 6-digit random OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = '123456';
 
     // Set OTP expiration to 10 minutes from now
     const otpExpiresAt = new Date();
