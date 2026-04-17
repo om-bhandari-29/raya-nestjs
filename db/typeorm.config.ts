@@ -15,10 +15,6 @@ export default new DataSource({
   synchronize: false, // use true only in development
   logging: true,
 
-  ssl: {
-    rejectUnauthorized: false,
-  },
-
   /* Path to load all entity files (.ts or .js) */
   entities: [`${__dirname}/../**/*.entity{.ts,.js}`],
 
