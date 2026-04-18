@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
 import { ItemGroupModule } from './modules/item-group/item-group.module';
+import { SubCategoryModule } from './modules/sub-category/sub-category.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PGTypeORMconfig } from './config/pgsql.config';
 import { ConfigModule } from '@nestjs/config';
@@ -15,6 +16,7 @@ import { ConfigModule } from '@nestjs/config';
     }),
     AuthModule,
     ItemGroupModule,
+    SubCategoryModule,
   ],
   controllers: [AppController],
   providers: [AppService],
