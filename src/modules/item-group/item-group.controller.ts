@@ -7,13 +7,11 @@ import {
   ParseIntPipe,
   Patch,
   Post,
-  UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { ItemGroupService } from './item-group.service';
 import { CreateItemGroupDto } from './dto/create-item-group.dto';
 import { UpdateItemGroupDto } from './dto/update-item-group.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import {
   CreateItemGroupSwagger,
   FindAllItemGroupsSwagger,
@@ -23,8 +21,6 @@ import {
 } from './item-group.swagger';
 
 @ApiTags('item-group')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('item-group')
 export class ItemGroupController {
   constructor(private readonly itemGroupService: ItemGroupService) {}
