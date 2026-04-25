@@ -20,10 +20,10 @@ export class CreateProductMasterDto {
   @IsNotEmpty()
   sub_category_id: number;
 
-  @ApiProperty({ example: 150.5 })
-  @IsNumber()
+  @ApiProperty({ example: '150.5' })
+  @IsString()
   @IsNotEmpty()
-  labour_rate: number;
+  labour_rate: string;
 
   @ApiProperty({ enum: LabourRateOnEnum, example: LabourRateOnEnum.net })
   @IsEnum(LabourRateOnEnum)

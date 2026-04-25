@@ -23,8 +23,8 @@ export class ProductMaster {
   @Column({ type: 'int' })
   sub_category_id: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
-  labour_rate: number;
+  @Column({ type: 'varchar', length: 50 })
+  labour_rate: string;
 
   @Column({ type: 'enum', enum: LabourRateOnEnum })
   labour_rate_on: LabourRateOnEnum;
