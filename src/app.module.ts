@@ -8,6 +8,7 @@ import { ProductMasterModule } from './modules/product-master/product-master.mod
 import { GstHsnCodeModule } from './modules/gst-hsn-code/gst-hsn-code.module';
 import { UomModule } from './modules/uom/uom.module';
 import { ItemModule } from './modules/item/item.module';
+import { ItemAttributeMasterModule } from './modules/item-attribute-master/item-attribute-master.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PGTypeORMconfig } from './config/pgsql.config';
 import { ConfigModule } from '@nestjs/config';
@@ -25,6 +26,7 @@ import { ConfigModule } from '@nestjs/config';
     GstHsnCodeModule,
     UomModule,
     ItemModule,
+    ItemAttributeMasterModule,
   ],
   controllers: [AppController],
   providers: [AppService],
