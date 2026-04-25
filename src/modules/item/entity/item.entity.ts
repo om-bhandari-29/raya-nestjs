@@ -13,6 +13,7 @@ import { Uom } from '../../uom/entity/uom.entity';
 import { MaterialRequestTypeEnum } from '../../../core/enum/material-request-type.enum';
 import { ValuationMethodEnum } from '../../../core/enum/valuation-method.enum';
 import { ItemBarcode } from './item-barcode.entity';
+import { ItemVariant } from './item-variant.entity';
 
 @Entity('item')
 export class Item {
@@ -126,6 +127,31 @@ export class Item {
   // Barcodes
   @OneToMany(() => ItemBarcode, (barcode) => barcode.item, { cascade: true })
   barcodes: ItemBarcode[];
+
+  // Variants
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  stones: string | null;
+
+  @Column({ type: 'decimal', precision: 10, scale: 3, default: 0 })
+  gross_weight: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 3, default: 0 })
+  net_weight: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 3, default: 0 })
+  stones_weight_in_gram: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 3, default: 0 })
+  stone_carat_wt: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 3, default: 0 })
+  pure_weight_metal: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  labor_rate: number;
+
+  @OneToMany(() => ItemVariant, (variant) => variant.item, { cascade: true })
+  variants: ItemVariant[];
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;

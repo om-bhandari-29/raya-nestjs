@@ -17,6 +17,7 @@ import { Type } from 'class-transformer';
 import { MaterialRequestTypeEnum } from '../../../core/enum/material-request-type.enum';
 import { ValuationMethodEnum } from '../../../core/enum/valuation-method.enum';
 import { CreateItemBarcodeDto } from './create-item-barcode.dto';
+import { CreateItemVariantDto } from './create-item-variant.dto';
 
 export class CreateItemDto {
   @ApiProperty({ example: 1 })
@@ -171,4 +172,60 @@ export class CreateItemDto {
   @Type(() => CreateItemBarcodeDto)
   @IsOptional()
   barcodes?: CreateItemBarcodeDto[];
+
+  // Variants tab
+  @ApiPropertyOptional({ example: 'Diamond' })
+  @IsString()
+  @IsOptional()
+  @MaxLength(255)
+  stones?: string;
+
+  @ApiPropertyOptional({ example: 4.54 })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  @Type(() => Number)
+  gross_weight?: number;
+
+  @ApiPropertyOptional({ example: 0 })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  @Type(() => Number)
+  net_weight?: number;
+
+  @ApiPropertyOptional({ example: 0 })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  @Type(() => Number)
+  stones_weight_in_gram?: number;
+
+  @ApiPropertyOptional({ example: 0 })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  @Type(() => Number)
+  stone_carat_wt?: number;
+
+  @ApiPropertyOptional({ example: 0 })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  @Type(() => Number)
+  pure_weight_metal?: number;
+
+  @ApiPropertyOptional({ example: 0 })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  @Type(() => Number)
+  labor_rate?: number;
+
+  @ApiPropertyOptional({ type: [CreateItemVariantDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateItemVariantDto)
+  @IsOptional()
+  variants?: CreateItemVariantDto[];
 }

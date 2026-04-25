@@ -7,8 +7,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Item } from './entity/item.entity';
 import { ItemBarcode } from './entity/item-barcode.entity';
+import { ItemVariant } from './entity/item-variant.entity';
+import { ItemAttributeValue } from '../item-attribute-master/entity/item-attribute-value.entity';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
+import { CreateItemVariantDto } from './dto/create-item-variant.dto';
 
 const ITEM_RELATIONS = [
   'product_master',
@@ -18,6 +21,10 @@ const ITEM_RELATIONS = [
   'weight_uom',
   'barcodes',
   'barcodes.uom',
+  'variants',
+  'variants.attribute',
+  'variants.value',
+  'variants.variant_of',
 ];
 
 @Injectable()
@@ -27,9 +34,29 @@ export class ItemService {
     private readonly itemRepository: Repository<Item>,
     @InjectRepository(ItemBarcode)
     private readonly barcodeRepository: Repository<ItemBarcode>,
+    @InjectRepository(ItemVariant)
+    private readonly variantRepository: Repository<ItemVariant>,
+    @InjectRepository(ItemAttributeValue)
+    private readonly attributeValueRepository: Repository<ItemAttributeValue>,
   ) {}
 
+  private async validateVariants(variants: CreateItemVariantDto[]) {
+    for (const v of variants) {
+      const attrValue = await this.attributeValueRepository.findOne({
+        where: { id: v.value_id, attribute_id: v.attribute_id },
+      });
+      if (!attrValue) {
+        throw new BadRequestException(
+          `value_id ${v.value_id} does not belong to attribute_id ${v.attribute_id}`,
+        );
+      }
+    }
+  }
+
   async create(createItemDto: CreateItemDto) {
+    if (createItemDto.variants?.length) {
+      await this.validateVariants(createItemDto.variants);
+    }
     const item = this.itemRepository.create(createItemDto);
     await this.itemRepository.save(item);
     return {
@@ -77,13 +104,21 @@ export class ItemService {
       );
     }
 
-    const { barcodes, ...rest } = updateItemDto;
+    const { barcodes, variants, ...rest } = updateItemDto;
     Object.assign(item, rest);
 
     if (barcodes !== undefined) {
       await this.barcodeRepository.delete({ item_id: id });
       item.barcodes = barcodes.map((b) =>
         this.barcodeRepository.create({ ...b, item_id: id }),
+      );
+    }
+
+    if (variants !== undefined) {
+      await this.validateVariants(variants);
+      await this.variantRepository.delete({ item_id: id });
+      item.variants = variants.map((v) =>
+        this.variantRepository.create({ ...v, item_id: id }),
       );
     }
 
