@@ -1,5 +1,8 @@
 import {
+  IsArray,
   IsBoolean,
+  IsDateString,
+  IsEnum,
   IsInt,
   IsNotEmpty,
   IsNumber,
@@ -7,9 +10,13 @@ import {
   IsString,
   MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { MaterialRequestTypeEnum } from '../../../core/enum/material-request-type.enum';
+import { ValuationMethodEnum } from '../../../core/enum/valuation-method.enum';
+import { CreateItemBarcodeDto } from './create-item-barcode.dto';
 
 export class CreateItemDto {
   @ApiProperty({ example: 1 })
@@ -109,4 +116,59 @@ export class CreateItemDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  // Inventory Settings
+  @ApiPropertyOptional({ example: 0 })
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  @Type(() => Number)
+  shelf_life_in_days?: number;
+
+  @ApiPropertyOptional({ example: 365 })
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  @Type(() => Number)
+  warranty_period_in_days?: number;
+
+  @ApiPropertyOptional({ example: '2099-12-31' })
+  @IsDateString()
+  @IsOptional()
+  end_of_life?: string;
+
+  @ApiPropertyOptional({ example: 0.0 })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  @Type(() => Number)
+  weight_per_unit?: number;
+
+  @ApiPropertyOptional({ example: 1 })
+  @IsInt()
+  @IsOptional()
+  @Type(() => Number)
+  weight_uom_id?: number;
+
+  @ApiPropertyOptional({ enum: MaterialRequestTypeEnum, example: MaterialRequestTypeEnum.purchase })
+  @IsEnum(MaterialRequestTypeEnum)
+  @IsOptional()
+  default_material_request_type?: MaterialRequestTypeEnum;
+
+  @ApiPropertyOptional({ enum: ValuationMethodEnum, example: ValuationMethodEnum.fifo })
+  @IsEnum(ValuationMethodEnum)
+  @IsOptional()
+  valuation_method?: ValuationMethodEnum;
+
+  @ApiPropertyOptional({ example: false })
+  @IsBoolean()
+  @IsOptional()
+  allow_negative_stock?: boolean;
+
+  @ApiPropertyOptional({ type: [CreateItemBarcodeDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateItemBarcodeDto)
+  @IsOptional()
+  barcodes?: CreateItemBarcodeDto[];
 }

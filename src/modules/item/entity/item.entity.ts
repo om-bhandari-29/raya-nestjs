@@ -3,12 +3,16 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { ProductMaster } from '../../product-master/entity/product-master.entity';
 import { ItemGroup } from '../../item-group/entity/item-group.entity';
 import { GstHsnCode } from '../../gst-hsn-code/entity/gst-hsn-code.entity';
 import { Uom } from '../../uom/entity/uom.entity';
+import { MaterialRequestTypeEnum } from '../../../core/enum/material-request-type.enum';
+import { ValuationMethodEnum } from '../../../core/enum/valuation-method.enum';
+import { ItemBarcode } from './item-barcode.entity';
 
 @Entity('item')
 export class Item {
@@ -81,6 +85,47 @@ export class Item {
 
   @Column({ type: 'text', nullable: true })
   description: string | null;
+
+  // Inventory Settings
+  @Column({ type: 'int', default: 0 })
+  shelf_life_in_days: number;
+
+  @Column({ type: 'int', nullable: true })
+  warranty_period_in_days: number | null;
+
+  @Column({ type: 'date', default: '2099-12-31' })
+  end_of_life: string;
+
+  @Column({ type: 'decimal', precision: 10, scale: 3, default: 0 })
+  weight_per_unit: number;
+
+  @ManyToOne(() => Uom, { nullable: true })
+  @JoinColumn({ name: 'weight_uom_id' })
+  weight_uom: Uom;
+
+  @Column({ type: 'int', nullable: true })
+  weight_uom_id: number | null;
+
+  @Column({
+    type: 'enum',
+    enum: MaterialRequestTypeEnum,
+    default: MaterialRequestTypeEnum.purchase,
+  })
+  default_material_request_type: MaterialRequestTypeEnum;
+
+  @Column({
+    type: 'enum',
+    enum: ValuationMethodEnum,
+    nullable: true,
+  })
+  valuation_method: ValuationMethodEnum | null;
+
+  @Column({ type: 'boolean', default: false })
+  allow_negative_stock: boolean;
+
+  // Barcodes
+  @OneToMany(() => ItemBarcode, (barcode) => barcode.item, { cascade: true })
+  barcodes: ItemBarcode[];
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
