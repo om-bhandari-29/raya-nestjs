@@ -8,21 +8,23 @@ export class AddInventoryFieldsAndBarcodesTable1776510300000
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Add enums
     await queryRunner.query(`
-      CREATE TYPE "material_request_type_enum" AS ENUM (
-        'purchase',
-        'material_transfer',
-        'material_issue',
-        'manufacture',
-        'customer_provided'
-      )
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'material_request_type_enum') THEN
+          CREATE TYPE "material_request_type_enum" AS ENUM (
+            'purchase', 'material_transfer', 'material_issue', 'manufacture', 'customer_provided'
+          );
+        END IF;
+      END $$
     `);
 
     await queryRunner.query(`
-      CREATE TYPE "valuation_method_enum" AS ENUM (
-        'fifo',
-        'moving_average',
-        'lifo'
-      )
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'valuation_method_enum') THEN
+          CREATE TYPE "valuation_method_enum" AS ENUM (
+            'fifo', 'moving_average', 'lifo'
+          );
+        END IF;
+      END $$
     `);
 
     // Add inventory columns to item table

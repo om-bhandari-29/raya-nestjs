@@ -5,7 +5,7 @@ export class CreateProductMasterTable1776497226000 implements MigrationInterface
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `CREATE TYPE "public"."product_master_labour_rate_on_enum" AS ENUM('Net', 'Gross', 'Other')`,
+      `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'product_master_labour_rate_on_enum') THEN CREATE TYPE "public"."product_master_labour_rate_on_enum" AS ENUM('Net', 'Gross', 'Other'); END IF; END $$`,
     );
     await queryRunner.query(
       `CREATE TABLE IF NOT EXISTS "product_master" ("id" SERIAL NOT NULL, "name" character varying(150) NOT NULL, "sub_category_id" integer NOT NULL, "labour_rate" numeric(10,2) NOT NULL, "labour_rate_on" "public"."product_master_labour_rate_on_enum" NOT NULL, "product_description" text, "is_active" boolean NOT NULL DEFAULT true, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_product_master" PRIMARY KEY ("id"))`,
