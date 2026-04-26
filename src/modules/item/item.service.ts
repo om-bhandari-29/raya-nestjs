@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { Item } from './entity/item.entity';
 import { ItemBarcode } from './entity/item-barcode.entity';
 import { ItemVariant } from './entity/item-variant.entity';
+import { ItemStoneDetail } from './entity/item-stone-detail.entity';
 import { ItemAttributeValue } from '../item-attribute-master/entity/item-attribute-value.entity';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
@@ -25,6 +26,10 @@ const ITEM_RELATIONS = [
   'variants.attribute',
   'variants.value',
   'variants.variant_of',
+  'stone_details',
+  'stone_details.stone_family',
+  'stone_details.stone_clarity',
+  'stone_details.stone_shape',
 ];
 
 @Injectable()
@@ -36,6 +41,8 @@ export class ItemService {
     private readonly barcodeRepository: Repository<ItemBarcode>,
     @InjectRepository(ItemVariant)
     private readonly variantRepository: Repository<ItemVariant>,
+    @InjectRepository(ItemStoneDetail)
+    private readonly stoneDetailRepository: Repository<ItemStoneDetail>,
     @InjectRepository(ItemAttributeValue)
     private readonly attributeValueRepository: Repository<ItemAttributeValue>,
   ) {}
@@ -94,7 +101,7 @@ export class ItemService {
   async update(id: number, updateItemDto: UpdateItemDto) {
     const item = await this.itemRepository.findOne({
       where: { id },
-      relations: ['barcodes'],
+      relations: ['barcodes', 'variants', 'stone_details'],
     });
     if (!item) throw new NotFoundException(`Item with id ${id} not found`);
 
@@ -104,7 +111,7 @@ export class ItemService {
       );
     }
 
-    const { barcodes, variants, ...rest } = updateItemDto;
+    const { barcodes, variants, stone_details, ...rest } = updateItemDto;
     Object.assign(item, rest);
 
     if (barcodes !== undefined) {
@@ -119,6 +126,13 @@ export class ItemService {
       await this.variantRepository.delete({ item_id: id });
       item.variants = variants.map((v) =>
         this.variantRepository.create({ ...v, item_id: id }),
+      );
+    }
+
+    if (stone_details !== undefined) {
+      await this.stoneDetailRepository.delete({ item_id: id });
+      item.stone_details = stone_details.map((s) =>
+        this.stoneDetailRepository.create({ ...s, item_id: id }),
       );
     }
 

@@ -18,6 +18,7 @@ import { MaterialRequestTypeEnum } from '../../../core/enum/material-request-typ
 import { ValuationMethodEnum } from '../../../core/enum/valuation-method.enum';
 import { CreateItemBarcodeDto } from './create-item-barcode.dto';
 import { CreateItemVariantDto } from './create-item-variant.dto';
+import { CreateItemStoneDetailDto } from './create-item-stone-detail.dto';
 
 export class CreateItemDto {
   @ApiProperty({ example: 1 })
@@ -228,4 +229,12 @@ export class CreateItemDto {
   @Type(() => CreateItemVariantDto)
   @IsOptional()
   variants?: CreateItemVariantDto[];
+
+  // Stone Details
+  @ApiPropertyOptional({ type: [CreateItemStoneDetailDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateItemStoneDetailDto)
+  @IsOptional()
+  stone_details?: CreateItemStoneDetailDto[];
 }

@@ -14,6 +14,7 @@ import { MaterialRequestTypeEnum } from '../../../core/enum/material-request-typ
 import { ValuationMethodEnum } from '../../../core/enum/valuation-method.enum';
 import { ItemBarcode } from './item-barcode.entity';
 import { ItemVariant } from './item-variant.entity';
+import { ItemStoneDetail } from './item-stone-detail.entity';
 
 @Entity('item')
 export class Item {
@@ -152,6 +153,10 @@ export class Item {
 
   @OneToMany(() => ItemVariant, (variant) => variant.item, { cascade: true })
   variants: ItemVariant[];
+
+  // Stone Details
+  @OneToMany(() => ItemStoneDetail, (stone) => stone.item, { cascade: true })
+  stone_details: ItemStoneDetail[];
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
