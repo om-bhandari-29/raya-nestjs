@@ -9,19 +9,19 @@ export class AddInventoryFieldsAndBarcodesTable1776510300000
     // Add enums
     await queryRunner.query(`
       CREATE TYPE "material_request_type_enum" AS ENUM (
-        'Purchase',
-        'Material Transfer',
-        'Material Issue',
-        'Manufacture',
-        'Customer Provided'
+        'purchase',
+        'material_transfer',
+        'material_issue',
+        'manufacture',
+        'customer_provided'
       )
     `);
 
     await queryRunner.query(`
       CREATE TYPE "valuation_method_enum" AS ENUM (
-        'FIFO',
-        'Moving Average',
-        'LIFO'
+        'fifo',
+        'moving_average',
+        'lifo'
       )
     `);
 
@@ -33,7 +33,7 @@ export class AddInventoryFieldsAndBarcodesTable1776510300000
         ADD COLUMN "end_of_life" date NOT NULL DEFAULT '2099-12-31',
         ADD COLUMN "weight_per_unit" numeric(10,3) NOT NULL DEFAULT '0',
         ADD COLUMN "weight_uom_id" integer,
-        ADD COLUMN "default_material_request_type" "material_request_type_enum" NOT NULL DEFAULT 'Purchase',
+        ADD COLUMN "default_material_request_type" "material_request_type_enum" NOT NULL DEFAULT 'purchase',
         ADD COLUMN "valuation_method" "valuation_method_enum",
         ADD COLUMN "allow_negative_stock" boolean NOT NULL DEFAULT false
     `);

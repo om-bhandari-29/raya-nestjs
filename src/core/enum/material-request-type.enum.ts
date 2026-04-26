@@ -1,7 +1,7 @@
 export enum MaterialRequestTypeEnum {
-  purchase = 'Purchase',
-  material_transfer = 'Material Transfer',
-  material_issue = 'Material Issue',
-  manufacture = 'Manufacture',
-  customer_provided = 'Customer Provided',
+  purchase = 'purchase',
+  material_transfer = 'material_transfer',
+  material_issue = 'material_issue',
+  manufacture = 'manufacture',
+  customer_provided = 'customer_provided',
 }

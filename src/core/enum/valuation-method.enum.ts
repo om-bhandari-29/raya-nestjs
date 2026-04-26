@@ -1,5 +1,5 @@
 export enum ValuationMethodEnum {
-  fifo = 'FIFO',
-  moving_average = 'Moving Average',
-  lifo = 'LIFO',
+  fifo = 'fifo',
+  moving_average = 'moving_average',
+  lifo = 'lifo',
 }
