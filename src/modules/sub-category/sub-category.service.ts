@@ -23,6 +23,26 @@ export class SubCategoryService {
     };
   }
 
+  async combo(itemGroupId?: number) {
+    const query = this.subCategoryRepository
+      .createQueryBuilder('sc')
+      .select(['sc.id', 'sc.name'])
+      .where('sc.is_active = :isActive', { isActive: true })
+      .orderBy('sc.name', 'ASC');
+
+    if (itemGroupId) {
+      query.andWhere('sc.item_group_id = :itemGroupId', { itemGroupId });
+    }
+
+    const data = await query.getMany();
+    return {
+      status: true,
+      message: 'Sub-category combo retrieved successfully',
+      statusCode: 200,
+      data,
+    };
+  }
+
   async findAll() {
     const subCategories = await this.subCategoryRepository.find({ relations: ['item_group'] });
     return {

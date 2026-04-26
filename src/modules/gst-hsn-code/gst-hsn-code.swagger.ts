@@ -25,6 +25,26 @@ const conflictExample = {
   data: null,
 };
 
+export const ComboGstHsnCodeSwagger = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Get GST HSN codes for dropdown (id, hsn_code and gst_rate)' }),
+    ApiResponse({
+      status: 200,
+      description: 'GST HSN code combo retrieved successfully',
+      schema: {
+        example: {
+          status: true,
+          message: 'GST HSN code combo retrieved successfully',
+          statusCode: 200,
+          data: [
+            { id: 1, hsn_code: '7113', gst_rate: '3.00' },
+            { id: 2, hsn_code: '7114', gst_rate: '5.00' },
+          ],
+        },
+      },
+    }),
+  );
+
 export const CreateGstHsnCodeSwagger = () =>
   applyDecorators(
     ApiOperation({ summary: 'Create a new GST HSN code' }),

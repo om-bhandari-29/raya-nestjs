@@ -18,6 +18,7 @@ import {
   FindOneItemGroupSwagger,
   UpdateItemGroupSwagger,
   RemoveItemGroupSwagger,
+  ComboItemGroupSwagger,
 } from './item-group.swagger';
 
 @ApiTags('item-group')
@@ -29,6 +30,12 @@ export class ItemGroupController {
   @CreateItemGroupSwagger()
   create(@Body() createItemGroupDto: CreateItemGroupDto) {
     return this.itemGroupService.create(createItemGroupDto);
+  }
+
+  @Get('combo')
+  @ComboItemGroupSwagger()
+  combo() {
+    return this.itemGroupService.combo();
   }
 
   @Get()

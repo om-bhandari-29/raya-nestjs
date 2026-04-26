@@ -24,6 +24,26 @@ const conflictExample = {
   data: null,
 };
 
+export const ComboUomSwagger = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Get UOMs for dropdown (id and name only)' }),
+    ApiResponse({
+      status: 200,
+      description: 'UOM combo retrieved successfully',
+      schema: {
+        example: {
+          status: true,
+          message: 'UOM combo retrieved successfully',
+          statusCode: 200,
+          data: [
+            { id: 1, name: 'Gram' },
+            { id: 2, name: 'Kilogram' },
+          ],
+        },
+      },
+    }),
+  );
+
 export const CreateUomSwagger = () =>
   applyDecorators(
     ApiOperation({ summary: 'Create a new UOM' }),

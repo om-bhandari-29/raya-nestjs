@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { SubCategoryService } from './sub-category.service';
@@ -18,6 +19,7 @@ import {
   FindOneSubCategorySwagger,
   UpdateSubCategorySwagger,
   RemoveSubCategorySwagger,
+  ComboSubCategorySwagger,
 } from './sub-category.swagger';
 
 @ApiTags('sub-category')
@@ -29,6 +31,12 @@ export class SubCategoryController {
   @CreateSubCategorySwagger()
   create(@Body() createSubCategoryDto: CreateSubCategoryDto) {
     return this.subCategoryService.create(createSubCategoryDto);
+  }
+
+  @Get('combo')
+  @ComboSubCategorySwagger()
+  combo(@Query('item_group_id') itemGroupId?: string) {
+    return this.subCategoryService.combo(itemGroupId ? +itemGroupId : undefined);
   }
 
   @Get()

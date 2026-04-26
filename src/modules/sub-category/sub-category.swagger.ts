@@ -1,5 +1,5 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 
 const subCategoryExample = {
   id: 1,
@@ -23,6 +23,35 @@ const notFoundExample = {
   statusCode: 404,
   data: null,
 };
+
+export const ComboSubCategorySwagger = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Get sub-categories for dropdown (id and name only)',
+      description: 'Pass optional `item_group_id` query param to filter by item group',
+    }),
+    ApiQuery({
+      name: 'item_group_id',
+      required: false,
+      type: Number,
+      description: 'Filter sub-categories by item group id',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Sub-category combo retrieved successfully',
+      schema: {
+        example: {
+          status: true,
+          message: 'Sub-category combo retrieved successfully',
+          statusCode: 200,
+          data: [
+            { id: 1, name: 'Mobile Phones' },
+            { id: 2, name: 'Laptops' },
+          ],
+        },
+      },
+    }),
+  );
 
 export const CreateSubCategorySwagger = () =>
   applyDecorators(

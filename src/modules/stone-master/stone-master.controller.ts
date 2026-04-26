@@ -13,6 +13,7 @@ import { StoneMasterService } from './stone-master.service';
 import { CreateStoneMasterDto } from './dto/create-stone-master.dto';
 import { UpdateStoneMasterDto } from './dto/update-stone-master.dto';
 import {
+  ComboStoneMasterSwagger,
   CreateStoneMasterSwagger,
   FindAllStoneMasterSwagger,
   FindOneStoneMasterSwagger,
@@ -29,6 +30,12 @@ export class StoneFamilyController {
   @CreateStoneMasterSwagger('family')
   create(@Body() dto: CreateStoneMasterDto) {
     return this.service.create('family', dto);
+  }
+
+  @Get('combo')
+  @ComboStoneMasterSwagger('family')
+  combo() {
+    return this.service.combo('family');
   }
 
   @Get()
@@ -67,6 +74,12 @@ export class StoneClarityController {
     return this.service.create('clarity', dto);
   }
 
+  @Get('combo')
+  @ComboStoneMasterSwagger('clarity')
+  combo() {
+    return this.service.combo('clarity');
+  }
+
   @Get()
   @FindAllStoneMasterSwagger('clarity')
   findAll() {
@@ -101,6 +114,12 @@ export class StoneShapeController {
   @CreateStoneMasterSwagger('shape')
   create(@Body() dto: CreateStoneMasterDto) {
     return this.service.create('shape', dto);
+  }
+
+  @Get('combo')
+  @ComboStoneMasterSwagger('shape')
+  combo() {
+    return this.service.combo('shape');
   }
 
   @Get()

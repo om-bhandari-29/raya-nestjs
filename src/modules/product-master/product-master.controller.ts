@@ -7,12 +7,14 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ProductMasterService } from './product-master.service';
 import { CreateProductMasterDto } from './dto/create-product-master.dto';
 import { UpdateProductMasterDto } from './dto/update-product-master.dto';
 import {
+  ComboProductMasterSwagger,
   CreateProductMasterSwagger,
   FindAllProductMastersSwagger,
   FindOneProductMasterSwagger,
@@ -29,6 +31,12 @@ export class ProductMasterController {
   @CreateProductMasterSwagger()
   create(@Body() createProductMasterDto: CreateProductMasterDto) {
     return this.productMasterService.create(createProductMasterDto);
+  }
+
+  @Get('combo')
+  @ComboProductMasterSwagger()
+  combo(@Query('sub_category_id') subCategoryId?: string) {
+    return this.productMasterService.combo(subCategoryId ? +subCategoryId : undefined);
   }
 
   @Get()

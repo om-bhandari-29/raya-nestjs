@@ -21,6 +21,20 @@ export class ItemAttributeMasterService {
     private readonly valueRepository: Repository<ItemAttributeValue>,
   ) {}
 
+  async combo() {
+    const data = await this.attributeRepository.find({
+      where: { status: true },
+      select: ['id', 'attribute_name'],
+      order: { attribute_name: 'ASC' },
+    });
+    return {
+      status: true,
+      message: 'Item attribute combo retrieved successfully',
+      statusCode: 200,
+      data,
+    };
+  }
+
   async create(createDto: CreateItemAttributeMasterDto) {
     const attribute = this.attributeRepository.create(createDto);
     await this.attributeRepository.save(attribute);

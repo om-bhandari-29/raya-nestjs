@@ -16,6 +16,20 @@ export class UomService {
     private readonly uomRepository: Repository<Uom>,
   ) {}
 
+  async combo() {
+    const data = await this.uomRepository.find({
+      where: { is_active: true },
+      select: ['id', 'name'],
+      order: { name: 'ASC' },
+    });
+    return {
+      status: true,
+      message: 'UOM combo retrieved successfully',
+      statusCode: 200,
+      data,
+    };
+  }
+
   async create(createUomDto: CreateUomDto) {
     const existing = await this.uomRepository.findOne({
       where: { name: createUomDto.name },

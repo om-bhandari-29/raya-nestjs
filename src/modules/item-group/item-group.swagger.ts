@@ -16,6 +16,26 @@ const notFoundExample = {
   data: null,
 };
 
+export const ComboItemGroupSwagger = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Get item groups for dropdown (id and name only)' }),
+    ApiResponse({
+      status: 200,
+      description: 'Item group combo retrieved successfully',
+      schema: {
+        example: {
+          status: true,
+          message: 'Item group combo retrieved successfully',
+          statusCode: 200,
+          data: [
+            { id: 1, name: 'Electronics' },
+            { id: 2, name: 'Jewellery' },
+          ],
+        },
+      },
+    }),
+  );
+
 export const CreateItemGroupSwagger = () =>
   applyDecorators(
     ApiOperation({ summary: 'Create a new item group' }),

@@ -16,6 +16,21 @@ export class GstHsnCodeService {
     private readonly gstHsnCodeRepository: Repository<GstHsnCode>,
   ) {}
 
+  async combo() {
+    const data = await this.gstHsnCodeRepository
+      .createQueryBuilder('g')
+      .select(['g.id', 'g.hsn_code', 'g.gst_rate'])
+      .where('g.is_active = :isActive', { isActive: true })
+      .orderBy('g.hsn_code', 'ASC')
+      .getMany();
+    return {
+      status: true,
+      message: 'GST HSN code combo retrieved successfully',
+      statusCode: 200,
+      data,
+    };
+  }
+
   async create(createGstHsnCodeDto: CreateGstHsnCodeDto) {
     const existing = await this.gstHsnCodeRepository.findOne({
       where: { hsn_code: createGstHsnCodeDto.hsn_code },

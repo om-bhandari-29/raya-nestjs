@@ -1,5 +1,5 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 
 const productMasterExample = {
   id: 1,
@@ -25,6 +25,35 @@ const notFoundExample = {
   statusCode: 404,
   data: null,
 };
+
+export const ComboProductMasterSwagger = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Get product masters for dropdown (id and name only)',
+      description: 'Pass optional `sub_category_id` query param to filter by sub-category',
+    }),
+    ApiQuery({
+      name: 'sub_category_id',
+      required: false,
+      type: Number,
+      description: 'Filter product masters by sub-category id',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Product master combo retrieved successfully',
+      schema: {
+        example: {
+          status: true,
+          message: 'Product master combo retrieved successfully',
+          statusCode: 200,
+          data: [
+            { id: 1, name: 'Gold Ring' },
+            { id: 2, name: 'Silver Necklace' },
+          ],
+        },
+      },
+    }),
+  );
 
 export const CreateProductMasterSwagger = () =>
   applyDecorators(

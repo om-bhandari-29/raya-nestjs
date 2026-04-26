@@ -13,6 +13,7 @@ import { UomService } from './uom.service';
 import { CreateUomDto } from './dto/create-uom.dto';
 import { UpdateUomDto } from './dto/update-uom.dto';
 import {
+  ComboUomSwagger,
   CreateUomSwagger,
   FindAllUomsSwagger,
   FindOneUomSwagger,
@@ -29,6 +30,12 @@ export class UomController {
   @CreateUomSwagger()
   create(@Body() createUomDto: CreateUomDto) {
     return this.uomService.create(createUomDto);
+  }
+
+  @Get('combo')
+  @ComboUomSwagger()
+  combo() {
+    return this.uomService.combo();
   }
 
   @Get()

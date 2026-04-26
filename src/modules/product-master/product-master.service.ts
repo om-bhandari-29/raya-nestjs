@@ -23,6 +23,26 @@ export class ProductMasterService {
     };
   }
 
+  async combo(subCategoryId?: number) {
+    const query = this.productMasterRepository
+      .createQueryBuilder('pm')
+      .select(['pm.id', 'pm.name'])
+      .where('pm.is_active = :isActive', { isActive: true })
+      .orderBy('pm.name', 'ASC');
+
+    if (subCategoryId) {
+      query.andWhere('pm.sub_category_id = :subCategoryId', { subCategoryId });
+    }
+
+    const data = await query.getMany();
+    return {
+      status: true,
+      message: 'Product master combo retrieved successfully',
+      statusCode: 200,
+      data,
+    };
+  }
+
   async findAll() {
     const products = await this.productMasterRepository.find({
       relations: ['sub_category'],

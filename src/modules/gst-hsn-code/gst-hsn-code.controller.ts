@@ -13,6 +13,7 @@ import { GstHsnCodeService } from './gst-hsn-code.service';
 import { CreateGstHsnCodeDto } from './dto/create-gst-hsn-code.dto';
 import { UpdateGstHsnCodeDto } from './dto/update-gst-hsn-code.dto';
 import {
+  ComboGstHsnCodeSwagger,
   CreateGstHsnCodeSwagger,
   FindAllGstHsnCodesSwagger,
   FindOneGstHsnCodeSwagger,
@@ -29,6 +30,12 @@ export class GstHsnCodeController {
   @CreateGstHsnCodeSwagger()
   create(@Body() createGstHsnCodeDto: CreateGstHsnCodeDto) {
     return this.gstHsnCodeService.create(createGstHsnCodeDto);
+  }
+
+  @Get('combo')
+  @ComboGstHsnCodeSwagger()
+  combo() {
+    return this.gstHsnCodeService.combo();
   }
 
   @Get()

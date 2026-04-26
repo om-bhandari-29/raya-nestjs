@@ -45,6 +45,26 @@ const notFoundExample = {
   data: null,
 };
 
+export const ComboAttributeSwagger = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Get item attributes for dropdown (id and attribute_name only)' }),
+    ApiResponse({
+      status: 200,
+      description: 'Item attribute combo retrieved successfully',
+      schema: {
+        example: {
+          status: true,
+          message: 'Item attribute combo retrieved successfully',
+          statusCode: 200,
+          data: [
+            { id: 1, attribute_name: 'Metal Type' },
+            { id: 2, attribute_name: 'Stone Type' },
+          ],
+        },
+      },
+    }),
+  );
+
 export const CreateAttributeSwagger = () =>
   applyDecorators(
     ApiOperation({ summary: 'Create a new item attribute' }),

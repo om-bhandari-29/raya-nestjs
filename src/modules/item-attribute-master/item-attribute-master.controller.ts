@@ -15,6 +15,7 @@ import { UpdateItemAttributeMasterDto } from './dto/update-item-attribute-master
 import { CreateItemAttributeValueDto } from './dto/create-item-attribute-value.dto';
 import { UpdateItemAttributeValueDto } from './dto/update-item-attribute-value.dto';
 import {
+  ComboAttributeSwagger,
   CreateAttributeSwagger,
   FindAllAttributesSwagger,
   FindOneAttributeSwagger,
@@ -36,6 +37,12 @@ export class ItemAttributeMasterController {
   @CreateAttributeSwagger()
   create(@Body() createDto: CreateItemAttributeMasterDto) {
     return this.service.create(createDto);
+  }
+
+  @Get('combo')
+  @ComboAttributeSwagger()
+  combo() {
+    return this.service.combo();
   }
 
   @Get()

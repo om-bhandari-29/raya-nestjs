@@ -31,6 +31,21 @@ export class StoneMasterService {
     return this.shapeRepo;
   }
 
+  async combo(type: 'family' | 'clarity' | 'shape') {
+    const repo = this.getRepo(type);
+    const data = await (repo as Repository<StoneFamily>).find({
+      where: { is_published: true } as any,
+      select: ['id', 'name'] as any,
+      order: { name: 'ASC' } as any,
+    });
+    return {
+      status: true,
+      message: `Stone ${type} combo retrieved successfully`,
+      statusCode: 200,
+      data,
+    };
+  }
+
   async create(type: 'family' | 'clarity' | 'shape', dto: CreateStoneMasterDto) {
     const repo = this.getRepo(type);
     const entity = repo.create(dto as any);

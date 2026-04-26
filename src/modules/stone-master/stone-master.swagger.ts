@@ -16,6 +16,26 @@ const notFound = (type: string) => ({
   data: null,
 });
 
+export const ComboStoneMasterSwagger = (type: string) =>
+  applyDecorators(
+    ApiOperation({ summary: `Get stone ${type}s for dropdown (id and name only)` }),
+    ApiResponse({
+      status: 200,
+      description: `Stone ${type} combo retrieved successfully`,
+      schema: {
+        example: {
+          status: true,
+          message: `Stone ${type} combo retrieved successfully`,
+          statusCode: 200,
+          data: [
+            { id: 1, name: 'Diamond' },
+            { id: 2, name: 'Ruby' },
+          ],
+        },
+      },
+    }),
+  );
+
 export const CreateStoneMasterSwagger = (type: string) =>
   applyDecorators(
     ApiOperation({ summary: `Create a new stone ${type}` }),
