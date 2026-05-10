@@ -3,8 +3,13 @@ import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 const itemGroupExample = {
   id: 1,
-  name: 'Electronics',
+  name_frappe_based_id: 'JEWELLERY-GOLD',
+  is_group: false,
+  image: null,
+  gst_hsn_code: '7113',
+  parent_item_group: null,
   is_active: true,
+  liked: false,
   created_at: '2026-04-18T00:00:00.000Z',
   updated_at: '2026-04-18T00:00:00.000Z',
 };
@@ -18,7 +23,9 @@ const notFoundExample = {
 
 export const ComboItemGroupSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Get item groups for dropdown (id and name only)' }),
+    ApiOperation({
+      summary: 'Get item groups for dropdown (id and name only)',
+    }),
     ApiResponse({
       status: 200,
       description: 'Item group combo retrieved successfully',
@@ -126,6 +133,30 @@ export const RemoveItemGroupSwagger = () =>
           message: 'Item group deleted successfully',
           statusCode: 200,
           data: null,
+        },
+      },
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Item group not found',
+      schema: { example: notFoundExample },
+    }),
+  );
+
+export const ToggleLikedItemGroupSwagger = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Like or unlike an item group by name_frappe_based_id',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Item group liked/unliked successfully',
+      schema: {
+        example: {
+          status: true,
+          message: 'Item group "Jewelry" liked successfully',
+          statusCode: 200,
+          data: { ...itemGroupExample, liked: true },
         },
       },
     }),

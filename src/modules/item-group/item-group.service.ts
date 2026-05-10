@@ -1,10 +1,15 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ItemGroup } from './entity/item-group.entity';
 import { SubCategory } from '../sub-category/entity/sub-category.entity';
 import { CreateItemGroupDto } from './dto/create-item-group.dto';
 import { UpdateItemGroupDto } from './dto/update-item-group.dto';
+import { ToggleLikedItemGroupDto } from './dto/toggle-liked-item-group.dto';
 
 @Injectable()
 export class ItemGroupService {
@@ -29,8 +34,8 @@ export class ItemGroupService {
   async combo() {
     const itemGroups = await this.itemGroupRepository.find({
       where: { is_active: true },
-      select: ['id', 'name'],
-      order: { name: 'ASC' },
+      select: ['id', 'name_frappe_based_id'],
+      order: { name_frappe_based_id: 'ASC' },
     });
     return {
       status: true,
@@ -73,6 +78,25 @@ export class ItemGroupService {
     return {
       status: true,
       message: 'Item group updated successfully',
+      statusCode: 200,
+      data: itemGroup,
+    };
+  }
+
+  async toggleLiked(dto: ToggleLikedItemGroupDto) {
+    const itemGroup = await this.itemGroupRepository.findOne({
+      where: { name_frappe_based_id: dto.name_frappe_based_id },
+    });
+    if (!itemGroup) {
+      throw new NotFoundException(
+        `Item group "${dto.name_frappe_based_id}" not found`,
+      );
+    }
+    itemGroup.liked = dto.liked;
+    await this.itemGroupRepository.save(itemGroup);
+    return {
+      status: true,
+      message: `Item group "${dto.name_frappe_based_id}" ${dto.liked ? 'liked' : 'unliked'} successfully`,
       statusCode: 200,
       data: itemGroup,
     };

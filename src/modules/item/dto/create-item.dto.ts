@@ -152,12 +152,18 @@ export class CreateItemDto {
   @Type(() => Number)
   weight_uom_id?: number;
 
-  @ApiPropertyOptional({ enum: MaterialRequestTypeEnum, example: MaterialRequestTypeEnum.purchase })
+  @ApiPropertyOptional({
+    enum: MaterialRequestTypeEnum,
+    example: MaterialRequestTypeEnum.purchase,
+  })
   @IsEnum(MaterialRequestTypeEnum)
   @IsOptional()
   default_material_request_type?: MaterialRequestTypeEnum;
 
-  @ApiPropertyOptional({ enum: ValuationMethodEnum, example: ValuationMethodEnum.fifo })
+  @ApiPropertyOptional({
+    enum: ValuationMethodEnum,
+    example: ValuationMethodEnum.fifo,
+  })
   @IsEnum(ValuationMethodEnum)
   @IsOptional()
   valuation_method?: ValuationMethodEnum;

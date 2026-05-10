@@ -12,6 +12,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { ItemGroupService } from './item-group.service';
 import { CreateItemGroupDto } from './dto/create-item-group.dto';
 import { UpdateItemGroupDto } from './dto/update-item-group.dto';
+import { ToggleLikedItemGroupDto } from './dto/toggle-liked-item-group.dto';
 import {
   CreateItemGroupSwagger,
   FindAllItemGroupsSwagger,
@@ -19,6 +20,7 @@ import {
   UpdateItemGroupSwagger,
   RemoveItemGroupSwagger,
   ComboItemGroupSwagger,
+  ToggleLikedItemGroupSwagger,
 } from './item-group.swagger';
 
 @ApiTags('item-group')
@@ -30,6 +32,12 @@ export class ItemGroupController {
   @CreateItemGroupSwagger()
   create(@Body() createItemGroupDto: CreateItemGroupDto) {
     return this.itemGroupService.create(createItemGroupDto);
+  }
+
+  @Post('toggle-liked')
+  @ToggleLikedItemGroupSwagger()
+  toggleLiked(@Body() dto: ToggleLikedItemGroupDto) {
+    return this.itemGroupService.toggleLiked(dto);
   }
 
   @Get('combo')
