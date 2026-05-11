@@ -19,7 +19,7 @@ export class GstHsnCodeService {
   async combo() {
     const data = await this.gstHsnCodeRepository
       .createQueryBuilder('g')
-      .select(['g.id', 'g.hsn_code', 'g.gst_rate'])
+      .select(['g.name', 'g.hsn_code'])
       .where('g.is_active = :isActive', { isActive: true })
       .orderBy('g.hsn_code', 'ASC')
       .getMany();
@@ -61,12 +61,12 @@ export class GstHsnCodeService {
     };
   }
 
-  async findOne(id: number) {
+  async findOne(name: string) {
     const gstHsnCode = await this.gstHsnCodeRepository.findOne({
-      where: { id },
+      where: { name },
     });
     if (!gstHsnCode) {
-      throw new NotFoundException(`GST HSN code with id ${id} not found`);
+      throw new NotFoundException(`GST HSN code '${name}' not found`);
     }
     return {
       status: true,
@@ -76,12 +76,12 @@ export class GstHsnCodeService {
     };
   }
 
-  async update(id: number, updateGstHsnCodeDto: UpdateGstHsnCodeDto) {
+  async update(name: string, updateGstHsnCodeDto: UpdateGstHsnCodeDto) {
     const gstHsnCode = await this.gstHsnCodeRepository.findOne({
-      where: { id },
+      where: { name },
     });
     if (!gstHsnCode) {
-      throw new NotFoundException(`GST HSN code with id ${id} not found`);
+      throw new NotFoundException(`GST HSN code '${name}' not found`);
     }
 
     if (
@@ -108,12 +108,12 @@ export class GstHsnCodeService {
     };
   }
 
-  async remove(id: number) {
+  async remove(name: string) {
     const gstHsnCode = await this.gstHsnCodeRepository.findOne({
-      where: { id },
+      where: { name },
     });
     if (!gstHsnCode) {
-      throw new NotFoundException(`GST HSN code with id ${id} not found`);
+      throw new NotFoundException(`GST HSN code '${name}' not found`);
     }
     await this.gstHsnCodeRepository.remove(gstHsnCode);
     return {

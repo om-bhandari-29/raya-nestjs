@@ -2,10 +2,9 @@ import { applyDecorators } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 const gstHsnCodeExample = {
-  id: 1,
+  name: '8471',
   hsn_code: '8471',
   description: 'Automatic data processing machines and units',
-  gst_rate: '18.00',
   is_active: true,
   created_at: '2026-04-25T00:00:00.000Z',
   updated_at: '2026-04-25T00:00:00.000Z',
@@ -13,7 +12,7 @@ const gstHsnCodeExample = {
 
 const notFoundExample = {
   status: false,
-  message: 'GST HSN code with id 1 not found',
+  message: "GST HSN code '8471' not found",
   statusCode: 404,
   data: null,
 };
@@ -27,7 +26,9 @@ const conflictExample = {
 
 export const ComboGstHsnCodeSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Get GST HSN codes for dropdown (id, hsn_code and gst_rate)' }),
+    ApiOperation({
+      summary: 'Get GST HSN codes for dropdown (name and hsn_code)',
+    }),
     ApiResponse({
       status: 200,
       description: 'GST HSN code combo retrieved successfully',
@@ -37,8 +38,8 @@ export const ComboGstHsnCodeSwagger = () =>
           message: 'GST HSN code combo retrieved successfully',
           statusCode: 200,
           data: [
-            { id: 1, hsn_code: '7113', gst_rate: '3.00' },
-            { id: 2, hsn_code: '7114', gst_rate: '5.00' },
+            { name: '7113', hsn_code: '7113' },
+            { name: '7114', hsn_code: '7114' },
           ],
         },
       },
@@ -86,7 +87,7 @@ export const FindAllGstHsnCodesSwagger = () =>
 
 export const FindOneGstHsnCodeSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Get a GST HSN code by id' }),
+    ApiOperation({ summary: 'Get a GST HSN code by name' }),
     ApiResponse({
       status: 200,
       description: 'GST HSN code retrieved successfully',
@@ -108,7 +109,7 @@ export const FindOneGstHsnCodeSwagger = () =>
 
 export const UpdateGstHsnCodeSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Update a GST HSN code by id' }),
+    ApiOperation({ summary: 'Update a GST HSN code by name' }),
     ApiResponse({
       status: 200,
       description: 'GST HSN code updated successfully',
@@ -135,7 +136,7 @@ export const UpdateGstHsnCodeSwagger = () =>
 
 export const RemoveGstHsnCodeSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Delete a GST HSN code by id' }),
+    ApiOperation({ summary: 'Delete a GST HSN code by name' }),
     ApiResponse({
       status: 200,
       description: 'GST HSN code deleted successfully',

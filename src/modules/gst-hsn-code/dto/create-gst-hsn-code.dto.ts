@@ -1,16 +1,12 @@
-import {
-  IsBoolean,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Max,
-  Min,
-} from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 
 export class CreateGstHsnCodeDto {
+  @ApiProperty({ example: '8471' })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
   @ApiProperty({ example: '8471' })
   @IsString()
   @IsNotEmpty()
@@ -20,13 +16,6 @@ export class CreateGstHsnCodeDto {
   @IsString()
   @IsNotEmpty()
   description: string;
-
-  @ApiProperty({ example: 18.0 })
-  @IsNumber()
-  @Min(0)
-  @Max(100)
-  @Type(() => Number)
-  gst_rate: number;
 
   @ApiPropertyOptional({ example: true })
   @IsBoolean()

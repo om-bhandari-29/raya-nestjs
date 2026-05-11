@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
 } from '@nestjs/common';
@@ -44,24 +43,24 @@ export class GstHsnCodeController {
     return this.gstHsnCodeService.findAll();
   }
 
-  @Get(':id')
+  @Get(':name')
   @FindOneGstHsnCodeSwagger()
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.gstHsnCodeService.findOne(id);
+  findOne(@Param('name') name: string) {
+    return this.gstHsnCodeService.findOne(name);
   }
 
-  @Patch(':id')
+  @Patch(':name')
   @UpdateGstHsnCodeSwagger()
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('name') name: string,
     @Body() updateGstHsnCodeDto: UpdateGstHsnCodeDto,
   ) {
-    return this.gstHsnCodeService.update(id, updateGstHsnCodeDto);
+    return this.gstHsnCodeService.update(name, updateGstHsnCodeDto);
   }
 
-  @Delete(':id')
+  @Delete(':name')
   @RemoveGstHsnCodeSwagger()
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.gstHsnCodeService.remove(id);
+  remove(@Param('name') name: string) {
+    return this.gstHsnCodeService.remove(name);
   }
 }

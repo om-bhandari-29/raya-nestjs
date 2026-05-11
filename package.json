@@ -26,7 +26,8 @@
     "migration:show": "npm run typeorm -- migration:show -d ./db/typeorm.config.ts",
     "seed:item-attributes": "ts-node --require tsconfig-paths/register db/seeds/item-attribute-master.seed.ts",
     "seed:stone-master": "ts-node --require tsconfig-paths/register db/seeds/stone-master.seed.ts",
-    "seed:item-groups": "ts-node --require tsconfig-paths/register db/seeds/item-group.seed.ts"
+    "seed:item-groups": "ts-node --require tsconfig-paths/register db/seeds/item-group.seed.ts",
+    "seed:gst-hsn-codes": "ts-node --require tsconfig-paths/register db/seeds/gst-hsn-code.seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
