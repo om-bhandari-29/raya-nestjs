@@ -35,8 +35,8 @@ export class SubCategoryController {
 
   @Get('combo')
   @ComboSubCategorySwagger()
-  combo(@Query('item_group_id') itemGroupId?: string) {
-    return this.subCategoryService.combo(itemGroupId ? +itemGroupId : undefined);
+  combo(@Query('item_group_name') itemGroupName?: string) {
+    return this.subCategoryService.combo(itemGroupName ?? null);
   }
 
   @Get()

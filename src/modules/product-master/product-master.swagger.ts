@@ -4,9 +4,7 @@ import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 const productMasterExample = {
   id: 1,
   name: 'Steel Rod',
-  sub_category_id: 1,
-  labour_rate: '150.50',
-  labour_rate_on: 'Net',
+  sub_category_name: 'Mobile Phones',
   product_description: 'High quality steel rod',
   is_active: true,
   created_at: '2026-04-19T00:00:00.000Z',
@@ -14,7 +12,7 @@ const productMasterExample = {
   sub_category: {
     id: 1,
     name: 'Mobile Phones',
-    item_group_id: 1,
+    item_group_name: 'Electronics',
     is_active: true,
   },
 };
@@ -30,13 +28,14 @@ export const ComboProductMasterSwagger = () =>
   applyDecorators(
     ApiOperation({
       summary: 'Get product masters for dropdown (id and name only)',
-      description: 'Pass optional `sub_category_id` query param to filter by sub-category',
+      description:
+        'Pass optional `sub_category_id` query param to filter by sub-category',
     }),
     ApiQuery({
-      name: 'sub_category_id',
+      name: 'sub_category_name',
       required: false,
-      type: Number,
-      description: 'Filter product masters by sub-category id',
+      type: String,
+      description: 'Filter product masters by sub-category name',
     }),
     ApiResponse({
       status: 200,

@@ -23,15 +23,17 @@ export class ProductMasterService {
     };
   }
 
-  async combo(subCategoryId?: number) {
+  async combo(subCategoryName?: string) {
     const query = this.productMasterRepository
       .createQueryBuilder('pm')
       .select(['pm.id', 'pm.name'])
       .where('pm.is_active = :isActive', { isActive: true })
       .orderBy('pm.name', 'ASC');
 
-    if (subCategoryId) {
-      query.andWhere('pm.sub_category_id = :subCategoryId', { subCategoryId });
+    if (subCategoryName) {
+      query.andWhere('pm.sub_category_name = :subCategoryName', {
+        subCategoryName,
+      });
     }
 
     const data = await query.getMany();
@@ -72,7 +74,9 @@ export class ProductMasterService {
   }
 
   async update(id: number, updateProductMasterDto: UpdateProductMasterDto) {
-    const product = await this.productMasterRepository.findOne({ where: { id } });
+    const product = await this.productMasterRepository.findOne({
+      where: { id },
+    });
     if (!product) {
       throw new NotFoundException(`Product master with id ${id} not found`);
     }
@@ -87,7 +91,9 @@ export class ProductMasterService {
   }
 
   async remove(id: number) {
-    const product = await this.productMasterRepository.findOne({ where: { id } });
+    const product = await this.productMasterRepository.findOne({
+      where: { id },
+    });
     if (!product) {
       throw new NotFoundException(`Product master with id ${id} not found`);
     }

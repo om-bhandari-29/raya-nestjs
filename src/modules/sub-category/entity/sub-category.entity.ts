@@ -1,4 +1,10 @@
-import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { ItemGroup } from '../../item-group/entity/item-group.entity';
 
 @Entity()
@@ -6,15 +12,18 @@ export class SubCategory {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ length: 100, type: 'varchar' })
+  @Column({ length: 100, type: 'varchar', unique: true })
   name: string;
 
   @ManyToOne(() => ItemGroup)
-  @JoinColumn({ name: 'item_group_id' })
+  @JoinColumn({
+    name: 'item_group_name',
+    referencedColumnName: 'name_frappe_based_id',
+  })
   item_group: ItemGroup;
 
-  @Column({ type: 'int' })
-  item_group_id: number;
+  @Column({ type: 'varchar', length: 255 })
+  item_group_name: string;
 
   @Column({ type: 'boolean', default: true })
   is_active: boolean;

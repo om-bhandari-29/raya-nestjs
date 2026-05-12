@@ -1,5 +1,5 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 
 const gstHsnCodeExample = {
   name: '8471',
@@ -70,7 +70,24 @@ export const CreateGstHsnCodeSwagger = () =>
 
 export const FindAllGstHsnCodesSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Get all GST HSN codes' }),
+    ApiOperation({ summary: 'Get all GST HSN codes with pagination' }),
+    ApiQuery({
+      name: 'page',
+      required: false,
+      example: 1,
+      description: 'Page number (default: 1)',
+    }),
+    ApiQuery({
+      name: 'limit',
+      required: false,
+      example: 20,
+      description: 'Items per page (default: 20)',
+    }),
+    ApiQuery({
+      name: 'search',
+      required: false,
+      description: 'Search by hsn_code or description',
+    }),
     ApiResponse({
       status: 200,
       description: 'GST HSN codes retrieved successfully',
@@ -80,6 +97,12 @@ export const FindAllGstHsnCodesSwagger = () =>
           message: 'GST HSN codes retrieved successfully',
           statusCode: 200,
           data: [gstHsnCodeExample],
+          meta: {
+            total: 5000,
+            page: 1,
+            limit: 20,
+            totalPages: 250,
+          },
         },
       },
     }),

@@ -1,4 +1,4 @@
-import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateSubCategoryDto {
@@ -7,10 +7,10 @@ export class CreateSubCategoryDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ example: 1 })
-  @IsNumber()
+  @ApiProperty({ example: 'Electronics' })
+  @IsString()
   @IsNotEmpty()
-  item_group_id: number;
+  item_group_name: string;
 
   @ApiPropertyOptional({ example: true })
   @IsBoolean()

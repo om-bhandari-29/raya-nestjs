@@ -1,13 +1,5 @@
-import {
-  IsBoolean,
-  IsEnum,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { LabourRateOnEnum } from '../../../core/enum/labour-rate-on.enum';
 
 export class CreateProductMasterDto {
   @ApiProperty({ example: 'Steel Rod' })
@@ -15,20 +7,10 @@ export class CreateProductMasterDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ example: 1 })
-  @IsNumber()
-  @IsNotEmpty()
-  sub_category_id: number;
-
-  @ApiProperty({ example: '150.5' })
+  @ApiProperty({ example: 'Mobile Phones' })
   @IsString()
   @IsNotEmpty()
-  labour_rate: string;
-
-  @ApiProperty({ enum: LabourRateOnEnum, example: LabourRateOnEnum.net })
-  @IsEnum(LabourRateOnEnum)
-  @IsNotEmpty()
-  labour_rate_on: LabourRateOnEnum;
+  sub_category_name: string;
 
   @ApiPropertyOptional({ example: 'High quality steel rod' })
   @IsString()

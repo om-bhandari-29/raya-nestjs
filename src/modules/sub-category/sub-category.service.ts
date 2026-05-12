@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SubCategory } from './entity/sub-category.entity';
@@ -14,7 +18,16 @@ export class SubCategoryService {
 
   async create(createSubCategoryDto: CreateSubCategoryDto) {
     const subCategory = this.subCategoryRepository.create(createSubCategoryDto);
-    await this.subCategoryRepository.save(subCategory);
+    try {
+      await this.subCategoryRepository.save(subCategory);
+    } catch (error) {
+      if (error.code === '23505') {
+        throw new ConflictException(
+          `Sub-category with name '${createSubCategoryDto.name}' already exists`,
+        );
+      }
+      throw error;
+    }
     return {
       status: true,
       message: 'Sub-category created successfully',
@@ -23,15 +36,15 @@ export class SubCategoryService {
     };
   }
 
-  async combo(itemGroupId?: number) {
+  async combo(itemGroupName: string | null) {
     const query = this.subCategoryRepository
       .createQueryBuilder('sc')
       .select(['sc.id', 'sc.name'])
       .where('sc.is_active = :isActive', { isActive: true })
       .orderBy('sc.name', 'ASC');
 
-    if (itemGroupId) {
-      query.andWhere('sc.item_group_id = :itemGroupId', { itemGroupId });
+    if (itemGroupName) {
+      query.andWhere('sc.item_group_name = :itemGroupName', { itemGroupName });
     }
 
     const data = await query.getMany();
@@ -44,7 +57,9 @@ export class SubCategoryService {
   }
 
   async findAll() {
-    const subCategories = await this.subCategoryRepository.find({ relations: ['item_group'] });
+    const subCategories = await this.subCategoryRepository.find({
+      relations: ['item_group'],
+    });
     return {
       status: true,
       message: 'Sub-categories retrieved successfully',
@@ -54,7 +69,10 @@ export class SubCategoryService {
   }
 
   async findOne(id: number) {
-    const subCategory = await this.subCategoryRepository.findOne({ where: { id }, relations: ['item_group'] });
+    const subCategory = await this.subCategoryRepository.findOne({
+      where: { id },
+      relations: ['item_group'],
+    });
     if (!subCategory) {
       throw new NotFoundException(`Sub-category with id ${id} not found`);
     }
@@ -67,12 +85,23 @@ export class SubCategoryService {
   }
 
   async update(id: number, updateSubCategoryDto: UpdateSubCategoryDto) {
-    const subCategory = await this.subCategoryRepository.findOne({ where: { id } });
+    const subCategory = await this.subCategoryRepository.findOne({
+      where: { id },
+    });
     if (!subCategory) {
       throw new NotFoundException(`Sub-category with id ${id} not found`);
     }
     Object.assign(subCategory, updateSubCategoryDto);
-    await this.subCategoryRepository.save(subCategory);
+    try {
+      await this.subCategoryRepository.save(subCategory);
+    } catch (error) {
+      if (error.code === '23505') {
+        throw new ConflictException(
+          `Sub-category with name '${updateSubCategoryDto.name}' already exists`,
+        );
+      }
+      throw error;
+    }
     return {
       status: true,
       message: 'Sub-category updated successfully',
@@ -82,7 +111,9 @@ export class SubCategoryService {
   }
 
   async remove(id: number) {
-    const subCategory = await this.subCategoryRepository.findOne({ where: { id } });
+    const subCategory = await this.subCategoryRepository.findOne({
+      where: { id },
+    });
     if (!subCategory) {
       throw new NotFoundException(`Sub-category with id ${id} not found`);
     }

@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { GstHsnCodeService } from './gst-hsn-code.service';
@@ -39,8 +40,12 @@ export class GstHsnCodeController {
 
   @Get()
   @FindAllGstHsnCodesSwagger()
-  findAll() {
-    return this.gstHsnCodeService.findAll();
+  findAll(
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+    @Query('search') search?: string,
+  ) {
+    return this.gstHsnCodeService.findAll(+page, +limit, search);
   }
 
   @Get(':name')

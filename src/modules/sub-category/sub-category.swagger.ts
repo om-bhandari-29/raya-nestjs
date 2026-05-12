@@ -4,13 +4,13 @@ import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 const subCategoryExample = {
   id: 1,
   name: 'Mobile Phones',
-  item_group_id: 1,
+  item_group_name: 'Electronics',
   is_active: true,
   created_at: '2026-04-18T00:00:00.000Z',
   updated_at: '2026-04-18T00:00:00.000Z',
   item_group: {
     id: 1,
-    name: 'Electronics',
+    name_frappe_based_id: 'Electronics',
     is_active: true,
     created_at: '2026-04-18T00:00:00.000Z',
     updated_at: '2026-04-18T00:00:00.000Z',
@@ -28,13 +28,15 @@ export const ComboSubCategorySwagger = () =>
   applyDecorators(
     ApiOperation({
       summary: 'Get sub-categories for dropdown (id and name only)',
-      description: 'Pass optional `item_group_id` query param to filter by item group',
+      description:
+        'Pass optional `item_group_name` query param to filter by item group',
     }),
     ApiQuery({
-      name: 'item_group_id',
+      name: 'item_group_name',
       required: false,
-      type: Number,
-      description: 'Filter sub-categories by item group id',
+      type: String,
+      description:
+        'Filter sub-categories by item group name (name_frappe_based_id)',
     }),
     ApiResponse({
       status: 200,

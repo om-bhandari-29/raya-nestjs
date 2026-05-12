@@ -51,13 +51,32 @@ export class GstHsnCodeService {
     };
   }
 
-  async findAll() {
-    const gstHsnCodes = await this.gstHsnCodeRepository.find();
+  async findAll(page: number, limit: number, search?: string) {
+    const query = this.gstHsnCodeRepository
+      .createQueryBuilder('g')
+      .orderBy('g.created_at', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    if (search) {
+      query.where('g.hsn_code ILIKE :search OR g.description ILIKE :search', {
+        search: `%${search}%`,
+      });
+    }
+
+    const [data, total] = await query.getManyAndCount();
+
     return {
       status: true,
       message: 'GST HSN codes retrieved successfully',
       statusCode: 200,
-      data: gstHsnCodes,
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 
