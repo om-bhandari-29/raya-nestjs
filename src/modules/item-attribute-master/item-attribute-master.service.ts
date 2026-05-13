@@ -1,7 +1,7 @@
 import {
+  ConflictException,
   Injectable,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -24,8 +24,8 @@ export class ItemAttributeMasterService {
   async combo() {
     const data = await this.attributeRepository.find({
       where: { status: true },
-      select: ['id', 'attribute_name'],
-      order: { attribute_name: 'ASC' },
+      select: ['id', 'name'],
+      order: { name: 'ASC' },
     });
     return {
       status: true,
@@ -36,6 +36,15 @@ export class ItemAttributeMasterService {
   }
 
   async create(createDto: CreateItemAttributeMasterDto) {
+    const existing = await this.attributeRepository.findOne({
+      where: { name: createDto.name },
+    });
+    if (existing) {
+      throw new ConflictException(
+        `Item attribute '${createDto.name}' already exists`,
+      );
+    }
+
     const attribute = this.attributeRepository.create(createDto);
     await this.attributeRepository.save(attribute);
     return {
@@ -58,13 +67,13 @@ export class ItemAttributeMasterService {
     };
   }
 
-  async findOne(id: number) {
+  async findOne(name: string) {
     const attribute = await this.attributeRepository.findOne({
-      where: { id },
+      where: { name },
       relations: ['values'],
     });
     if (!attribute)
-      throw new NotFoundException(`Item attribute with id ${id} not found`);
+      throw new NotFoundException(`Item attribute '${name}' not found`);
     return {
       status: true,
       message: 'Item attribute retrieved successfully',
@@ -73,21 +82,32 @@ export class ItemAttributeMasterService {
     };
   }
 
-  async update(id: number, updateDto: UpdateItemAttributeMasterDto) {
+  async update(name: string, updateDto: UpdateItemAttributeMasterDto) {
     const attribute = await this.attributeRepository.findOne({
-      where: { id },
+      where: { name },
       relations: ['values'],
     });
     if (!attribute)
-      throw new NotFoundException(`Item attribute with id ${id} not found`);
+      throw new NotFoundException(`Item attribute '${name}' not found`);
+
+    if (updateDto.name && updateDto.name !== attribute.name) {
+      const existing = await this.attributeRepository.findOne({
+        where: { name: updateDto.name },
+      });
+      if (existing) {
+        throw new ConflictException(
+          `Item attribute '${updateDto.name}' already exists`,
+        );
+      }
+    }
 
     const { values, ...rest } = updateDto;
     Object.assign(attribute, rest);
 
     if (values !== undefined) {
-      await this.valueRepository.delete({ attribute_id: id });
+      await this.valueRepository.delete({ attribute_id: attribute.id });
       attribute.values = values.map((v) =>
-        this.valueRepository.create({ ...v, attribute_id: id }),
+        this.valueRepository.create({ ...v, attribute_id: attribute.id }),
       );
     }
 
@@ -100,10 +120,12 @@ export class ItemAttributeMasterService {
     };
   }
 
-  async remove(id: number) {
-    const attribute = await this.attributeRepository.findOne({ where: { id } });
+  async remove(name: string) {
+    const attribute = await this.attributeRepository.findOne({
+      where: { name },
+    });
     if (!attribute)
-      throw new NotFoundException(`Item attribute with id ${id} not found`);
+      throw new NotFoundException(`Item attribute '${name}' not found`);
     await this.attributeRepository.remove(attribute);
     return {
       status: true,
@@ -114,16 +136,21 @@ export class ItemAttributeMasterService {
   }
 
   // Value CRUD
-  async createValue(attributeId: number, createDto: CreateItemAttributeValueDto) {
+  async createValue(
+    attributeName: string,
+    createDto: CreateItemAttributeValueDto,
+  ) {
     const attribute = await this.attributeRepository.findOne({
-      where: { id: attributeId },
+      where: { name: attributeName },
     });
     if (!attribute)
-      throw new NotFoundException(`Item attribute with id ${attributeId} not found`);
+      throw new NotFoundException(
+        `Item attribute '${attributeName}' not found`,
+      );
 
     const value = this.valueRepository.create({
       ...createDto,
-      attribute_id: attributeId,
+      attribute_id: attribute.id,
     });
     await this.valueRepository.save(value);
     return {
@@ -134,15 +161,17 @@ export class ItemAttributeMasterService {
     };
   }
 
-  async findAllValues(attributeId: number) {
+  async findAllValues(attributeName: string) {
     const attribute = await this.attributeRepository.findOne({
-      where: { id: attributeId },
+      where: { name: attributeName },
     });
     if (!attribute)
-      throw new NotFoundException(`Item attribute with id ${attributeId} not found`);
+      throw new NotFoundException(
+        `Item attribute '${attributeName}' not found`,
+      );
 
     const values = await this.valueRepository.find({
-      where: { attribute_id: attributeId },
+      where: { attribute_id: attribute.id },
     });
     return {
       status: true,
@@ -152,13 +181,21 @@ export class ItemAttributeMasterService {
     };
   }
 
-  async findOneValue(attributeId: number, valueId: number) {
+  async findOneValue(attributeName: string, valueId: number) {
+    const attribute = await this.attributeRepository.findOne({
+      where: { name: attributeName },
+    });
+    if (!attribute)
+      throw new NotFoundException(
+        `Item attribute '${attributeName}' not found`,
+      );
+
     const value = await this.valueRepository.findOne({
-      where: { id: valueId, attribute_id: attributeId },
+      where: { id: valueId, attribute_id: attribute.id },
     });
     if (!value)
       throw new NotFoundException(
-        `Attribute value with id ${valueId} not found for attribute ${attributeId}`,
+        `Attribute value with id ${valueId} not found for attribute '${attributeName}'`,
       );
     return {
       status: true,
@@ -169,16 +206,24 @@ export class ItemAttributeMasterService {
   }
 
   async updateValue(
-    attributeId: number,
+    attributeName: string,
     valueId: number,
     updateDto: UpdateItemAttributeValueDto,
   ) {
+    const attribute = await this.attributeRepository.findOne({
+      where: { name: attributeName },
+    });
+    if (!attribute)
+      throw new NotFoundException(
+        `Item attribute '${attributeName}' not found`,
+      );
+
     const value = await this.valueRepository.findOne({
-      where: { id: valueId, attribute_id: attributeId },
+      where: { id: valueId, attribute_id: attribute.id },
     });
     if (!value)
       throw new NotFoundException(
-        `Attribute value with id ${valueId} not found for attribute ${attributeId}`,
+        `Attribute value with id ${valueId} not found for attribute '${attributeName}'`,
       );
 
     Object.assign(value, updateDto);
@@ -191,13 +236,21 @@ export class ItemAttributeMasterService {
     };
   }
 
-  async removeValue(attributeId: number, valueId: number) {
+  async removeValue(attributeName: string, valueId: number) {
+    const attribute = await this.attributeRepository.findOne({
+      where: { name: attributeName },
+    });
+    if (!attribute)
+      throw new NotFoundException(
+        `Item attribute '${attributeName}' not found`,
+      );
+
     const value = await this.valueRepository.findOne({
-      where: { id: valueId, attribute_id: attributeId },
+      where: { id: valueId, attribute_id: attribute.id },
     });
     if (!value)
       throw new NotFoundException(
-        `Attribute value with id ${valueId} not found for attribute ${attributeId}`,
+        `Attribute value with id ${valueId} not found for attribute '${attributeName}'`,
       );
 
     await this.valueRepository.remove(value);

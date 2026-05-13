@@ -2,6 +2,7 @@ import {
   IsArray,
   IsBoolean,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   MaxLength,
@@ -16,7 +17,7 @@ export class CreateItemAttributeMasterDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(255)
-  attribute_name: string;
+  name: string;
 
   @ApiPropertyOptional({ example: true })
   @IsBoolean()
@@ -32,6 +33,24 @@ export class CreateItemAttributeMasterDto {
   @IsBoolean()
   @IsOptional()
   numeric_values?: boolean;
+
+  @ApiPropertyOptional({ example: 0.0 })
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  from_range?: number;
+
+  @ApiPropertyOptional({ example: 100.0 })
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  to_range?: number;
+
+  @ApiPropertyOptional({ example: 0.5 })
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  increment?: number;
 
   @ApiPropertyOptional({ type: [CreateItemAttributeValueDto] })
   @IsArray()

@@ -1,9 +1,4 @@
-import {
-  Column,
-  Entity,
-  OneToMany,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { ItemAttributeValue } from './item-attribute-value.entity';
 
 @Entity('item_attribute_master')
@@ -11,8 +6,8 @@ export class ItemAttributeMaster {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ length: 255, type: 'varchar' })
-  attribute_name: string;
+  @Column({ length: 255, type: 'varchar', unique: true })
+  name: string;
 
   @Column({ type: 'boolean', default: true })
   status: boolean;
@@ -22,6 +17,15 @@ export class ItemAttributeMaster {
 
   @Column({ type: 'boolean', default: false })
   numeric_values: boolean;
+
+  @Column({ type: 'decimal', precision: 10, scale: 4, nullable: true })
+  from_range: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 4, nullable: true })
+  to_range: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 4, nullable: true })
+  increment: number;
 
   @OneToMany(() => ItemAttributeValue, (value) => value.attribute, {
     cascade: true,

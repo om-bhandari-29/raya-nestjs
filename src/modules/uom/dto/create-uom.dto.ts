@@ -14,14 +14,18 @@ export class CreateUomDto {
   @MaxLength(50)
   name: string;
 
-  @ApiPropertyOptional({ example: 'Unit of weight measurement' })
-  @IsString()
+  @ApiPropertyOptional({ example: false })
+  @IsBoolean()
   @IsOptional()
-  @MaxLength(255)
-  description?: string;
+  must_be_whole_number?: boolean;
 
   @ApiPropertyOptional({ example: true })
   @IsBoolean()
   @IsOptional()
   is_active?: boolean;
+
+  @ApiPropertyOptional({ example: true })
+  @IsBoolean()
+  @IsOptional()
+  enabled?: boolean;
 }

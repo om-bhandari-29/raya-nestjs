@@ -1,18 +1,19 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 
 const uomExample = {
   id: 1,
   name: 'Kilogram',
-  description: 'Unit of weight measurement',
+  must_be_whole_number: false,
   is_active: true,
+  enabled: true,
   created_at: '2026-04-25T00:00:00.000Z',
   updated_at: '2026-04-25T00:00:00.000Z',
 };
 
 const notFoundExample = {
   status: false,
-  message: 'UOM with id 1 not found',
+  message: "UOM 'Kilogram' not found",
   statusCode: 404,
   data: null,
 };
@@ -85,7 +86,8 @@ export const FindAllUomsSwagger = () =>
 
 export const FindOneUomSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Get a UOM by id' }),
+    ApiOperation({ summary: 'Get a UOM by name' }),
+    ApiParam({ name: 'name', type: 'string', example: 'Kilogram' }),
     ApiResponse({
       status: 200,
       description: 'UOM retrieved successfully',
@@ -107,7 +109,8 @@ export const FindOneUomSwagger = () =>
 
 export const UpdateUomSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Update a UOM by id' }),
+    ApiOperation({ summary: 'Update a UOM by name' }),
+    ApiParam({ name: 'name', type: 'string', example: 'Kilogram' }),
     ApiResponse({
       status: 200,
       description: 'UOM updated successfully',
@@ -134,7 +137,8 @@ export const UpdateUomSwagger = () =>
 
 export const RemoveUomSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Delete a UOM by id' }),
+    ApiOperation({ summary: 'Delete a UOM by name' }),
+    ApiParam({ name: 'name', type: 'string', example: 'Kilogram' }),
     ApiResponse({
       status: 200,
       description: 'UOM deleted successfully',

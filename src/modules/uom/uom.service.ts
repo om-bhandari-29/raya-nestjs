@@ -58,10 +58,10 @@ export class UomService {
     };
   }
 
-  async findOne(id: number) {
-    const uom = await this.uomRepository.findOne({ where: { id } });
+  async findOne(name: string) {
+    const uom = await this.uomRepository.findOne({ where: { name } });
     if (!uom) {
-      throw new NotFoundException(`UOM with id ${id} not found`);
+      throw new NotFoundException(`UOM '${name}' not found`);
     }
     return {
       status: true,
@@ -71,10 +71,10 @@ export class UomService {
     };
   }
 
-  async update(id: number, updateUomDto: UpdateUomDto) {
-    const uom = await this.uomRepository.findOne({ where: { id } });
+  async update(name: string, updateUomDto: UpdateUomDto) {
+    const uom = await this.uomRepository.findOne({ where: { name } });
     if (!uom) {
-      throw new NotFoundException(`UOM with id ${id} not found`);
+      throw new NotFoundException(`UOM '${name}' not found`);
     }
 
     if (updateUomDto.name && updateUomDto.name !== uom.name) {
@@ -82,7 +82,9 @@ export class UomService {
         where: { name: updateUomDto.name },
       });
       if (existing) {
-        throw new ConflictException(`UOM '${updateUomDto.name}' already exists`);
+        throw new ConflictException(
+          `UOM '${updateUomDto.name}' already exists`,
+        );
       }
     }
 
@@ -96,10 +98,10 @@ export class UomService {
     };
   }
 
-  async remove(id: number) {
-    const uom = await this.uomRepository.findOne({ where: { id } });
+  async remove(name: string) {
+    const uom = await this.uomRepository.findOne({ where: { name } });
     if (!uom) {
-      throw new NotFoundException(`UOM with id ${id} not found`);
+      throw new NotFoundException(`UOM '${name}' not found`);
     }
     await this.uomRepository.remove(uom);
     return {

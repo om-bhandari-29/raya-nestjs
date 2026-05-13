@@ -1,12 +1,15 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 
 const attributeExample = {
   id: 1,
-  attribute_name: 'Metal Type',
+  name: 'Metal Type',
   status: true,
   is_base_attribute: false,
   numeric_values: false,
+  from_range: null,
+  to_range: null,
+  increment: null,
   values: [
     {
       id: 1,
@@ -40,14 +43,23 @@ const valueExample = {
 
 const notFoundExample = {
   status: false,
-  message: 'Item attribute with id 1 not found',
+  message: "Item attribute 'Metal Type' not found",
   statusCode: 404,
+  data: null,
+};
+
+const conflictExample = {
+  status: false,
+  message: "Item attribute 'Metal Type' already exists",
+  statusCode: 409,
   data: null,
 };
 
 export const ComboAttributeSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Get item attributes for dropdown (id and attribute_name only)' }),
+    ApiOperation({
+      summary: 'Get item attributes for dropdown (id and name only)',
+    }),
     ApiResponse({
       status: 200,
       description: 'Item attribute combo retrieved successfully',
@@ -57,8 +69,8 @@ export const ComboAttributeSwagger = () =>
           message: 'Item attribute combo retrieved successfully',
           statusCode: 200,
           data: [
-            { id: 1, attribute_name: 'Metal Type' },
-            { id: 2, attribute_name: 'Stone Type' },
+            { id: 1, name: 'Metal Type' },
+            { id: 2, name: 'Stone Type' },
           ],
         },
       },
@@ -79,6 +91,11 @@ export const CreateAttributeSwagger = () =>
           data: attributeExample,
         },
       },
+    }),
+    ApiResponse({
+      status: 409,
+      description: 'Item attribute already exists',
+      schema: { example: conflictExample },
     }),
   );
 
@@ -101,7 +118,8 @@ export const FindAllAttributesSwagger = () =>
 
 export const FindOneAttributeSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Get an item attribute by id' }),
+    ApiOperation({ summary: 'Get an item attribute by name' }),
+    ApiParam({ name: 'name', type: 'string', example: 'Metal Type' }),
     ApiResponse({
       status: 200,
       description: 'Item attribute retrieved successfully',
@@ -123,7 +141,8 @@ export const FindOneAttributeSwagger = () =>
 
 export const UpdateAttributeSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Update an item attribute by id' }),
+    ApiOperation({ summary: 'Update an item attribute by name' }),
+    ApiParam({ name: 'name', type: 'string', example: 'Metal Type' }),
     ApiResponse({
       status: 200,
       description: 'Item attribute updated successfully',
@@ -141,11 +160,17 @@ export const UpdateAttributeSwagger = () =>
       description: 'Item attribute not found',
       schema: { example: notFoundExample },
     }),
+    ApiResponse({
+      status: 409,
+      description: 'Item attribute already exists',
+      schema: { example: conflictExample },
+    }),
   );
 
 export const RemoveAttributeSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Delete an item attribute by id' }),
+    ApiOperation({ summary: 'Delete an item attribute by name' }),
+    ApiParam({ name: 'name', type: 'string', example: 'Metal Type' }),
     ApiResponse({
       status: 200,
       description: 'Item attribute deleted successfully',
@@ -168,6 +193,11 @@ export const RemoveAttributeSwagger = () =>
 export const CreateValueSwagger = () =>
   applyDecorators(
     ApiOperation({ summary: 'Create a new attribute value' }),
+    ApiParam({
+      name: 'attributeName',
+      type: 'string',
+      example: 'Metal Type',
+    }),
     ApiResponse({
       status: 201,
       description: 'Attribute value created successfully',
@@ -185,6 +215,11 @@ export const CreateValueSwagger = () =>
 export const FindAllValuesSwagger = () =>
   applyDecorators(
     ApiOperation({ summary: 'Get all values for an attribute' }),
+    ApiParam({
+      name: 'attributeName',
+      type: 'string',
+      example: 'Metal Type',
+    }),
     ApiResponse({
       status: 200,
       description: 'Attribute values retrieved successfully',
@@ -202,6 +237,12 @@ export const FindAllValuesSwagger = () =>
 export const FindOneValueSwagger = () =>
   applyDecorators(
     ApiOperation({ summary: 'Get an attribute value by id' }),
+    ApiParam({
+      name: 'attributeName',
+      type: 'string',
+      example: 'Metal Type',
+    }),
+    ApiParam({ name: 'valueId', type: 'number', example: 1 }),
     ApiResponse({
       status: 200,
       description: 'Attribute value retrieved successfully',
@@ -219,6 +260,12 @@ export const FindOneValueSwagger = () =>
 export const UpdateValueSwagger = () =>
   applyDecorators(
     ApiOperation({ summary: 'Update an attribute value by id' }),
+    ApiParam({
+      name: 'attributeName',
+      type: 'string',
+      example: 'Metal Type',
+    }),
+    ApiParam({ name: 'valueId', type: 'number', example: 1 }),
     ApiResponse({
       status: 200,
       description: 'Attribute value updated successfully',
@@ -236,6 +283,12 @@ export const UpdateValueSwagger = () =>
 export const RemoveValueSwagger = () =>
   applyDecorators(
     ApiOperation({ summary: 'Delete an attribute value by id' }),
+    ApiParam({
+      name: 'attributeName',
+      type: 'string',
+      example: 'Metal Type',
+    }),
+    ApiParam({ name: 'valueId', type: 'number', example: 1 }),
     ApiResponse({
       status: 200,
       description: 'Attribute value deleted successfully',

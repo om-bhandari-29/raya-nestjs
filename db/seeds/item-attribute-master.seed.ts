@@ -4,7 +4,7 @@ import { ItemAttributeValue } from '../../src/modules/item-attribute-master/enti
 import { PGTypeORMconfig } from '../../src/config/pgsql.config';
 
 const seedData: Array<{
-  attribute_name: string;
+  name: string;
   status: boolean;
   is_base_attribute: boolean;
   numeric_values: boolean;
@@ -16,7 +16,7 @@ const seedData: Array<{
   }>;
 }> = [
   {
-    attribute_name: 'Size',
+    name: 'Size',
     status: true,
     is_base_attribute: false,
     numeric_values: true,
@@ -29,7 +29,7 @@ const seedData: Array<{
     ],
   },
   {
-    attribute_name: 'Birthstone Count',
+    name: 'Birthstone Count',
     status: true,
     is_base_attribute: false,
     numeric_values: true,
@@ -40,7 +40,7 @@ const seedData: Array<{
     ],
   },
   {
-    attribute_name: 'Band style',
+    name: 'Band style',
     status: true,
     is_base_attribute: false,
     numeric_values: false,
@@ -52,7 +52,7 @@ const seedData: Array<{
     ],
   },
   {
-    attribute_name: 'Ring Size',
+    name: 'Ring Size',
     status: true,
     is_base_attribute: false,
     numeric_values: true,
@@ -65,7 +65,7 @@ const seedData: Array<{
     ],
   },
   {
-    attribute_name: 'Metal Color',
+    name: 'Metal Color',
     status: true,
     is_base_attribute: false,
     numeric_values: false,
@@ -77,7 +77,7 @@ const seedData: Array<{
     ],
   },
   {
-    attribute_name: 'Stone Family',
+    name: 'Stone Family',
     status: true,
     is_base_attribute: false,
     numeric_values: false,
@@ -88,7 +88,7 @@ const seedData: Array<{
     ],
   },
   {
-    attribute_name: 'Stone Dimension',
+    name: 'Stone Dimension',
     status: true,
     is_base_attribute: false,
     numeric_values: false,
@@ -100,7 +100,7 @@ const seedData: Array<{
     ],
   },
   {
-    attribute_name: 'Stone',
+    name: 'Stone',
     status: true,
     is_base_attribute: false,
     numeric_values: false,
@@ -112,7 +112,7 @@ const seedData: Array<{
     ],
   },
   {
-    attribute_name: 'Shape',
+    name: 'Shape',
     status: true,
     is_base_attribute: false,
     numeric_values: false,
@@ -125,7 +125,7 @@ const seedData: Array<{
     ],
   },
   {
-    attribute_name: 'Metal',
+    name: 'Metal',
     status: true,
     is_base_attribute: true,
     numeric_values: false,
@@ -136,7 +136,7 @@ const seedData: Array<{
     ],
   },
   {
-    attribute_name: 'Band',
+    name: 'Band',
     status: true,
     is_base_attribute: false,
     numeric_values: false,
@@ -147,7 +147,7 @@ const seedData: Array<{
     ],
   },
   {
-    attribute_name: 'Halo',
+    name: 'Halo',
     status: true,
     is_base_attribute: false,
     numeric_values: false,
@@ -158,13 +158,13 @@ const seedData: Array<{
     ],
   },
   {
-    attribute_name: 'Purity',
+    name: 'Purity',
     status: true,
     is_base_attribute: false,
     numeric_values: true,
     values: [
       { attribute_value: '14K', abbreviation: '14K', purity_factor: 0.585 },
-      { attribute_value: '18K', abbreviation: '18K', purity_factor: 0.750 },
+      { attribute_value: '18K', abbreviation: '18K', purity_factor: 0.75 },
       { attribute_value: '22K', abbreviation: '22K', purity_factor: 0.916 },
       { attribute_value: '24K', abbreviation: '24K', purity_factor: 0.999 },
     ],
@@ -183,15 +183,15 @@ async function seed() {
 
   for (const data of seedData) {
     const existing = await attributeRepo.findOne({
-      where: { attribute_name: data.attribute_name },
+      where: { name: data.name },
     });
     if (existing) {
-      console.log(`Skipping "${data.attribute_name}" — already exists`);
+      console.log(`Skipping "${data.name}" — already exists`);
       continue;
     }
 
     const attribute = attributeRepo.create({
-      attribute_name: data.attribute_name,
+      name: data.name,
       status: data.status,
       is_base_attribute: data.is_base_attribute,
       numeric_values: data.numeric_values,
@@ -203,7 +203,7 @@ async function seed() {
       await valueRepo.save(value);
     }
 
-    console.log(`Seeded "${data.attribute_name}" with ${data.values.length} values`);
+    console.log(`Seeded "${data.name}" with ${data.values.length} values`);
   }
 
   await dataSource.destroy();

@@ -51,68 +51,68 @@ export class ItemAttributeMasterController {
     return this.service.findAll();
   }
 
-  @Get(':id')
+  @Get(':name')
   @FindOneAttributeSwagger()
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.service.findOne(id);
+  findOne(@Param('name') name: string) {
+    return this.service.findOne(name);
   }
 
-  @Patch(':id')
+  @Patch(':name')
   @UpdateAttributeSwagger()
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('name') name: string,
     @Body() updateDto: UpdateItemAttributeMasterDto,
   ) {
-    return this.service.update(id, updateDto);
+    return this.service.update(name, updateDto);
   }
 
-  @Delete(':id')
+  @Delete(':name')
   @RemoveAttributeSwagger()
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.service.remove(id);
+  remove(@Param('name') name: string) {
+    return this.service.remove(name);
   }
 
   // Values endpoints
-  @Post(':attributeId/values')
+  @Post(':attributeName/values')
   @CreateValueSwagger()
   createValue(
-    @Param('attributeId', ParseIntPipe) attributeId: number,
+    @Param('attributeName') attributeName: string,
     @Body() createDto: CreateItemAttributeValueDto,
   ) {
-    return this.service.createValue(attributeId, createDto);
+    return this.service.createValue(attributeName, createDto);
   }
 
-  @Get(':attributeId/values')
+  @Get(':attributeName/values')
   @FindAllValuesSwagger()
-  findAllValues(@Param('attributeId', ParseIntPipe) attributeId: number) {
-    return this.service.findAllValues(attributeId);
+  findAllValues(@Param('attributeName') attributeName: string) {
+    return this.service.findAllValues(attributeName);
   }
 
-  @Get(':attributeId/values/:valueId')
+  @Get(':attributeName/values/:valueId')
   @FindOneValueSwagger()
   findOneValue(
-    @Param('attributeId', ParseIntPipe) attributeId: number,
+    @Param('attributeName') attributeName: string,
     @Param('valueId', ParseIntPipe) valueId: number,
   ) {
-    return this.service.findOneValue(attributeId, valueId);
+    return this.service.findOneValue(attributeName, valueId);
   }
 
-  @Patch(':attributeId/values/:valueId')
+  @Patch(':attributeName/values/:valueId')
   @UpdateValueSwagger()
   updateValue(
-    @Param('attributeId', ParseIntPipe) attributeId: number,
+    @Param('attributeName') attributeName: string,
     @Param('valueId', ParseIntPipe) valueId: number,
     @Body() updateDto: UpdateItemAttributeValueDto,
   ) {
-    return this.service.updateValue(attributeId, valueId, updateDto);
+    return this.service.updateValue(attributeName, valueId, updateDto);
   }
 
-  @Delete(':attributeId/values/:valueId')
+  @Delete(':attributeName/values/:valueId')
   @RemoveValueSwagger()
   removeValue(
-    @Param('attributeId', ParseIntPipe) attributeId: number,
+    @Param('attributeName') attributeName: string,
     @Param('valueId', ParseIntPipe) valueId: number,
   ) {
-    return this.service.removeValue(attributeId, valueId);
+    return this.service.removeValue(attributeName, valueId);
   }
 }
