@@ -45,7 +45,18 @@ export class ItemAttributeMasterService {
       );
     }
 
-    const attribute = this.attributeRepository.create(createDto);
+    const { values, ...rest } = createDto;
+    const attribute = this.attributeRepository.create(rest);
+
+    if (values?.length) {
+      attribute.values = values.map((v) => {
+        const val = { ...(v as any) };
+        delete val.id;
+        delete val.attribute_name;
+        return this.valueRepository.create(val as Partial<ItemAttributeValue>);
+      });
+    }
+
     await this.attributeRepository.save(attribute);
     return {
       status: true,
@@ -105,10 +116,16 @@ export class ItemAttributeMasterService {
     Object.assign(attribute, rest);
 
     if (values !== undefined) {
-      await this.valueRepository.delete({ attribute_id: attribute.id });
-      attribute.values = values.map((v) =>
-        this.valueRepository.create({ ...v, attribute_id: attribute.id }),
-      );
+      await this.valueRepository.delete({ attribute_name: attribute.name });
+      attribute.values = values.map((v) => {
+        const val = { ...(v as any) };
+        delete val.id;
+        delete val.attribute_name;
+        return this.valueRepository.create({
+          ...val,
+          attribute_name: attribute.name,
+        } as Partial<ItemAttributeValue>);
+      });
     }
 
     await this.attributeRepository.save(attribute);
@@ -150,7 +167,7 @@ export class ItemAttributeMasterService {
 
     const value = this.valueRepository.create({
       ...createDto,
-      attribute_id: attribute.id,
+      attribute_name: attribute.name,
     });
     await this.valueRepository.save(value);
     return {
@@ -171,7 +188,7 @@ export class ItemAttributeMasterService {
       );
 
     const values = await this.valueRepository.find({
-      where: { attribute_id: attribute.id },
+      where: { attribute_name: attribute.name },
     });
     return {
       status: true,
@@ -191,7 +208,7 @@ export class ItemAttributeMasterService {
       );
 
     const value = await this.valueRepository.findOne({
-      where: { id: valueId, attribute_id: attribute.id },
+      where: { id: valueId, attribute_name: attribute.name },
     });
     if (!value)
       throw new NotFoundException(
@@ -219,7 +236,7 @@ export class ItemAttributeMasterService {
       );
 
     const value = await this.valueRepository.findOne({
-      where: { id: valueId, attribute_id: attribute.id },
+      where: { id: valueId, attribute_name: attribute.name },
     });
     if (!value)
       throw new NotFoundException(
@@ -246,7 +263,7 @@ export class ItemAttributeMasterService {
       );
 
     const value = await this.valueRepository.findOne({
-      where: { id: valueId, attribute_id: attribute.id },
+      where: { id: valueId, attribute_name: attribute.name },
     });
     if (!value)
       throw new NotFoundException(

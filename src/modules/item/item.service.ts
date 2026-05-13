@@ -50,11 +50,11 @@ export class ItemService {
   private async validateVariants(variants: CreateItemVariantDto[]) {
     for (const v of variants) {
       const attrValue = await this.attributeValueRepository.findOne({
-        where: { id: v.value_id, attribute_id: v.attribute_id },
+        where: { id: v.value_id, attribute_name: v.attribute_name },
       });
       if (!attrValue) {
         throw new BadRequestException(
-          `value_id ${v.value_id} does not belong to attribute_id ${v.attribute_id}`,
+          `value_id ${v.value_id} does not belong to attribute_name ${v.attribute_name}`,
         );
       }
     }

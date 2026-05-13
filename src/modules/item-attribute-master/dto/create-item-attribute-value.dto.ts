@@ -14,7 +14,7 @@ export class CreateItemAttributeValueDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(255)
-  attribute_value: string;
+  name: string;
 
   @ApiPropertyOptional({ example: 'Metal' })
   @IsString()

@@ -9,7 +9,7 @@ const seedData: Array<{
   is_base_attribute: boolean;
   numeric_values: boolean;
   values: Array<{
-    attribute_value: string;
+    name: string;
     attribute_type?: string;
     abbreviation?: string;
     purity_factor?: number;
@@ -21,11 +21,11 @@ const seedData: Array<{
     is_base_attribute: false,
     numeric_values: true,
     values: [
-      { attribute_value: 'XS', abbreviation: 'XS' },
-      { attribute_value: 'S', abbreviation: 'S' },
-      { attribute_value: 'M', abbreviation: 'M' },
-      { attribute_value: 'L', abbreviation: 'L' },
-      { attribute_value: 'XL', abbreviation: 'XL' },
+      { name: 'XS', abbreviation: 'XS' },
+      { name: 'S', abbreviation: 'S' },
+      { name: 'M', abbreviation: 'M' },
+      { name: 'L', abbreviation: 'L' },
+      { name: 'XL', abbreviation: 'XL' },
     ],
   },
   {
@@ -34,9 +34,9 @@ const seedData: Array<{
     is_base_attribute: false,
     numeric_values: true,
     values: [
-      { attribute_value: '1', abbreviation: '1' },
-      { attribute_value: '2', abbreviation: '2' },
-      { attribute_value: '3', abbreviation: '3' },
+      { name: '1', abbreviation: '1' },
+      { name: '2', abbreviation: '2' },
+      { name: '3', abbreviation: '3' },
     ],
   },
   {
@@ -45,10 +45,10 @@ const seedData: Array<{
     is_base_attribute: false,
     numeric_values: false,
     values: [
-      { attribute_value: 'Plain', abbreviation: 'PL' },
-      { attribute_value: 'Twisted', abbreviation: 'TW' },
-      { attribute_value: 'Braided', abbreviation: 'BR' },
-      { attribute_value: 'Milgrain', abbreviation: 'MG' },
+      { name: 'Plain', abbreviation: 'PL' },
+      { name: 'Twisted', abbreviation: 'TW' },
+      { name: 'Braided', abbreviation: 'BR' },
+      { name: 'Milgrain', abbreviation: 'MG' },
     ],
   },
   {
@@ -57,11 +57,11 @@ const seedData: Array<{
     is_base_attribute: false,
     numeric_values: true,
     values: [
-      { attribute_value: '5', abbreviation: 'R5' },
-      { attribute_value: '6', abbreviation: 'R6' },
-      { attribute_value: '7', abbreviation: 'R7' },
-      { attribute_value: '8', abbreviation: 'R8' },
-      { attribute_value: '9', abbreviation: 'R9' },
+      { name: '5', abbreviation: 'R5' },
+      { name: '6', abbreviation: 'R6' },
+      { name: '7', abbreviation: 'R7' },
+      { name: '8', abbreviation: 'R8' },
+      { name: '9', abbreviation: 'R9' },
     ],
   },
   {
@@ -70,10 +70,10 @@ const seedData: Array<{
     is_base_attribute: false,
     numeric_values: false,
     values: [
-      { attribute_value: 'Yellow', abbreviation: 'YL' },
-      { attribute_value: 'White', abbreviation: 'WH' },
-      { attribute_value: 'Rose', abbreviation: 'RS' },
-      { attribute_value: 'Two Tone', abbreviation: 'TT' },
+      { name: 'Yellow', abbreviation: 'YL' },
+      { name: 'White', abbreviation: 'WH' },
+      { name: 'Rose', abbreviation: 'RS' },
+      { name: 'Two Tone', abbreviation: 'TT' },
     ],
   },
   {
@@ -82,9 +82,9 @@ const seedData: Array<{
     is_base_attribute: false,
     numeric_values: false,
     values: [
-      { attribute_value: 'Diamond', abbreviation: 'DI' },
-      { attribute_value: 'Gemstone', abbreviation: 'GS' },
-      { attribute_value: 'Pearl', abbreviation: 'PE' },
+      { name: 'Diamond', abbreviation: 'DI' },
+      { name: 'Gemstone', abbreviation: 'GS' },
+      { name: 'Pearl', abbreviation: 'PE' },
     ],
   },
   {
@@ -93,10 +93,10 @@ const seedData: Array<{
     is_base_attribute: false,
     numeric_values: false,
     values: [
-      { attribute_value: '3x3 mm', abbreviation: '3X3' },
-      { attribute_value: '4x4 mm', abbreviation: '4X4' },
-      { attribute_value: '5x5 mm', abbreviation: '5X5' },
-      { attribute_value: '6x4 mm', abbreviation: '6X4' },
+      { name: '3x3 mm', abbreviation: '3X3' },
+      { name: '4x4 mm', abbreviation: '4X4' },
+      { name: '5x5 mm', abbreviation: '5X5' },
+      { name: '6x4 mm', abbreviation: '6X4' },
     ],
   },
   {
@@ -105,10 +105,10 @@ const seedData: Array<{
     is_base_attribute: false,
     numeric_values: false,
     values: [
-      { attribute_value: 'Diamond', abbreviation: 'DI' },
-      { attribute_value: 'Ruby', abbreviation: 'RB' },
-      { attribute_value: 'Emerald', abbreviation: 'EM' },
-      { attribute_value: 'Sapphire', abbreviation: 'SP' },
+      { name: 'Diamond', abbreviation: 'DI' },
+      { name: 'Ruby', abbreviation: 'RB' },
+      { name: 'Emerald', abbreviation: 'EM' },
+      { name: 'Sapphire', abbreviation: 'SP' },
     ],
   },
   {
@@ -117,11 +117,11 @@ const seedData: Array<{
     is_base_attribute: false,
     numeric_values: false,
     values: [
-      { attribute_value: 'Round', abbreviation: 'RD' },
-      { attribute_value: 'Oval', abbreviation: 'OV' },
-      { attribute_value: 'Princess', abbreviation: 'PR' },
-      { attribute_value: 'Cushion', abbreviation: 'CU' },
-      { attribute_value: 'Pear', abbreviation: 'PE' },
+      { name: 'Round', abbreviation: 'RD' },
+      { name: 'Oval', abbreviation: 'OV' },
+      { name: 'Princess', abbreviation: 'PR' },
+      { name: 'Cushion', abbreviation: 'CU' },
+      { name: 'Pear', abbreviation: 'PE' },
     ],
   },
   {
@@ -130,9 +130,9 @@ const seedData: Array<{
     is_base_attribute: true,
     numeric_values: false,
     values: [
-      { attribute_value: 'Gold', abbreviation: 'GL', purity_factor: 0 },
-      { attribute_value: 'Silver', abbreviation: 'SL', purity_factor: 0 },
-      { attribute_value: 'Platinum', abbreviation: 'PL', purity_factor: 0 },
+      { name: 'Gold', abbreviation: 'GL', purity_factor: 0 },
+      { name: 'Silver', abbreviation: 'SL', purity_factor: 0 },
+      { name: 'Platinum', abbreviation: 'PL', purity_factor: 0 },
     ],
   },
   {
@@ -141,9 +141,9 @@ const seedData: Array<{
     is_base_attribute: false,
     numeric_values: false,
     values: [
-      { attribute_value: 'Comfort Fit', abbreviation: 'CF' },
-      { attribute_value: 'Flat', abbreviation: 'FL' },
-      { attribute_value: 'Domed', abbreviation: 'DM' },
+      { name: 'Comfort Fit', abbreviation: 'CF' },
+      { name: 'Flat', abbreviation: 'FL' },
+      { name: 'Domed', abbreviation: 'DM' },
     ],
   },
   {
@@ -152,9 +152,9 @@ const seedData: Array<{
     is_base_attribute: false,
     numeric_values: false,
     values: [
-      { attribute_value: 'Single', abbreviation: 'SH' },
-      { attribute_value: 'Double', abbreviation: 'DH' },
-      { attribute_value: 'No Halo', abbreviation: 'NH' },
+      { name: 'Single', abbreviation: 'SH' },
+      { name: 'Double', abbreviation: 'DH' },
+      { name: 'No Halo', abbreviation: 'NH' },
     ],
   },
   {
@@ -163,10 +163,10 @@ const seedData: Array<{
     is_base_attribute: false,
     numeric_values: true,
     values: [
-      { attribute_value: '14K', abbreviation: '14K', purity_factor: 0.585 },
-      { attribute_value: '18K', abbreviation: '18K', purity_factor: 0.75 },
-      { attribute_value: '22K', abbreviation: '22K', purity_factor: 0.916 },
-      { attribute_value: '24K', abbreviation: '24K', purity_factor: 0.999 },
+      { name: '14K', abbreviation: '14K', purity_factor: 0.585 },
+      { name: '18K', abbreviation: '18K', purity_factor: 0.75 },
+      { name: '22K', abbreviation: '22K', purity_factor: 0.916 },
+      { name: '24K', abbreviation: '24K', purity_factor: 0.999 },
     ],
   },
 ];
@@ -199,7 +199,7 @@ async function seed() {
     await attributeRepo.save(attribute);
 
     for (const v of data.values) {
-      const value = valueRepo.create({ ...v, attribute_id: attribute.id });
+      const value = valueRepo.create({ ...v, attribute_name: attribute.name });
       await valueRepo.save(value);
     }
 

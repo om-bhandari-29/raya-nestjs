@@ -15,10 +15,10 @@ export class CreateItemVariantDto {
   @Type(() => Number)
   variant_of_id?: number;
 
-  @ApiProperty({ example: 1, description: 'FK to item_attribute_master' })
-  @IsInt()
-  @Type(() => Number)
-  attribute_id: number;
+  @ApiProperty({ example: 'Metal', description: 'FK to item_attribute_master name' })
+  @IsString()
+  @MaxLength(255)
+  attribute_name: string;
 
   @ApiProperty({ example: 1, description: 'FK to item_attribute_value (must belong to selected attribute)' })
   @IsInt()

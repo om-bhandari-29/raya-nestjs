@@ -13,16 +13,16 @@ const attributeExample = {
   values: [
     {
       id: 1,
-      attribute_id: 1,
-      attribute_value: 'Gold',
+      attribute_name: 'Metal Type',
+      name: 'Gold',
       attribute_type: 'Metal',
       abbreviation: 'GL',
       purity_factor: 0,
     },
     {
       id: 2,
-      attribute_id: 1,
-      attribute_value: 'Silver',
+      attribute_name: 'Metal Type',
+      name: 'Silver',
       attribute_type: 'Metal',
       abbreviation: 'SL',
       purity_factor: 0,
@@ -34,8 +34,8 @@ const attributeExample = {
 
 const valueExample = {
   id: 1,
-  attribute_id: 1,
-  attribute_value: 'Gold',
+  attribute_name: 'Metal Type',
+  name: 'Gold',
   attribute_type: 'Metal',
   abbreviation: 'GL',
   purity_factor: 0,

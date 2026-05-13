@@ -29,11 +29,11 @@ export class ItemVariant {
   variant_of_id: number | null;
 
   @ManyToOne(() => ItemAttributeMaster, { onDelete: 'RESTRICT' })
-  @JoinColumn({ name: 'attribute_id' })
+  @JoinColumn({ name: 'attribute_name', referencedColumnName: 'name' })
   attribute: ItemAttributeMaster;
 
-  @Column({ type: 'int' })
-  attribute_id: number;
+  @Column({ length: 255, type: 'varchar' })
+  attribute_name: string;
 
   @ManyToOne(() => ItemAttributeValue, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'value_id' })
