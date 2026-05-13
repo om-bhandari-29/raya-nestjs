@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -45,24 +44,24 @@ export class ProductMasterController {
     return this.productMasterService.findAll();
   }
 
-  @Get(':id')
+  @Get(':name')
   @FindOneProductMasterSwagger()
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.productMasterService.findOne(id);
+  findOne(@Param('name') name: string) {
+    return this.productMasterService.findOne(name);
   }
 
-  @Patch(':id')
+  @Patch(':name')
   @UpdateProductMasterSwagger()
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('name') name: string,
     @Body() updateProductMasterDto: UpdateProductMasterDto,
   ) {
-    return this.productMasterService.update(id, updateProductMasterDto);
+    return this.productMasterService.update(name, updateProductMasterDto);
   }
 
-  @Delete(':id')
+  @Delete(':name')
   @RemoveProductMasterSwagger()
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.productMasterService.remove(id);
+  remove(@Param('name') name: string) {
+    return this.productMasterService.remove(name);
   }
 }

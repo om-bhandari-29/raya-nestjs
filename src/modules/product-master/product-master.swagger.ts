@@ -19,7 +19,7 @@ const productMasterExample = {
 
 const notFoundExample = {
   status: false,
-  message: 'Product master with id 1 not found',
+  message: 'Product master with name Steel Rod not found',
   statusCode: 404,
   data: null,
 };
@@ -90,7 +90,7 @@ export const FindAllProductMastersSwagger = () =>
 
 export const FindOneProductMasterSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Get a product master by id' }),
+    ApiOperation({ summary: 'Get a product master by name' }),
     ApiResponse({
       status: 200,
       description: 'Product master retrieved successfully',
@@ -112,7 +112,7 @@ export const FindOneProductMasterSwagger = () =>
 
 export const UpdateProductMasterSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Update a product master by id' }),
+    ApiOperation({ summary: 'Update a product master by name' }),
     ApiResponse({
       status: 200,
       description: 'Product master updated successfully',
@@ -134,7 +134,7 @@ export const UpdateProductMasterSwagger = () =>
 
 export const RemoveProductMasterSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Delete a product master by id' }),
+    ApiOperation({ summary: 'Delete a product master by name' }),
     ApiResponse({
       status: 200,
       description: 'Product master deleted successfully',

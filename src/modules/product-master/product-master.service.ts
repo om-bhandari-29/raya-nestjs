@@ -57,13 +57,13 @@ export class ProductMasterService {
     };
   }
 
-  async findOne(id: number) {
+  async findOne(name: string) {
     const product = await this.productMasterRepository.findOne({
-      where: { id },
+      where: { name },
       relations: ['sub_category'],
     });
     if (!product) {
-      throw new NotFoundException(`Product master with id ${id} not found`);
+      throw new NotFoundException(`Product master with name ${name} not found`);
     }
     return {
       status: true,
@@ -73,12 +73,12 @@ export class ProductMasterService {
     };
   }
 
-  async update(id: number, updateProductMasterDto: UpdateProductMasterDto) {
+  async update(name: string, updateProductMasterDto: UpdateProductMasterDto) {
     const product = await this.productMasterRepository.findOne({
-      where: { id },
+      where: { name },
     });
     if (!product) {
-      throw new NotFoundException(`Product master with id ${id} not found`);
+      throw new NotFoundException(`Product master with name ${name} not found`);
     }
     Object.assign(product, updateProductMasterDto);
     await this.productMasterRepository.save(product);
@@ -90,12 +90,12 @@ export class ProductMasterService {
     };
   }
 
-  async remove(id: number) {
+  async remove(name: string) {
     const product = await this.productMasterRepository.findOne({
-      where: { id },
+      where: { name },
     });
     if (!product) {
-      throw new NotFoundException(`Product master with id ${id} not found`);
+      throw new NotFoundException(`Product master with name ${name} not found`);
     }
     await this.productMasterRepository.remove(product);
     return {
