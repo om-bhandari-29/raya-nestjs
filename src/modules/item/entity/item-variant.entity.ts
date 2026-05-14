@@ -46,7 +46,7 @@ export class ItemVariant {
   is_disabled: boolean;
 
   @Column({ length: 255, type: 'varchar', nullable: true })
-  stone_family: string | null;
+  stone_type: string | null;
 
   @Column({ length: 255, type: 'varchar', nullable: true })
   stone_id: string | null;

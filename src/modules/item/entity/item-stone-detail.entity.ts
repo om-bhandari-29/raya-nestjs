@@ -6,7 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Item } from './item.entity';
-import { StoneFamily } from '../../stone-master/entity/stone-family.entity';
+import { StoneType } from '../../stone-master/entity/stone-type.entity';
 import { StoneClarity } from '../../stone-master/entity/stone-clarity.entity';
 import { StoneShape } from '../../stone-master/entity/stone-shape.entity';
 
@@ -22,12 +22,12 @@ export class ItemStoneDetail {
   @Column({ type: 'int' })
   item_id: number;
 
-  @ManyToOne(() => StoneFamily, { onDelete: 'RESTRICT' })
-  @JoinColumn({ name: 'stone_family_id' })
-  stone_family: StoneFamily;
+  @ManyToOne(() => StoneType, { onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'stone_type_id' })
+  stone_type: StoneType;
 
   @Column({ type: 'int' })
-  stone_family_id: number;
+  stone_type_id: number;
 
   @ManyToOne(() => StoneClarity, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'stone_clarity_id' })

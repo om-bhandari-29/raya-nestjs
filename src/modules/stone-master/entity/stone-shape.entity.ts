@@ -5,7 +5,7 @@ export class StoneShape {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ length: 255, type: 'varchar' })
+  @Column({ length: 255, type: 'varchar', unique: true })
   name: string;
 
   @Column({ type: 'boolean', default: true })

@@ -1,10 +1,10 @@
 import { DataSource } from 'typeorm';
-import { StoneFamily } from '../../src/modules/stone-master/entity/stone-family.entity';
+import { StoneType } from '../../src/modules/stone-master/entity/stone-type.entity';
 import { StoneClarity } from '../../src/modules/stone-master/entity/stone-clarity.entity';
 import { StoneShape } from '../../src/modules/stone-master/entity/stone-shape.entity';
 import { PGTypeORMconfig } from '../../src/config/pgsql.config';
 
-const families = [
+const types = [
   'Mossonite',
   'Natural Diamond',
   'Lab-Grown Diamond',
@@ -19,20 +19,20 @@ const shapes = ['Round', 'Oval', 'Emerald', 'Tapper', 'Pear'];
 async function seed() {
   const dataSource = new DataSource({
     ...(PGTypeORMconfig as any),
-    entities: [StoneFamily, StoneClarity, StoneShape],
+    entities: [StoneType, StoneClarity, StoneShape],
   });
 
   await dataSource.initialize();
 
-  const familyRepo = dataSource.getRepository(StoneFamily);
+  const typeRepo = dataSource.getRepository(StoneType);
   const clarityRepo = dataSource.getRepository(StoneClarity);
   const shapeRepo = dataSource.getRepository(StoneShape);
 
-  for (const name of families) {
-    const exists = await familyRepo.findOne({ where: { name } });
-    if (exists) { console.log(`Skipping family "${name}" — already exists`); continue; }
-    await familyRepo.save(familyRepo.create({ name, is_published: true }));
-    console.log(`Seeded family: ${name}`);
+  for (const name of types) {
+    const exists = await typeRepo.findOne({ where: { name } });
+    if (exists) { console.log(`Skipping type "${name}" — already exists`); continue; }
+    await typeRepo.save(typeRepo.create({ name, is_published: true }));
+    console.log(`Seeded type: ${name}`);
   }
 
   for (const name of clarities) {

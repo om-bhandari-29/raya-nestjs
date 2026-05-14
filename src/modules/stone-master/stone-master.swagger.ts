@@ -1,7 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
-const example = (type: string) => ({
+const example = () => ({
   id: 1,
   name: 'Diamond',
   is_published: true,
@@ -11,14 +11,16 @@ const example = (type: string) => ({
 
 const notFound = (type: string) => ({
   status: false,
-  message: `Stone ${type} with id 1 not found`,
+  message: `Stone ${type} with name "Diamond" not found`,
   statusCode: 404,
   data: null,
 });
 
 export const ComboStoneMasterSwagger = (type: string) =>
   applyDecorators(
-    ApiOperation({ summary: `Get stone ${type}s for dropdown (id and name only)` }),
+    ApiOperation({
+      summary: `Get stone ${type}s for dropdown (id and name only)`,
+    }),
     ApiResponse({
       status: 200,
       description: `Stone ${type} combo retrieved successfully`,
@@ -42,7 +44,14 @@ export const CreateStoneMasterSwagger = (type: string) =>
     ApiResponse({
       status: 201,
       description: `Stone ${type} created successfully`,
-      schema: { example: { status: true, message: `Stone ${type} created successfully`, statusCode: 201, data: example(type) } },
+      schema: {
+        example: {
+          status: true,
+          message: `Stone ${type} created successfully`,
+          statusCode: 201,
+          data: example(),
+        },
+      },
     }),
   );
 
@@ -52,39 +61,67 @@ export const FindAllStoneMasterSwagger = (type: string) =>
     ApiResponse({
       status: 200,
       description: `Stone ${type} list retrieved successfully`,
-      schema: { example: { status: true, message: `Stone ${type} list retrieved successfully`, statusCode: 200, data: [example(type)] } },
+      schema: {
+        example: {
+          status: true,
+          message: `Stone ${type} list retrieved successfully`,
+          statusCode: 200,
+          data: [example()],
+        },
+      },
     }),
   );
 
 export const FindOneStoneMasterSwagger = (type: string) =>
   applyDecorators(
-    ApiOperation({ summary: `Get a stone ${type} by id` }),
+    ApiOperation({ summary: `Get a stone ${type} by name` }),
     ApiResponse({
       status: 200,
       description: `Stone ${type} retrieved successfully`,
-      schema: { example: { status: true, message: `Stone ${type} retrieved successfully`, statusCode: 200, data: example(type) } },
+      schema: {
+        example: {
+          status: true,
+          message: `Stone ${type} retrieved successfully`,
+          statusCode: 200,
+          data: example(),
+        },
+      },
     }),
     ApiResponse({ status: 404, schema: { example: notFound(type) } }),
   );
 
 export const UpdateStoneMasterSwagger = (type: string) =>
   applyDecorators(
-    ApiOperation({ summary: `Update a stone ${type} by id` }),
+    ApiOperation({ summary: `Update a stone ${type} by name` }),
     ApiResponse({
       status: 200,
       description: `Stone ${type} updated successfully`,
-      schema: { example: { status: true, message: `Stone ${type} updated successfully`, statusCode: 200, data: example(type) } },
+      schema: {
+        example: {
+          status: true,
+          message: `Stone ${type} updated successfully`,
+          statusCode: 200,
+          data: example(),
+        },
+      },
     }),
     ApiResponse({ status: 404, schema: { example: notFound(type) } }),
   );
 
 export const RemoveStoneMasterSwagger = (type: string) =>
   applyDecorators(
-    ApiOperation({ summary: `Delete a stone ${type} by id` }),
+    ApiOperation({ summary: `Delete a stone ${type} by name` }),
     ApiResponse({
       status: 200,
       description: `Stone ${type} deleted successfully`,
-      schema: { example: { status: true, message: `Stone ${type} deleted successfully`, statusCode: 200, data: null } },
+      schema: {
+        example: {
+          status: true,
+          message: `Stone ${type} deleted successfully`,
+          statusCode: 200,
+          data: null,
+        },
+      },
     }),
     ApiResponse({ status: 404, schema: { example: notFound(type) } }),
   );

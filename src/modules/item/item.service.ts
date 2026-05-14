@@ -27,7 +27,7 @@ const ITEM_RELATIONS = [
   'variants.value',
   'variants.variant_of',
   'stone_details',
-  'stone_details.stone_family',
+  'stone_details.stone_type',
   'stone_details.stone_clarity',
   'stone_details.stone_shape',
 ];

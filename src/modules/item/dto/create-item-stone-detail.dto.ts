@@ -3,10 +3,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 export class CreateItemStoneDetailDto {
-  @ApiProperty({ example: 1, description: 'FK to stone_family' })
+  @ApiProperty({ example: 1, description: 'FK to stone_type' })
   @IsInt()
   @Type(() => Number)
-  stone_family_id: number;
+  stone_type_id: number;
 
   @ApiPropertyOptional({ example: 1, description: 'FK to stone_clarity' })
   @IsInt()

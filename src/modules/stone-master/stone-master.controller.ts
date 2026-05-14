@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
 } from '@nestjs/common';
@@ -21,45 +20,45 @@ import {
   RemoveStoneMasterSwagger,
 } from './stone-master.swagger';
 
-@ApiTags('stone-master/family')
-@Controller('stone-master/family')
-export class StoneFamilyController {
+@ApiTags('stone-master/type')
+@Controller('stone-master/type')
+export class StoneTypeController {
   constructor(private readonly service: StoneMasterService) {}
 
   @Post()
-  @CreateStoneMasterSwagger('family')
+  @CreateStoneMasterSwagger('type')
   create(@Body() dto: CreateStoneMasterDto) {
-    return this.service.create('family', dto);
+    return this.service.create('type', dto);
   }
 
   @Get('combo')
-  @ComboStoneMasterSwagger('family')
+  @ComboStoneMasterSwagger('type')
   combo() {
-    return this.service.combo('family');
+    return this.service.combo('type');
   }
 
   @Get()
-  @FindAllStoneMasterSwagger('family')
+  @FindAllStoneMasterSwagger('type')
   findAll() {
-    return this.service.findAll('family');
+    return this.service.findAll('type');
   }
 
-  @Get(':id')
-  @FindOneStoneMasterSwagger('family')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.service.findOne('family', id);
+  @Get(':name')
+  @FindOneStoneMasterSwagger('type')
+  findOne(@Param('name') name: string) {
+    return this.service.findOne('type', name);
   }
 
-  @Patch(':id')
-  @UpdateStoneMasterSwagger('family')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateStoneMasterDto) {
-    return this.service.update('family', id, dto);
+  @Patch(':name')
+  @UpdateStoneMasterSwagger('type')
+  update(@Param('name') name: string, @Body() dto: UpdateStoneMasterDto) {
+    return this.service.update('type', name, dto);
   }
 
-  @Delete(':id')
-  @RemoveStoneMasterSwagger('family')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.service.remove('family', id);
+  @Delete(':name')
+  @RemoveStoneMasterSwagger('type')
+  remove(@Param('name') name: string) {
+    return this.service.remove('type', name);
   }
 }
 
@@ -86,22 +85,22 @@ export class StoneClarityController {
     return this.service.findAll('clarity');
   }
 
-  @Get(':id')
+  @Get(':name')
   @FindOneStoneMasterSwagger('clarity')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.service.findOne('clarity', id);
+  findOne(@Param('name') name: string) {
+    return this.service.findOne('clarity', name);
   }
 
-  @Patch(':id')
+  @Patch(':name')
   @UpdateStoneMasterSwagger('clarity')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateStoneMasterDto) {
-    return this.service.update('clarity', id, dto);
+  update(@Param('name') name: string, @Body() dto: UpdateStoneMasterDto) {
+    return this.service.update('clarity', name, dto);
   }
 
-  @Delete(':id')
+  @Delete(':name')
   @RemoveStoneMasterSwagger('clarity')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.service.remove('clarity', id);
+  remove(@Param('name') name: string) {
+    return this.service.remove('clarity', name);
   }
 }
 
@@ -128,21 +127,21 @@ export class StoneShapeController {
     return this.service.findAll('shape');
   }
 
-  @Get(':id')
+  @Get(':name')
   @FindOneStoneMasterSwagger('shape')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.service.findOne('shape', id);
+  findOne(@Param('name') name: string) {
+    return this.service.findOne('shape', name);
   }
 
-  @Patch(':id')
+  @Patch(':name')
   @UpdateStoneMasterSwagger('shape')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateStoneMasterDto) {
-    return this.service.update('shape', id, dto);
+  update(@Param('name') name: string, @Body() dto: UpdateStoneMasterDto) {
+    return this.service.update('shape', name, dto);
   }
 
-  @Delete(':id')
+  @Delete(':name')
   @RemoveStoneMasterSwagger('shape')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.service.remove('shape', id);
+  remove(@Param('name') name: string) {
+    return this.service.remove('shape', name);
   }
 }

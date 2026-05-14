@@ -34,7 +34,7 @@ export class CreateItemVariantDto {
   @IsString()
   @IsOptional()
   @MaxLength(255)
-  stone_family?: string;
+  stone_type?: string;
 
   @ApiPropertyOptional({ example: 'STN-001' })
   @IsString()

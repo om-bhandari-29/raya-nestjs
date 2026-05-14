@@ -1,11 +1,11 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity('stone_family')
-export class StoneFamily {
+@Entity('stone_type')
+export class StoneType {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ length: 255, type: 'varchar' })
+  @Column({ length: 255, type: 'varchar', unique: true })
   name: string;
 
   @Column({ type: 'boolean', default: true })
