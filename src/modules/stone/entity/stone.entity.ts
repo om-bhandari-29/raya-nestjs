@@ -1,4 +1,10 @@
-import { Column, Entity, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate } from 'typeorm';
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  BeforeInsert,
+  BeforeUpdate,
+} from 'typeorm';
 
 @Entity()
 export class Stone {
@@ -82,7 +88,9 @@ export class Stone {
   @BeforeUpdate()
   generateKey() {
     const formatDimension = (value: number | null | undefined): string => {
-      return value !== null && value !== undefined ? Number(value).toFixed(2) : '0.00';
+      return value !== null && value !== undefined
+        ? Number(value).toFixed(2)
+        : '0.00';
     };
 
     const parts = [

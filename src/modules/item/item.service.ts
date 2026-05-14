@@ -98,6 +98,20 @@ export class ItemService {
     };
   }
 
+  async findByName(name: string) {
+    const item = await this.itemRepository.findOne({
+      where: { name },
+      relations: ITEM_RELATIONS,
+    });
+    if (!item) throw new NotFoundException(`Item with name "${name}" not found`);
+    return {
+      status: true,
+      message: 'Item retrieved successfully',
+      statusCode: 200,
+      data: item,
+    };
+  }
+
   async update(id: number, updateItemDto: UpdateItemDto) {
     const item = await this.itemRepository.findOne({
       where: { id },

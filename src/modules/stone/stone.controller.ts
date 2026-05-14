@@ -52,19 +52,19 @@ export class StoneController {
     return this.stoneService.findAll(pageNum, limitNum);
   }
 
-  @Get(':id')
+  @Get(':generatedKey')
   @FindOneStoneSwagger()
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.stoneService.findOne(id);
+  findOne(@Param('generatedKey') generatedKey: string) {
+    return this.stoneService.findOne(generatedKey);
   }
 
-  @Patch(':id')
+  @Patch(':generatedKey')
   @UpdateStoneSwagger()
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('generatedKey') generatedKey: string,
     @Body() updateStoneDto: UpdateStoneDto,
   ) {
-    return this.stoneService.update(id, updateStoneDto);
+    return this.stoneService.update(generatedKey, updateStoneDto);
   }
 
   @Delete(':id')

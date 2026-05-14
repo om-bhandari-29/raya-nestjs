@@ -37,6 +37,11 @@ export class ItemController {
     return this.itemService.findAll();
   }
 
+  @Get('by-name/:name')
+  findByName(@Param('name') name: string) {
+    return this.itemService.findByName(name);
+  }
+
   @Get(':id')
   @FindOneItemSwagger()
   findOne(@Param('id', ParseIntPipe) id: number) {
