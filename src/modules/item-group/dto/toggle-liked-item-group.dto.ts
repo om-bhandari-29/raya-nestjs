@@ -6,7 +6,7 @@ export class ToggleLikedItemGroupDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(255)
-  name_frappe_based_id: string;
+  name: string;
 
   @ApiProperty({ example: true })
   @IsBoolean()

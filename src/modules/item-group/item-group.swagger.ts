@@ -3,11 +3,11 @@ import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 const itemGroupExample = {
   id: 1,
-  name_frappe_based_id: 'JEWELLERY-GOLD',
+  name: 'JEWELLERY-GOLD',
   is_group: false,
   image: null,
   gst_hsn_code: '7113',
-  parent_item_group: null,
+  parent_item_group_id: null,
   is_active: true,
   liked: false,
   created_at: '2026-04-18T00:00:00.000Z',
@@ -146,7 +146,7 @@ export const RemoveItemGroupSwagger = () =>
 export const ToggleLikedItemGroupSwagger = () =>
   applyDecorators(
     ApiOperation({
-      summary: 'Like or unlike an item group by name_frappe_based_id',
+      summary: 'Like or unlike an item group by name',
     }),
     ApiResponse({
       status: 200,

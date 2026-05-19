@@ -12,7 +12,7 @@ export class ItemGroup {
   id: number;
 
   @Column({ length: 255, type: 'varchar', unique: true })
-  name_frappe_based_id: string;
+  name: string;
 
   @Column({ type: 'boolean', default: false })
   is_group: boolean;
@@ -24,14 +24,11 @@ export class ItemGroup {
   gst_hsn_code: string | null;
 
   @ManyToOne(() => ItemGroup, { nullable: true })
-  @JoinColumn({
-    name: 'parent_item_group',
-    referencedColumnName: 'name_frappe_based_id',
-  })
+  @JoinColumn({ name: 'parent_item_group_id' })
   parent_item_group_rel: ItemGroup | null;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  parent_item_group: string | null;
+  @Column({ type: 'int', nullable: true })
+  parent_item_group_id: number | null;
 
   @Column({ type: 'boolean', default: true })
   is_active: boolean;

@@ -10,7 +10,7 @@ const subCategoryExample = {
   updated_at: '2026-04-18T00:00:00.000Z',
   item_group: {
     id: 1,
-    name_frappe_based_id: 'Electronics',
+    name: 'Electronics',
     is_active: true,
     created_at: '2026-04-18T00:00:00.000Z',
     updated_at: '2026-04-18T00:00:00.000Z',
@@ -36,7 +36,7 @@ export const ComboSubCategorySwagger = () =>
       required: false,
       type: String,
       description:
-        'Filter sub-categories by item group name (name_frappe_based_id)',
+        'Filter sub-categories by item group name',
     }),
     ApiResponse({
       status: 200,

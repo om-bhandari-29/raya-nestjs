@@ -2,100 +2,28 @@ import { DataSource } from 'typeorm';
 import { ItemGroup } from '../../src/modules/item-group/entity/item-group.entity';
 import { PGTypeORMconfig } from '../../src/config/pgsql.config';
 
-// Order matters: parents must be inserted before their children
 const seedData: Array<{
-  name_frappe_based_id: string;
-  parent_item_group: string | null;
+  name: string;
+  parent_name: string | null;
   is_group: boolean;
 }> = [
-  // Root
-  {
-    name_frappe_based_id: 'All Item Groups',
-    parent_item_group: null,
-    is_group: true,
-  },
-  // Children of All Item Groups
-  {
-    name_frappe_based_id: 'Consumable',
-    parent_item_group: 'All Item Groups',
-    is_group: false,
-  },
-  {
-    name_frappe_based_id: 'Jewelry',
-    parent_item_group: 'All Item Groups',
-    is_group: true,
-  },
-  {
-    name_frappe_based_id: 'Products',
-    parent_item_group: 'All Item Groups',
-    is_group: false,
-  },
-  {
-    name_frappe_based_id: 'Raw Material',
-    parent_item_group: 'All Item Groups',
-    is_group: false,
-  },
-  {
-    name_frappe_based_id: 'Services',
-    parent_item_group: 'All Item Groups',
-    is_group: false,
-  },
-  {
-    name_frappe_based_id: 'Sub Assemblies',
-    parent_item_group: 'All Item Groups',
-    is_group: false,
-  },
-  // Children of Jewelry
-  {
-    name_frappe_based_id: 'Anklets',
-    parent_item_group: 'Jewelry',
-    is_group: true,
-  },
-  {
-    name_frappe_based_id: 'Bangles',
-    parent_item_group: 'Jewelry',
-    is_group: true,
-  },
-  {
-    name_frappe_based_id: 'Bracelets',
-    parent_item_group: 'Jewelry',
-    is_group: true,
-  },
-  {
-    name_frappe_based_id: 'Chains',
-    parent_item_group: 'Jewelry',
-    is_group: true,
-  },
-  {
-    name_frappe_based_id: 'Charms',
-    parent_item_group: 'Jewelry',
-    is_group: true,
-  },
-  {
-    name_frappe_based_id: 'Earrings',
-    parent_item_group: 'Jewelry',
-    is_group: true,
-  },
-  {
-    name_frappe_based_id: 'Lapel Pins',
-    parent_item_group: 'Jewelry',
-    is_group: true,
-  },
-  {
-    name_frappe_based_id: 'Nose Pins',
-    parent_item_group: 'Jewelry',
-    is_group: true,
-  },
-  {
-    name_frappe_based_id: 'Pendants',
-    parent_item_group: 'Jewelry',
-    is_group: true,
-  },
-  {
-    name_frappe_based_id: 'Rings',
-    parent_item_group: 'Jewelry',
-    is_group: true,
-  },
+  { name: 'All Item Groups', parent_name: null, is_group: true },
+  { name: 'Consumable', parent_name: 'All Item Groups', is_group: false },
+  { name: 'Jewelry', parent_name: 'All Item Groups', is_group: true },
+  { name: 'Products', parent_name: 'All Item Groups', is_group: false },
+  { name: 'Raw Material', parent_name: 'All Item Groups', is_group: false },
+  { name: 'Services', parent_name: 'All Item Groups', is_group: false },
+  { name: 'Sub Assemblies', parent_name: 'All Item Groups', is_group: false },
+  { name: 'Anklets', parent_name: 'Jewelry', is_group: true },
+  { name: 'Bangles', parent_name: 'Jewelry', is_group: true },
+  { name: 'Bracelets', parent_name: 'Jewelry', is_group: true },
+  { name: 'Chains', parent_name: 'Jewelry', is_group: true },
+  { name: 'Charms', parent_name: 'Jewelry', is_group: true },
+  { name: 'Earrings', parent_name: 'Jewelry', is_group: true },
+  { name: 'Lapel Pins', parent_name: 'Jewelry', is_group: true },
+  { name: 'Nose Pins', parent_name: 'Jewelry', is_group: true },
+  { name: 'Pendants', parent_name: 'Jewelry', is_group: true },
+  { name: 'Rings', parent_name: 'Jewelry', is_group: true },
 ];
 
 async function seed() {
@@ -107,19 +35,17 @@ async function seed() {
   await dataSource.initialize();
   const repo = dataSource.getRepository(ItemGroup);
 
+  // Pass 1: Insert all items without parent
   for (const data of seedData) {
-    const existing = await repo.findOne({
-      where: { name_frappe_based_id: data.name_frappe_based_id },
-    });
+    const existing = await repo.findOne({ where: { name: data.name } });
 
     if (existing) {
-      console.log(`Skipping "${data.name_frappe_based_id}" — already exists`);
+      console.log(`Skipping "${data.name}" — already exists`);
       continue;
     }
 
     const itemGroup = repo.create({
-      name_frappe_based_id: data.name_frappe_based_id,
-      parent_item_group: data.parent_item_group,
+      name: data.name,
       is_group: data.is_group,
       image: null,
       gst_hsn_code: null,
@@ -127,7 +53,20 @@ async function seed() {
     });
 
     await repo.save(itemGroup);
-    console.log(`Seeded "${data.name_frappe_based_id}"`);
+    console.log(`Seeded "${data.name}"`);
+  }
+
+  // Pass 2: Set parent_item_group_id
+  for (const data of seedData) {
+    if (!data.parent_name) continue;
+
+    const parent = await repo.findOne({ where: { name: data.parent_name } });
+    if (!parent) {
+      console.warn(`Parent "${data.parent_name}" not found for "${data.name}"`);
+      continue;
+    }
+
+    await repo.update({ name: data.name }, { parent_item_group_id: parent.id });
   }
 
   await dataSource.destroy();

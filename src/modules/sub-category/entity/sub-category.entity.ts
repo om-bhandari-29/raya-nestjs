@@ -18,7 +18,7 @@ export class SubCategory {
   @ManyToOne(() => ItemGroup)
   @JoinColumn({
     name: 'item_group_name',
-    referencedColumnName: 'name_frappe_based_id',
+    referencedColumnName: 'name',
   })
   item_group: ItemGroup;
 

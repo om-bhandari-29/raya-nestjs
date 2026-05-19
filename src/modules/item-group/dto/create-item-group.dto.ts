@@ -1,5 +1,6 @@
 import {
   IsBoolean,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -12,7 +13,7 @@ export class CreateItemGroupDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(255)
-  name_frappe_based_id: string;
+  name: string;
 
   @ApiPropertyOptional({ example: false })
   @IsBoolean()
@@ -31,11 +32,10 @@ export class CreateItemGroupDto {
   @MaxLength(50)
   gst_hsn_code?: string;
 
-  @ApiPropertyOptional({ example: 'PARENT-GROUP-ID' })
-  @IsString()
+  @ApiPropertyOptional({ example: 1 })
+  @IsInt()
   @IsOptional()
-  @MaxLength(255)
-  parent_item_group?: string;
+  parent_item_group_id?: number;
 
   @ApiPropertyOptional({ example: true })
   @IsBoolean()

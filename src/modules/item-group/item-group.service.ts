@@ -34,8 +34,8 @@ export class ItemGroupService {
   async combo() {
     const itemGroups = await this.itemGroupRepository.find({
       where: { is_active: true },
-      select: ['id', 'name_frappe_based_id'],
-      order: { name_frappe_based_id: 'ASC' },
+      select: ['id', 'name'],
+      order: { name: 'ASC' },
     });
     return {
       status: true,
@@ -46,12 +46,18 @@ export class ItemGroupService {
   }
 
   async findAll() {
-    const itemGroups = await this.itemGroupRepository.find();
+    const itemGroups = await this.itemGroupRepository.find({
+      relations: ['parent_item_group_rel'],
+    });
+    const data = itemGroups.map(({ parent_item_group_rel, ...rest }) => ({
+      ...rest,
+      parent_item_group_name: parent_item_group_rel?.name ?? null,
+    }));
     return {
       status: true,
       message: 'Item groups retrieved successfully',
       statusCode: 200,
-      data: itemGroups,
+      data,
     };
   }
 
@@ -85,18 +91,18 @@ export class ItemGroupService {
 
   async toggleLiked(dto: ToggleLikedItemGroupDto) {
     const itemGroup = await this.itemGroupRepository.findOne({
-      where: { name_frappe_based_id: dto.name_frappe_based_id },
+      where: { name: dto.name },
     });
     if (!itemGroup) {
       throw new NotFoundException(
-        `Item group "${dto.name_frappe_based_id}" not found`,
+        `Item group "${dto.name}" not found`,
       );
     }
     itemGroup.liked = dto.liked;
     await this.itemGroupRepository.save(itemGroup);
     return {
       status: true,
-      message: `Item group "${dto.name_frappe_based_id}" ${dto.liked ? 'liked' : 'unliked'} successfully`,
+      message: `Item group "${dto.name}" ${dto.liked ? 'liked' : 'unliked'} successfully`,
       statusCode: 200,
       data: itemGroup,
     };
