@@ -16,14 +16,11 @@ export class SubCategory {
   name: string;
 
   @ManyToOne(() => ItemGroup)
-  @JoinColumn({
-    name: 'item_group_name',
-    referencedColumnName: 'name',
-  })
+  @JoinColumn({ name: 'item_group_id' })
   item_group: ItemGroup;
 
-  @Column({ type: 'varchar', length: 255 })
-  item_group_name: string;
+  @Column({ type: 'int' })
+  item_group_id: number;
 
   @Column({ type: 'boolean', default: true })
   is_active: boolean;

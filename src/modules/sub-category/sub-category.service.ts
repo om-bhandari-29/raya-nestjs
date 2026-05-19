@@ -36,15 +36,15 @@ export class SubCategoryService {
     };
   }
 
-  async combo(itemGroupName: string | null) {
+  async combo(itemGroupId: number | null) {
     const query = this.subCategoryRepository
       .createQueryBuilder('sc')
       .select(['sc.id', 'sc.name'])
       .where('sc.is_active = :isActive', { isActive: true })
       .orderBy('sc.name', 'ASC');
 
-    if (itemGroupName) {
-      query.andWhere('sc.item_group_name = :itemGroupName', { itemGroupName });
+    if (itemGroupId) {
+      query.andWhere('sc.item_group_id = :itemGroupId', { itemGroupId });
     }
 
     const data = await query.getMany();
