@@ -5,11 +5,6 @@ export class CreateGstHsnCodeDto {
   @ApiProperty({ example: '8471' })
   @IsString()
   @IsNotEmpty()
-  name: string;
-
-  @ApiProperty({ example: '8471' })
-  @IsString()
-  @IsNotEmpty()
   hsn_code: string;
 
   @ApiProperty({ example: 'Automatic data processing machines and units' })

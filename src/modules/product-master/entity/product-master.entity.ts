@@ -16,11 +16,11 @@ export class ProductMaster {
   name: string;
 
   @ManyToOne(() => SubCategory)
-  @JoinColumn({ name: 'sub_category_name', referencedColumnName: 'name' })
+  @JoinColumn({ name: 'sub_category_id' })
   sub_category: SubCategory;
 
-  @Column({ type: 'varchar', length: 100 })
-  sub_category_name: string;
+  @Column({ type: 'int' })
+  sub_category_id: number;
 
   @Column({ type: 'text', nullable: true })
   product_description: string | null;

@@ -4,7 +4,7 @@ import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 const productMasterExample = {
   id: 1,
   name: 'Steel Rod',
-  sub_category_name: 'Mobile Phones',
+  sub_category_id: 1,
   product_description: 'High quality steel rod',
   is_active: true,
   created_at: '2026-04-19T00:00:00.000Z',
@@ -12,7 +12,7 @@ const productMasterExample = {
   sub_category: {
     id: 1,
     name: 'Mobile Phones',
-    item_group_name: 'Electronics',
+    item_group_id: 1,
     is_active: true,
   },
 };
@@ -32,10 +32,10 @@ export const ComboProductMasterSwagger = () =>
         'Pass optional `sub_category_id` query param to filter by sub-category',
     }),
     ApiQuery({
-      name: 'sub_category_name',
+      name: 'sub_category_id',
       required: false,
-      type: String,
-      description: 'Filter product masters by sub-category name',
+      type: Number,
+      description: 'Filter product masters by sub-category id',
     }),
     ApiResponse({
       status: 200,

@@ -23,17 +23,15 @@ export class ProductMasterService {
     };
   }
 
-  async combo(subCategoryName?: string) {
+  async combo(subCategoryId: number | null) {
     const query = this.productMasterRepository
       .createQueryBuilder('pm')
       .select(['pm.id', 'pm.name'])
       .where('pm.is_active = :isActive', { isActive: true })
       .orderBy('pm.name', 'ASC');
 
-    if (subCategoryName) {
-      query.andWhere('pm.sub_category_name = :subCategoryName', {
-        subCategoryName,
-      });
+    if (subCategoryId) {
+      query.andWhere('pm.sub_category_id = :subCategoryId', { subCategoryId });
     }
 
     const data = await query.getMany();

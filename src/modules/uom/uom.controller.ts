@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
 } from '@nestjs/common';
@@ -43,21 +44,21 @@ export class UomController {
     return this.uomService.findAll();
   }
 
-  @Get(':name')
+  @Get(':id')
   @FindOneUomSwagger()
-  findOne(@Param('name') name: string) {
-    return this.uomService.findOne(name);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.uomService.findOne(id);
   }
 
-  @Patch(':name')
+  @Patch(':id')
   @UpdateUomSwagger()
-  update(@Param('name') name: string, @Body() updateUomDto: UpdateUomDto) {
-    return this.uomService.update(name, updateUomDto);
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateUomDto: UpdateUomDto) {
+    return this.uomService.update(id, updateUomDto);
   }
 
-  @Delete(':name')
+  @Delete(':id')
   @RemoveUomSwagger()
-  remove(@Param('name') name: string) {
-    return this.uomService.remove(name);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.uomService.remove(id);
   }
 }

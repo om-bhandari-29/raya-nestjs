@@ -1,9 +1,9 @@
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('gst_hsn_code')
 export class GstHsnCode {
-  @PrimaryColumn({ length: 20, type: 'varchar' })
-  name: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   @Column({ length: 20, type: 'varchar', unique: true })
   hsn_code: string;

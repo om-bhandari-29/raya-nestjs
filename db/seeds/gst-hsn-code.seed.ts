@@ -51,7 +51,6 @@ async function seed() {
   for (let i = 0; i < data.length; i += batchSize) {
     const batch = data.slice(i, i + batchSize).map((item) =>
       repo.create({
-        name: item.hsn_code,
         hsn_code: item.hsn_code,
         description: item.description,
         is_active: true,

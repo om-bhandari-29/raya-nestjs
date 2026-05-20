@@ -86,7 +86,7 @@ export const FindAllUomsSwagger = () =>
 
 export const FindOneUomSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Get a UOM by name' }),
+    ApiOperation({ summary: 'Get a UOM by id' }),
     ApiParam({ name: 'name', type: 'string', example: 'Kilogram' }),
     ApiResponse({
       status: 200,
@@ -109,8 +109,8 @@ export const FindOneUomSwagger = () =>
 
 export const UpdateUomSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Update a UOM by name' }),
-    ApiParam({ name: 'name', type: 'string', example: 'Kilogram' }),
+    ApiOperation({ summary: 'Update a UOM by id' }),
+    ApiParam({ name: 'id', type: 'number', example: 1 }),
     ApiResponse({
       status: 200,
       description: 'UOM updated successfully',
@@ -137,8 +137,8 @@ export const UpdateUomSwagger = () =>
 
 export const RemoveUomSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Delete a UOM by name' }),
-    ApiParam({ name: 'name', type: 'string', example: 'Kilogram' }),
+    ApiOperation({ summary: 'Delete a UOM by id' }),
+    ApiParam({ name: 'id', type: 'number', example: 1 }),
     ApiResponse({
       status: 200,
       description: 'UOM deleted successfully',

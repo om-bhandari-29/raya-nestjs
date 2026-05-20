@@ -34,8 +34,10 @@ export class ProductMasterController {
 
   @Get('combo')
   @ComboProductMasterSwagger()
-  combo(@Query('sub_category_name') subCategoryName?: string) {
-    return this.productMasterService.combo(subCategoryName);
+  combo(@Query('sub_category_id') subCategoryId?: string) {
+    return this.productMasterService.combo(
+      subCategoryId ? parseInt(subCategoryId) : null,
+    );
   }
 
   @Get()

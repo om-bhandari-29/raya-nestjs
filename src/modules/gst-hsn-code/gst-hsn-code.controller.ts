@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -48,24 +49,24 @@ export class GstHsnCodeController {
     return this.gstHsnCodeService.findAll(+page, +limit, search);
   }
 
-  @Get(':name')
+  @Get(':id')
   @FindOneGstHsnCodeSwagger()
-  findOne(@Param('name') name: string) {
-    return this.gstHsnCodeService.findOne(name);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.gstHsnCodeService.findOne(id);
   }
 
-  @Patch(':name')
+  @Patch(':id')
   @UpdateGstHsnCodeSwagger()
   update(
-    @Param('name') name: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateGstHsnCodeDto: UpdateGstHsnCodeDto,
   ) {
-    return this.gstHsnCodeService.update(name, updateGstHsnCodeDto);
+    return this.gstHsnCodeService.update(id, updateGstHsnCodeDto);
   }
 
-  @Delete(':name')
+  @Delete(':id')
   @RemoveGstHsnCodeSwagger()
-  remove(@Param('name') name: string) {
-    return this.gstHsnCodeService.remove(name);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.gstHsnCodeService.remove(id);
   }
 }
