@@ -48,14 +48,12 @@ export class StoneService {
     };
   }
 
-  async findOne(generatedKey: string) {
+  async findOne(id: number) {
     const stone = await this.stoneRepository.findOne({
-      where: { generatedKey },
+      where: { id },
     });
     if (!stone) {
-      throw new NotFoundException(
-        `Stone with key "${generatedKey}" not found`,
-      );
+      throw new NotFoundException(`Stone with id ${id} not found`);
     }
     return {
       status: true,
@@ -65,14 +63,12 @@ export class StoneService {
     };
   }
 
-  async update(generatedKey: string, updateStoneDto: UpdateStoneDto) {
+  async update(id: number, updateStoneDto: UpdateStoneDto) {
     const stone = await this.stoneRepository.findOne({
-      where: { generatedKey },
+      where: { id },
     });
     if (!stone) {
-      throw new NotFoundException(
-        `Stone with key "${generatedKey}" not found`,
-      );
+      throw new NotFoundException(`Stone with id ${id} not found`);
     }
     Object.assign(stone, updateStoneDto);
     await this.stoneRepository.save(stone);
