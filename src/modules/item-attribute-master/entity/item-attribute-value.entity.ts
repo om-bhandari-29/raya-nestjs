@@ -15,17 +15,17 @@ export class ItemAttributeValue {
   @ManyToOne(() => ItemAttributeMaster, (attr) => attr.values, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'attribute_name', referencedColumnName: 'name' })
+  @JoinColumn({ name: 'attribute_master_id' })
   attribute: ItemAttributeMaster;
 
-  @Column({ length: 255, type: 'varchar' })
-  attribute_name: string;
+  @Column({ type: 'int' })
+  attribute_master_id: number;
 
   @Column({ length: 255, type: 'varchar' })
   name: string;
 
   @Column({ length: 100, type: 'varchar', nullable: true })
-  attribute_type: string | null;
+  type: string | null;
 
   @Column({ length: 50, type: 'varchar', nullable: true })
   abbreviation: string | null;

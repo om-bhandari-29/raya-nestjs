@@ -10,7 +10,7 @@ const seedData: Array<{
   numeric_values: boolean;
   values: Array<{
     name: string;
-    attribute_type?: string;
+    type?: string;
     abbreviation?: string;
     purity_factor?: number;
   }>;
@@ -199,7 +199,7 @@ async function seed() {
     await attributeRepo.save(attribute);
 
     for (const v of data.values) {
-      const value = valueRepo.create({ ...v, attribute_name: attribute.name });
+      const value = valueRepo.create({ ...v, attribute_master_id: attribute.id });
       await valueRepo.save(value);
     }
 

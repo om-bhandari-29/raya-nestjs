@@ -59,7 +59,7 @@ const itemExample = {
       id: 1,
       item_id: 1,
       variant_of_id: null,
-      attribute_name: 'Metal Type',
+      attribute_master_id: 1,
       value_id: 2,
       is_disabled: false,
       stone_type: null,

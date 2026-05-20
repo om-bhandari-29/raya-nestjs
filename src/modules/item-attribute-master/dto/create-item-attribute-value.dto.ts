@@ -20,7 +20,7 @@ export class CreateItemAttributeValueDto {
   @IsString()
   @IsOptional()
   @MaxLength(100)
-  attribute_type?: string;
+  type?: string;
 
   @ApiPropertyOptional({ example: 'GL' })
   @IsString()

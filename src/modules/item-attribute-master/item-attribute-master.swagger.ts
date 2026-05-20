@@ -13,17 +13,17 @@ const attributeExample = {
   values: [
     {
       id: 1,
-      attribute_name: 'Metal Type',
+      attribute_master_id: 1,
       name: 'Gold',
-      attribute_type: 'Metal',
+      type: 'Metal',
       abbreviation: 'GL',
       purity_factor: 0,
     },
     {
       id: 2,
-      attribute_name: 'Metal Type',
+      attribute_master_id: 1,
       name: 'Silver',
-      attribute_type: 'Metal',
+      type: 'Metal',
       abbreviation: 'SL',
       purity_factor: 0,
     },
@@ -34,16 +34,16 @@ const attributeExample = {
 
 const valueExample = {
   id: 1,
-  attribute_name: 'Metal Type',
+  attribute_master_id: 1,
   name: 'Gold',
-  attribute_type: 'Metal',
+  type: 'Metal',
   abbreviation: 'GL',
   purity_factor: 0,
 };
 
 const notFoundExample = {
   status: false,
-  message: "Item attribute 'Metal Type' not found",
+  message: 'Item attribute with id 1 not found',
   statusCode: 404,
   data: null,
 };
@@ -118,8 +118,8 @@ export const FindAllAttributesSwagger = () =>
 
 export const FindOneAttributeSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Get an item attribute by name' }),
-    ApiParam({ name: 'name', type: 'string', example: 'Metal Type' }),
+    ApiOperation({ summary: 'Get an item attribute by id' }),
+    ApiParam({ name: 'id', type: 'number', example: 1 }),
     ApiResponse({
       status: 200,
       description: 'Item attribute retrieved successfully',
@@ -141,8 +141,8 @@ export const FindOneAttributeSwagger = () =>
 
 export const UpdateAttributeSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Update an item attribute by name' }),
-    ApiParam({ name: 'name', type: 'string', example: 'Metal Type' }),
+    ApiOperation({ summary: 'Update an item attribute by id' }),
+    ApiParam({ name: 'id', type: 'number', example: 1 }),
     ApiResponse({
       status: 200,
       description: 'Item attribute updated successfully',
@@ -169,8 +169,8 @@ export const UpdateAttributeSwagger = () =>
 
 export const RemoveAttributeSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Delete an item attribute by name' }),
-    ApiParam({ name: 'name', type: 'string', example: 'Metal Type' }),
+    ApiOperation({ summary: 'Delete an item attribute by id' }),
+    ApiParam({ name: 'id', type: 'number', example: 1 }),
     ApiResponse({
       status: 200,
       description: 'Item attribute deleted successfully',
@@ -193,11 +193,7 @@ export const RemoveAttributeSwagger = () =>
 export const CreateValueSwagger = () =>
   applyDecorators(
     ApiOperation({ summary: 'Create a new attribute value' }),
-    ApiParam({
-      name: 'attributeName',
-      type: 'string',
-      example: 'Metal Type',
-    }),
+    ApiParam({ name: 'attributeId', type: 'number', example: 1 }),
     ApiResponse({
       status: 201,
       description: 'Attribute value created successfully',
@@ -215,11 +211,7 @@ export const CreateValueSwagger = () =>
 export const FindAllValuesSwagger = () =>
   applyDecorators(
     ApiOperation({ summary: 'Get all values for an attribute' }),
-    ApiParam({
-      name: 'attributeName',
-      type: 'string',
-      example: 'Metal Type',
-    }),
+    ApiParam({ name: 'attributeId', type: 'number', example: 1 }),
     ApiResponse({
       status: 200,
       description: 'Attribute values retrieved successfully',
@@ -237,11 +229,7 @@ export const FindAllValuesSwagger = () =>
 export const FindOneValueSwagger = () =>
   applyDecorators(
     ApiOperation({ summary: 'Get an attribute value by id' }),
-    ApiParam({
-      name: 'attributeName',
-      type: 'string',
-      example: 'Metal Type',
-    }),
+    ApiParam({ name: 'attributeId', type: 'number', example: 1 }),
     ApiParam({ name: 'valueId', type: 'number', example: 1 }),
     ApiResponse({
       status: 200,
@@ -260,11 +248,7 @@ export const FindOneValueSwagger = () =>
 export const UpdateValueSwagger = () =>
   applyDecorators(
     ApiOperation({ summary: 'Update an attribute value by id' }),
-    ApiParam({
-      name: 'attributeName',
-      type: 'string',
-      example: 'Metal Type',
-    }),
+    ApiParam({ name: 'attributeId', type: 'number', example: 1 }),
     ApiParam({ name: 'valueId', type: 'number', example: 1 }),
     ApiResponse({
       status: 200,
@@ -283,11 +267,7 @@ export const UpdateValueSwagger = () =>
 export const RemoveValueSwagger = () =>
   applyDecorators(
     ApiOperation({ summary: 'Delete an attribute value by id' }),
-    ApiParam({
-      name: 'attributeName',
-      type: 'string',
-      example: 'Metal Type',
-    }),
+    ApiParam({ name: 'attributeId', type: 'number', example: 1 }),
     ApiParam({ name: 'valueId', type: 'number', example: 1 }),
     ApiResponse({
       status: 200,
