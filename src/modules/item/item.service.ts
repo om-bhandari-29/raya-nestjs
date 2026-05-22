@@ -9,10 +9,9 @@ import { Item } from './entity/item.entity';
 import { ItemBarcode } from './entity/item-barcode.entity';
 import { ItemVariant } from './entity/item-variant.entity';
 import { ItemStoneDetail } from './entity/item-stone-detail.entity';
-import { ItemAttributeValue } from '../item-attribute-master/entity/item-attribute-value.entity';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
-import { CreateItemVariantDto } from './dto/create-item-variant.dto';
+import { SaveWeightDto } from './dto/save-weight.dto';
 
 const ITEM_RELATIONS = [
   'product_master',
@@ -24,8 +23,6 @@ const ITEM_RELATIONS = [
   'barcodes.uom',
   'variants',
   'variants.attribute',
-  'variants.value',
-  'variants.variant_of',
   'stone_details',
   'stone_details.stone_type',
   'stone_details.stone_clarity',
@@ -43,27 +40,9 @@ export class ItemService {
     private readonly variantRepository: Repository<ItemVariant>,
     @InjectRepository(ItemStoneDetail)
     private readonly stoneDetailRepository: Repository<ItemStoneDetail>,
-    @InjectRepository(ItemAttributeValue)
-    private readonly attributeValueRepository: Repository<ItemAttributeValue>,
   ) {}
 
-  private async validateVariants(variants: CreateItemVariantDto[]) {
-    for (const v of variants) {
-      const attrValue = await this.attributeValueRepository.findOne({
-        where: { id: v.value_id, attribute_master_id: v.attribute_master_id },
-      });
-      if (!attrValue) {
-        throw new BadRequestException(
-          `value_id ${v.value_id} does not belong to attribute_master_id ${v.attribute_master_id}`,
-        );
-      }
-    }
-  }
-
   async create(createItemDto: CreateItemDto) {
-    if (createItemDto.variants?.length) {
-      await this.validateVariants(createItemDto.variants);
-    }
     const item = this.itemRepository.create(createItemDto);
     await this.itemRepository.save(item);
     return {
@@ -71,6 +50,32 @@ export class ItemService {
       message: 'Item created successfully',
       statusCode: 201,
       data: item,
+    };
+  }
+
+  async options(page: number, limit: number, search?: string) {
+    const qb = this.itemRepository
+      .createQueryBuilder('item')
+      .select(['item.id', 'item.name']);
+
+    if (search) {
+      qb.where('item.name LIKE :search', { search: `%${search}%` });
+    }
+
+    const [items, total] = await qb
+      .skip((page - 1) * limit)
+      .take(limit)
+      .orderBy('item.name', 'ASC')
+      .getManyAndCount();
+
+    return {
+      status: true,
+      message: 'Item options retrieved successfully',
+      statusCode: 200,
+      data: {
+        items: items.map((i) => ({ id: i.id, name: i.name })),
+        pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      },
     };
   }
 
@@ -136,10 +141,9 @@ export class ItemService {
     }
 
     if (variants !== undefined) {
-      await this.validateVariants(variants);
-      await this.variantRepository.delete({ item_id: id });
+      await this.variantRepository.delete({ item_master_id: id });
       item.variants = variants.map((v) =>
-        this.variantRepository.create({ ...v, item_id: id }),
+        this.variantRepository.create({ ...v, item_master_id: id }),
       );
     }
 
@@ -156,6 +160,34 @@ export class ItemService {
       message: 'Item updated successfully',
       statusCode: 200,
       data: item,
+    };
+  }
+
+  async saveWeight(id: number, dto: SaveWeightDto) {
+    const item = await this.itemRepository.findOne({ where: { id } });
+    if (!item) throw new NotFoundException(`Item with id ${id} not found`);
+
+    const { variants, ...weightData } = dto;
+    Object.assign(item, weightData);
+    await this.itemRepository.save(item);
+
+    for (const v of variants) {
+      if (v.id === 0) {
+        const { id: _id, ...rest } = v;
+        await this.variantRepository.save(
+          this.variantRepository.create({ ...rest, item_master_id: id }),
+        );
+      } else {
+        const { id: variantId, ...rest } = v;
+        await this.variantRepository.update(variantId, { ...rest, item_master_id: id });
+      }
+    }
+
+    return {
+      status: true,
+      message: 'Weight and variants saved successfully',
+      statusCode: 200,
+      data: await this.itemRepository.findOne({ where: { id }, relations: ['variants'] }),
     };
   }
 

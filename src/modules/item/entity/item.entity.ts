@@ -16,7 +16,7 @@ import { ItemBarcode } from './item-barcode.entity';
 import { ItemVariant } from './item-variant.entity';
 import { ItemStoneDetail } from './item-stone-detail.entity';
 
-@Entity('item')
+@Entity('item_master')
 export class Item {
   @PrimaryGeneratedColumn()
   id: number;

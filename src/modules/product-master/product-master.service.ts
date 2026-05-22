@@ -23,23 +23,34 @@ export class ProductMasterService {
     };
   }
 
-  async combo(subCategoryId: number | null) {
+  async combo(subCategoryId: number | null, page: number, limit: number, search?: string) {
     const query = this.productMasterRepository
       .createQueryBuilder('pm')
       .select(['pm.id', 'pm.name'])
-      .where('pm.is_active = :isActive', { isActive: true })
-      .orderBy('pm.name', 'ASC');
+      .where('pm.is_active = :isActive', { isActive: true });
 
     if (subCategoryId) {
       query.andWhere('pm.sub_category_id = :subCategoryId', { subCategoryId });
     }
 
-    const data = await query.getMany();
+    if (search) {
+      query.andWhere('pm.name ILIKE :search', { search: `%${search}%` });
+    }
+
+    const [items, total] = await query
+      .orderBy('pm.name', 'ASC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
     return {
       status: true,
       message: 'Product master combo retrieved successfully',
       statusCode: 200,
-      data,
+      data: {
+        items,
+        pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      },
     };
   }
 

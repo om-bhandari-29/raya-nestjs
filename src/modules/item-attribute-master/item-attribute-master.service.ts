@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { ItemAttributeMaster } from './entity/item-attribute-master.entity';
 import { ItemAttributeValue } from './entity/item-attribute-value.entity';
 import { CreateItemAttributeMasterDto } from './dto/create-item-attribute-master.dto';
@@ -21,17 +21,30 @@ export class ItemAttributeMasterService {
     private readonly valueRepository: Repository<ItemAttributeValue>,
   ) {}
 
-  async combo() {
-    const data = await this.attributeRepository.find({
-      where: { status: true },
-      select: ['id', 'name'],
-      order: { name: 'ASC' },
-    });
+  async combo(page: number, limit: number, search?: string) {
+    const qb = this.attributeRepository
+      .createQueryBuilder('attr')
+      .select(['attr.id', 'attr.name'])
+      .where('attr.status = :status', { status: true });
+
+    if (search) {
+      qb.andWhere('attr.name ILIKE :search', { search: `%${search}%` });
+    }
+
+    const [items, total] = await qb
+      .orderBy('attr.name', 'ASC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
     return {
       status: true,
       message: 'Item attribute combo retrieved successfully',
       statusCode: 200,
-      data,
+      data: {
+        items,
+        pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      },
     };
   }
 
@@ -122,7 +135,16 @@ export class ItemAttributeMasterService {
     }
 
     if (values !== undefined && updateDto.numeric_values !== true) {
-      await this.valueRepository.delete({ attribute_master_id: id });
+      const existingIds = attribute.values.map((v) => v.id);
+      const incomingIds = values.filter((v) => v.id).map((v) => v.id);
+
+      // Delete values not present in incoming payload
+      const toDelete = existingIds.filter((eId) => !incomingIds.includes(eId));
+      if (toDelete.length) {
+        await this.valueRepository.delete({ id: In(toDelete) });
+      }
+
+      // Update existing and insert new
       attribute.values = values.map((v) =>
         this.valueRepository.create({
           ...v,

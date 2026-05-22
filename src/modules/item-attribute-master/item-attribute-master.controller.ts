@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ItemAttributeMasterService } from './item-attribute-master.service';
@@ -41,8 +42,12 @@ export class ItemAttributeMasterController {
 
   @Get('combo')
   @ComboAttributeSwagger()
-  combo() {
-    return this.service.combo();
+  combo(
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+    @Query('search') search?: string,
+  ) {
+    return this.service.combo(+page, +limit, search);
   }
 
   @Get()

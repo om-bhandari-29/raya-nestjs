@@ -34,9 +34,17 @@ export class ProductMasterController {
 
   @Get('combo')
   @ComboProductMasterSwagger()
-  combo(@Query('sub_category_id') subCategoryId?: string) {
+  combo(
+    @Query('sub_category_id') subCategoryId?: string,
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+    @Query('search') search?: string,
+  ) {
     return this.productMasterService.combo(
       subCategoryId ? parseInt(subCategoryId) : null,
+      +page,
+      +limit,
+      search,
     );
   }
 

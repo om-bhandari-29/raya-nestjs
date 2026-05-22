@@ -16,7 +16,7 @@ async function bootstrap() {
   });
 
   // Enable validation
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
   // Swagger configuration
   const config = new DocumentBuilder()

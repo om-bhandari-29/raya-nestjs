@@ -57,16 +57,14 @@ const itemExample = {
   variants: [
     {
       id: 1,
-      item_id: 1,
-      variant_of_id: null,
+      item_master_id: 1,
+      value: 'Gold 22K',
       attribute_master_id: 1,
-      value_id: 2,
+      attribute_value: 'Silver',
       is_disabled: false,
-      stone_type: null,
+      stone_family: null,
       stone_id: null,
       attribute: { id: 1, name: 'Metal Type' },
-      value: { id: 2, name: 'Silver', abbreviation: 'SL' },
-      variant_of: null,
     },
   ],
   stone_details: [
@@ -181,6 +179,60 @@ export const RemoveItemSwagger = () =>
           message: 'Item deleted successfully',
           statusCode: 200,
           data: null,
+        },
+      },
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Item not found',
+      schema: { example: notFoundExample },
+    }),
+  );
+
+export const OptionsItemSwagger = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Get item options (id and name) with pagination and search' }),
+    ApiResponse({
+      status: 200,
+      description: 'Item options retrieved successfully',
+      schema: {
+        example: {
+          status: true,
+          message: 'Item options retrieved successfully',
+          statusCode: 200,
+          data: {
+            items: [
+              { id: 1, name: 'White Gold Oval Hoop Earrings in Sterling Silver' },
+              { id: 2, name: 'Diamond Solitaire Ring' },
+            ],
+            pagination: { total: 50, page: 1, limit: 10, totalPages: 5 },
+          },
+        },
+      },
+    }),
+  );
+
+export const SaveWeightSwagger = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Save weight data and variants for an item' }),
+    ApiResponse({
+      status: 200,
+      description: 'Weight and variants saved successfully',
+      schema: {
+        example: {
+          status: true,
+          message: 'Weight and variants saved successfully',
+          statusCode: 200,
+          data: {
+            ...itemExample,
+            gross_weight: '23.000',
+            net_weight: '45.000',
+            labor_rate: '250.00',
+            pure_weight_metal: '4.000',
+            stone_carat_wt: '0.246',
+            stones: '',
+            stones_weight_in_gram: '50.000',
+          },
         },
       },
     }),

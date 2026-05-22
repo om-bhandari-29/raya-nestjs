@@ -7,17 +7,21 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiQuery } from '@nestjs/swagger';
 import { ItemService } from './item.service';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
+import { SaveWeightDto } from './dto/save-weight.dto';
 import {
   CreateItemSwagger,
   FindAllItemsSwagger,
   FindOneItemSwagger,
   UpdateItemSwagger,
   RemoveItemSwagger,
+  OptionsItemSwagger,
+  SaveWeightSwagger,
 } from './item.swagger';
 
 @ApiTags('item')
@@ -29,6 +33,23 @@ export class ItemController {
   @CreateItemSwagger()
   create(@Body() createItemDto: CreateItemDto) {
     return this.itemService.create(createItemDto);
+  }
+
+  @Get('options')
+  @OptionsItemSwagger()
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  options(
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+    @Query('search') search?: string,
+  ) {
+    return this.itemService.options(
+      parseInt(page, 10) || 1,
+      parseInt(limit, 10) || 10,
+      search,
+    );
   }
 
   @Get()
@@ -46,6 +67,15 @@ export class ItemController {
   @FindOneItemSwagger()
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.itemService.findOne(id);
+  }
+
+  @Patch(':id/weight')
+  @SaveWeightSwagger()
+  saveWeight(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() saveWeightDto: SaveWeightDto,
+  ) {
+    return this.itemService.saveWeight(id, saveWeightDto);
   }
 
   @Patch(':id')

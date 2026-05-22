@@ -5,11 +5,10 @@ import { ItemService } from './item.service';
 import { Item } from './entity/item.entity';
 import { ItemBarcode } from './entity/item-barcode.entity';
 import { ItemVariant } from './entity/item-variant.entity';
-import { ItemAttributeValue } from '../item-attribute-master/entity/item-attribute-value.entity';
 import { ItemStoneDetail } from './entity/item-stone-detail.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Item, ItemBarcode, ItemVariant, ItemAttributeValue, ItemStoneDetail])],
+  imports: [TypeOrmModule.forFeature([Item, ItemBarcode, ItemVariant, ItemStoneDetail])],
   controllers: [ItemController],
   providers: [ItemService],
   exports: [ItemService],
