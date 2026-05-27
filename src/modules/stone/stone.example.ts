@@ -1,6 +1,6 @@
 /**
  * Stone Module Usage Examples
- * 
+ *
  * This file contains example code snippets showing how to use the Stone module.
  * These are not executable tests, but rather documentation examples.
  */
@@ -21,8 +21,8 @@ const createStoneExample = {
   width: 5.25,
   height: 3.15,
   estimatedWeightInCt: 1.25,
-  pricePerCt: 5000.00,
-  pricePerCtUsd: 6000.00,
+  pricePerCt: 5000.0,
+  pricePerCtUsd: 6000.0,
   sizeRange: '1.00-2.00 ct',
   sourceFile: 'import_batch_001.csv',
   is_active: true,
@@ -40,12 +40,12 @@ const createRubyExample = {
   colour: 'Red',
   clarity: 'SI1',
   enhancementTreatment: 'Heat',
-  length: 6.00,
-  width: 4.00,
-  height: 2.50,
+  length: 6.0,
+  width: 4.0,
+  height: 2.5,
   estimatedWeightInCt: 0.85,
-  pricePerCt: 3000.00,
-  pricePerCtUsd: 3500.00,
+  pricePerCt: 3000.0,
+  pricePerCtUsd: 3500.0,
 };
 
 // Expected generatedKey: "Ruby-Oval-Natural-Mixed-Good-Red-Heat-6.00x4.00x2.50"
@@ -56,25 +56,25 @@ const createSapphireExample = {
   stoneName: 'Sapphire',
   cutStyle: 'Step',
   stoneType: 'Lab-grown',
-  length: 7.50,
-  width: 7.50,
-  height: 4.20,
+  length: 7.5,
+  width: 7.5,
+  height: 4.2,
 };
 
 // Expected generatedKey: "Sapphire-Cushion-Lab-grown-Step---7.50x7.50x4.20"
 
 // Example 4: Updating a stone (only price fields)
 const updateStoneExample = {
-  pricePerCt: 5500.00,
-  pricePerCtUsd: 6500.00,
+  pricePerCt: 5500.0,
+  pricePerCtUsd: 6500.0,
 };
 // Note: generatedKey will NOT change since key components weren't modified
 
 // Example 5: Updating stone dimensions (will regenerate key)
 const updateDimensionsExample = {
-  length: 5.30,
-  width: 5.30,
-  height: 3.20,
+  length: 5.3,
+  width: 5.3,
+  height: 3.2,
 };
 // Note: generatedKey WILL change to reflect new dimensions
 
@@ -186,11 +186,12 @@ const createResponseExample = {
     width: 5.25,
     height: 3.15,
     estimatedWeightInCt: 1.25,
-    pricePerCt: 5000.00,
-    pricePerCtUsd: 6000.00,
+    pricePerCt: 5000.0,
+    pricePerCtUsd: 6000.0,
     sizeRange: '1.00-2.00 ct',
     sourceFile: 'import_batch_001.csv',
-    generatedKey: 'Diamond-Round-Natural-Brilliant-Excellent-D-None-5.25x5.25x3.15',
+    generatedKey:
+      'Diamond-Round-Natural-Brilliant-Excellent-D-None-5.25x5.25x3.15',
     is_active: true,
     created_at: '2026-05-03T00:00:00.000Z',
     updated_at: '2026-05-03T00:00:00.000Z',
@@ -222,7 +223,8 @@ const comboResponseExample = {
     {
       id: 1,
       stoneName: 'Diamond',
-      generatedKey: 'Diamond-Round-Natural-Brilliant-Excellent-D-None-5.25x5.25x3.15',
+      generatedKey:
+        'Diamond-Round-Natural-Brilliant-Excellent-D-None-5.25x5.25x3.15',
     },
     {
       id: 2,

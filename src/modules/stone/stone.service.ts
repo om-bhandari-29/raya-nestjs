@@ -25,7 +25,7 @@ export class StoneService {
 
   async findAll(page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
-    
+
     const [stones, total] = await this.stoneRepository.findAndCount({
       skip,
       take: limit,
@@ -53,9 +53,7 @@ export class StoneService {
       where: { generatedKey },
     });
     if (!stone) {
-      throw new NotFoundException(
-        `Stone with key "${generatedKey}" not found`,
-      );
+      throw new NotFoundException(`Stone with key "${generatedKey}" not found`);
     }
     return {
       status: true,
@@ -70,9 +68,7 @@ export class StoneService {
       where: { generatedKey },
     });
     if (!stone) {
-      throw new NotFoundException(
-        `Stone with key "${generatedKey}" not found`,
-      );
+      throw new NotFoundException(`Stone with key "${generatedKey}" not found`);
     }
     Object.assign(stone, updateStoneDto);
     await this.stoneRepository.save(stone);

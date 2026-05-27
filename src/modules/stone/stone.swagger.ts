@@ -10,6 +10,7 @@ const stoneExample = {
   clarity: 'VS1',
   colour: 'D',
   stoneType: 'Natural',
+  family: null,
   cutGrade: 'Excellent',
   countryOrigin: 'South Africa',
   enhancementTreatment: 'None',
@@ -19,9 +20,10 @@ const stoneExample = {
   width: 5.25,
   height: 3.15,
   estimatedWeightInCt: 1.25,
-  pricePerCt: 5000.00,
-  pricePerCtUsd: 6000.00,
-  generatedKey: 'Diamond-Round-Natural-Brilliant-Excellent-D-None-5.25x5.25x3.15',
+  pricePerCt: 5000.0,
+  pricePerCtUsd: 6000.0,
+  generatedKey:
+    'Diamond-Round-Natural-Brilliant-Excellent-D-None-5.25x5.25x3.15',
   is_active: true,
   created_at: '2026-05-03T00:00:00.000Z',
   updated_at: '2026-05-03T00:00:00.000Z',
@@ -36,7 +38,9 @@ const notFoundExample = {
 
 export const ComboStoneSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Get stones for dropdown (id, stoneName, and generatedKey only)' }),
+    ApiOperation({
+      summary: 'Get stones for dropdown (id, stoneName, and generatedKey only)',
+    }),
     ApiResponse({
       status: 200,
       description: 'Stone combo retrieved successfully',
@@ -46,15 +50,17 @@ export const ComboStoneSwagger = () =>
           message: 'Stone combo retrieved successfully',
           statusCode: 200,
           data: [
-            { 
-              id: 1, 
+            {
+              id: 1,
               stoneName: 'Diamond',
-              generatedKey: 'Diamond-Round-Natural-Brilliant-Excellent-D-None-5.25x5.25x3.15'
+              generatedKey:
+                'Diamond-Round-Natural-Brilliant-Excellent-D-None-5.25x5.25x3.15',
             },
-            { 
-              id: 2, 
+            {
+              id: 2,
               stoneName: 'Ruby',
-              generatedKey: 'Ruby-Oval-Natural-Mixed-Good-Red-Heat-6.00x4.00x2.50'
+              generatedKey:
+                'Ruby-Oval-Natural-Mixed-Good-Red-Heat-6.00x4.00x2.50',
             },
           ],
         },

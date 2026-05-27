@@ -1,4 +1,11 @@
-import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -44,6 +51,12 @@ export class CreateStoneDto {
   @IsNotEmpty()
   @MaxLength(100)
   stoneType: string;
+
+  @ApiPropertyOptional({ example: 'Gemstone' })
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  family?: string;
 
   @ApiPropertyOptional({ example: 'Excellent' })
   @IsString()
@@ -99,13 +112,13 @@ export class CreateStoneDto {
   @Type(() => Number)
   estimatedWeightInCt?: number;
 
-  @ApiPropertyOptional({ example: 5000.00 })
+  @ApiPropertyOptional({ example: 5000.0 })
   @IsNumber()
   @IsOptional()
   @Type(() => Number)
   pricePerCt?: number;
 
-  @ApiPropertyOptional({ example: 6000.00 })
+  @ApiPropertyOptional({ example: 6000.0 })
   @IsNumber()
   @IsOptional()
   @Type(() => Number)
