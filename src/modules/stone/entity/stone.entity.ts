@@ -6,7 +6,7 @@ import {
   BeforeUpdate,
 } from 'typeorm';
 
-@Entity()
+@Entity('stone_dimension')
 export class Stone {
   @PrimaryGeneratedColumn()
   id: number;
