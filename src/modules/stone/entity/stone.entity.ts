@@ -56,20 +56,20 @@ export class Stone {
   sizeRange: string;
 
   // Number fields
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 18, scale: 8, nullable: true })
   length: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 18, scale: 8, nullable: true })
   width: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 18, scale: 8, nullable: true })
   height: number;
 
   @Column({
     name: 'Estimated_Weight_Final_ct',
     type: 'decimal',
-    precision: 10,
-    scale: 2,
+    precision: 18,
+    scale: 8,
     nullable: true,
   })
   estimatedWeightInCt: number;
@@ -77,8 +77,8 @@ export class Stone {
   @Column({
     name: 'Price_per_ct_INR',
     type: 'decimal',
-    precision: 10,
-    scale: 2,
+    precision: 18,
+    scale: 8,
     nullable: true,
   })
   pricePerCt: number;
@@ -86,8 +86,8 @@ export class Stone {
   @Column({
     name: 'Price_per_ct_USD',
     type: 'decimal',
-    precision: 10,
-    scale: 2,
+    precision: 18,
+    scale: 8,
     nullable: true,
   })
   pricePerCtUsd: number;
@@ -114,15 +114,24 @@ export class Stone {
   generateKey() {
     const formatDimension = (value: number | null | undefined): string => {
       return value !== null && value !== undefined
-        ? Number(value).toFixed(2)
-        : '0.00';
+        ? Number(value).toString()
+        : '0';
     };
+
+    // formData.stoneName,
+    // formData.shape,
+    // formData.stoneType,
+    // formData.cutStyle,
+    // formData.cutGrade,
+    // formData.colour,
+    // formData.enhancementTreatment
 
     const parts = [
       this.stoneName || '',
       this.shape || '',
       this.stoneType || '',
       this.cutStyle || '',
+      this.clarity || '',
       this.colour || '',
       this.enhancementTreatment || '',
       `${formatDimension(this.length)}x${formatDimension(this.width)}x${formatDimension(this.height)}`,
