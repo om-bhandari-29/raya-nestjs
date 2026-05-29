@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { StoneMasterService } from './stone-master.service';
@@ -39,8 +40,12 @@ export class StoneTypeController {
 
   @Get()
   @FindAllStoneMasterSwagger('type')
-  findAll() {
-    return this.service.findAll('type');
+  findAll(
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+    @Query('search') search?: string,
+  ) {
+    return this.service.findAll('type', +page, +limit, search);
   }
 
   @Get(':name')
@@ -81,8 +86,12 @@ export class StoneClarityController {
 
   @Get()
   @FindAllStoneMasterSwagger('clarity')
-  findAll() {
-    return this.service.findAll('clarity');
+  findAll(
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+    @Query('search') search?: string,
+  ) {
+    return this.service.findAll('clarity', +page, +limit, search);
   }
 
   @Get(':name')
@@ -123,8 +132,12 @@ export class StoneShapeController {
 
   @Get()
   @FindAllStoneMasterSwagger('shape')
-  findAll() {
-    return this.service.findAll('shape');
+  findAll(
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+    @Query('search') search?: string,
+  ) {
+    return this.service.findAll('shape', +page, +limit, search);
   }
 
   @Get(':name')

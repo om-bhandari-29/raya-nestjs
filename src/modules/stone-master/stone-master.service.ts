@@ -72,14 +72,38 @@ export class StoneMasterService {
     };
   }
 
-  async findAll(type: 'type' | 'clarity' | 'shape') {
+  async findAll(
+    type: 'type' | 'clarity' | 'shape',
+    page: number,
+    limit: number,
+    search?: string,
+  ) {
     const repo = this.getRepo(type);
-    const data = await repo.find();
+    const query = repo
+      .createQueryBuilder('s')
+      .orderBy('s.created_at', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    if (search) {
+      query.where('s.name ILIKE :search', {
+        search: `%${search}%`,
+      });
+    }
+
+    const [data, total] = await query.getManyAndCount();
+
     return {
       status: true,
       message: `Stone ${type} list retrieved successfully`,
       statusCode: 200,
       data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 
