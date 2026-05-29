@@ -2,9 +2,12 @@ import { MigrationInterface, QueryRunner, Table, TableIndex } from 'typeorm';
 
 export class CreateStoneTable1777000000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
+    // Drop old 'stone' table if it exists from a previous migration
+    await queryRunner.query(`DROP TABLE IF EXISTS "stone" CASCADE`);
+
     await queryRunner.createTable(
       new Table({
-        name: 'stone',
+        name: 'stone_dimension',
         columns: [
           {
             name: 'id',
@@ -151,7 +154,7 @@ export class CreateStoneTable1777000000000 implements MigrationInterface {
 
     // Create index on generatedKey for faster lookups
     await queryRunner.createIndex(
-      'stone',
+      'stone_dimension',
       new TableIndex({
         name: 'IDX_STONE_GENERATED_KEY',
         columnNames: ['generatedKey'],
@@ -160,7 +163,7 @@ export class CreateStoneTable1777000000000 implements MigrationInterface {
 
     // Create index on stoneName for faster searches
     await queryRunner.createIndex(
-      'stone',
+      'stone_dimension',
       new TableIndex({
         name: 'IDX_STONE_NAME',
         columnNames: ['stoneName'],
@@ -169,8 +172,8 @@ export class CreateStoneTable1777000000000 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropIndex('stone', 'IDX_STONE_NAME');
-    await queryRunner.dropIndex('stone', 'IDX_STONE_GENERATED_KEY');
-    await queryRunner.dropTable('stone');
+    await queryRunner.dropIndex('stone_dimension', 'IDX_STONE_NAME');
+    await queryRunner.dropIndex('stone_dimension', 'IDX_STONE_GENERATED_KEY');
+    await queryRunner.dropTable('stone_dimension');
   }
 }

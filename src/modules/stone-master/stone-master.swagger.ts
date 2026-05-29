@@ -1,5 +1,5 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 
 const example = () => ({
   id: 1,
@@ -57,7 +57,15 @@ export const CreateStoneMasterSwagger = (type: string) =>
 
 export const FindAllStoneMasterSwagger = (type: string) =>
   applyDecorators(
-    ApiOperation({ summary: `Get all stone ${type}s` }),
+    ApiOperation({ summary: `Get all stone ${type}s (paginated)` }),
+    ApiQuery({ name: 'page', required: false, type: Number, example: 1 }),
+    ApiQuery({ name: 'limit', required: false, type: Number, example: 20 }),
+    ApiQuery({
+      name: 'search',
+      required: false,
+      type: String,
+      description: 'Search by name',
+    }),
     ApiResponse({
       status: 200,
       description: `Stone ${type} list retrieved successfully`,
@@ -67,6 +75,12 @@ export const FindAllStoneMasterSwagger = (type: string) =>
           message: `Stone ${type} list retrieved successfully`,
           statusCode: 200,
           data: [example()],
+          meta: {
+            total: 50,
+            page: 1,
+            limit: 20,
+            totalPages: 3,
+          },
         },
       },
     }),

@@ -23,14 +23,22 @@ export class StoneService {
     };
   }
 
-  async findAll(page: number = 1, limit: number = 10) {
+  async findAll(page: number = 1, limit: number = 10, generatedKey?: string) {
     const skip = (page - 1) * limit;
-    
-    const [stones, total] = await this.stoneRepository.findAndCount({
-      skip,
-      take: limit,
-      order: { created_at: 'DESC' },
-    });
+
+    const queryBuilder = this.stoneRepository
+      .createQueryBuilder('stone')
+      .orderBy('stone.created_at', 'DESC')
+      .skip(skip)
+      .take(limit);
+
+    if (generatedKey) {
+      queryBuilder.andWhere('stone.generatedKey ILIKE :generatedKey', {
+        generatedKey: `%${generatedKey}%`,
+      });
+    }
+
+    const [stones, total] = await queryBuilder.getManyAndCount();
 
     return {
       status: true,
@@ -53,7 +61,7 @@ export class StoneService {
       where: { id },
     });
     if (!stone) {
-      throw new NotFoundException(`Stone with id ${id} not found`);
+      throw new NotFoundException(`Stone with key "${generatedKey}" not found`);
     }
     return {
       status: true,
@@ -68,7 +76,7 @@ export class StoneService {
       where: { id },
     });
     if (!stone) {
-      throw new NotFoundException(`Stone with id ${id} not found`);
+      throw new NotFoundException(`Stone with key "${generatedKey}" not found`);
     }
     Object.assign(stone, updateStoneDto);
     await this.stoneRepository.save(stone);

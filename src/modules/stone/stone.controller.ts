@@ -8,9 +8,19 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiTags, ApiQuery } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  ApiTags,
+  ApiQuery,
+  ApiConsumes,
+  ApiBody,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { StoneService } from './stone.service';
+import { StoneImportService } from './stone-import.service';
 import { CreateStoneDto } from './dto/create-stone.dto';
 import { UpdateStoneDto } from './dto/update-stone.dto';
 import {
@@ -25,7 +35,60 @@ import {
 @ApiTags('stone')
 @Controller('stone')
 export class StoneController {
-  constructor(private readonly stoneService: StoneService) {}
+  constructor(
+    private readonly stoneService: StoneService,
+    private readonly stoneImportService: StoneImportService,
+  ) {}
+
+  @Post('import')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Import stones from Excel file' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'Excel file (.xlsx) containing stone data',
+        },
+      },
+    },
+  })
+  async importExcel(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      return {
+        status: false,
+        message: 'No file uploaded',
+        statusCode: 400,
+        data: null,
+      };
+    }
+
+    const allowedMimes = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+      'application/vnd.ms-excel', // .xls
+    ];
+    const allowedExtensions = ['.xlsx', '.xls'];
+    const ext = file.originalname
+      ?.substring(file.originalname.lastIndexOf('.'))
+      ?.toLowerCase();
+
+    if (
+      !allowedExtensions.includes(ext) &&
+      !allowedMimes.includes(file.mimetype)
+    ) {
+      return {
+        status: false,
+        message: 'Invalid file type. Please upload an .xlsx or .xls file.',
+        statusCode: 400,
+        data: null,
+      };
+    }
+
+    return this.stoneImportService.importFromExcel(file.buffer, ext);
+  }
 
   @Post()
   @CreateStoneSwagger()
@@ -43,13 +106,20 @@ export class StoneController {
   @FindAllStonesSwagger()
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+  @ApiQuery({
+    name: 'generatedKey',
+    required: false,
+    type: String,
+    description: 'Search by generated key (partial match)',
+  })
   findAll(
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
+    @Query('generatedKey') generatedKey?: string,
   ) {
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 10;
-    return this.stoneService.findAll(pageNum, limitNum);
+    return this.stoneService.findAll(pageNum, limitNum, generatedKey);
   }
 
   @Get(':id')
