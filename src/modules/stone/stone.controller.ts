@@ -106,13 +106,20 @@ export class StoneController {
   @FindAllStonesSwagger()
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+  @ApiQuery({
+    name: 'generatedKey',
+    required: false,
+    type: String,
+    description: 'Search by generated key (partial match)',
+  })
   findAll(
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
+    @Query('generatedKey') generatedKey?: string,
   ) {
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 10;
-    return this.stoneService.findAll(pageNum, limitNum);
+    return this.stoneService.findAll(pageNum, limitNum, generatedKey);
   }
 
   @Get(':generatedKey')
