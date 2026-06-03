@@ -61,7 +61,7 @@ export class StoneService {
       where: { id },
     });
     if (!stone) {
-      throw new NotFoundException(`Stone with key "${generatedKey}" not found`);
+      throw new NotFoundException(`Stone with key "${id}" not found`);
     }
     return {
       status: true,
@@ -76,7 +76,7 @@ export class StoneService {
       where: { id },
     });
     if (!stone) {
-      throw new NotFoundException(`Stone with key "${generatedKey}" not found`);
+      throw new NotFoundException(`Stone with key "${id}" not found`);
     }
     Object.assign(stone, updateStoneDto);
     await this.stoneRepository.save(stone);

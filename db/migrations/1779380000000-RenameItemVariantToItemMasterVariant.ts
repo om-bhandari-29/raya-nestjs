@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class RenameItemVariantToItemMasterVariant1779546000000 implements MigrationInterface {
-  name = 'RenameItemVariantToItemMasterVariant1779546000000';
+export class RenameItemVariantToItemMasterVariant1779380000000 implements MigrationInterface {
+  name = 'RenameItemVariantToItemMasterVariant1779380000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`ALTER TABLE "item_variant" RENAME TO "item_master_variant"`);

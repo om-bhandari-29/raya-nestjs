@@ -11,6 +11,7 @@ import { ItemModule } from './modules/item/item.module';
 import { ItemAttributeMasterModule } from './modules/item-attribute-master/item-attribute-master.module';
 import { StoneMasterModule } from './modules/stone-master/stone-master.module';
 import { StoneModule } from './modules/stone/stone.module';
+import { EngineeringTemplateModule } from './modules/engineering-template/engineering-template.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PGTypeORMconfig } from './config/pgsql.config';
 import { ConfigModule } from '@nestjs/config';
@@ -31,6 +32,7 @@ import { ConfigModule } from '@nestjs/config';
     ItemAttributeMasterModule,
     StoneMasterModule,
     StoneModule,
+    EngineeringTemplateModule,
   ],
   controllers: [AppController],
   providers: [AppService],
