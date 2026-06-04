@@ -15,6 +15,7 @@ import { EngineeringTemplateModule } from './modules/engineering-template/engine
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PGTypeORMconfig } from './config/pgsql.config';
 import { ConfigModule } from '@nestjs/config';
+import { ProductsImportModule } from './modules/products-import/products-import.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { ConfigModule } from '@nestjs/config';
     StoneMasterModule,
     StoneModule,
     EngineeringTemplateModule,
+    ProductsImportModule,
   ],
   controllers: [AppController],
   providers: [AppService],
