@@ -3,6 +3,7 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { Readable } from 'stream';
 import * as csvParser from 'csv-parser';
+import { BlueprintListItemDto } from './dto/blueprint-list.dto';
 
 // ─── Column header names — verified against actual spreadsheet ──────────────
 //
@@ -406,5 +407,23 @@ export class ProductsImportService {
     );
 
     return sizeMap.size;
+  }
+
+  // ─── Querying ───────────────────────────────────────────────────────────────
+
+  /**
+   * This API will scan your product_blueprints table and group by design_slug
+   */
+  async getBlueprintsGroupedByDesign(): Promise<BlueprintListItemDto[]> {
+    const sql = `
+      SELECT DISTINCT ON (design_slug)
+        id,
+        design_slug,
+        variant_name,
+        target_gender
+      FROM product_blueprints
+      ORDER BY design_slug ASC, id ASC
+    `;
+    return await this.dataSource.query(sql);
   }
 }

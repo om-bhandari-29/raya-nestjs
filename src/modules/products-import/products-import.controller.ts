@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Get,
   UploadedFile,
   UseInterceptors,
   BadRequestException,
@@ -15,6 +16,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ProductsImportService } from './products-import.service';
+import { BlueprintListResponseDto } from './dto/blueprint-list.dto';
 
 @ApiTags('Products Import')
 @Controller('products-import')
@@ -76,6 +78,20 @@ export class ProductsImportController {
       statusCode: HttpStatus.OK,
       message: 'Import completed successfully.',
       data: result,
+    };
+  }
+
+  @Get('blueprints')
+  @ApiOperation({
+    summary: 'Get list of product blueprints grouped by design slug',
+    description: 'This API will scan your product_blueprints table and group by design_slug',
+  })
+  async getBlueprints(): Promise<BlueprintListResponseDto> {
+    const data = await this.productsImportService.getBlueprintsGroupedByDesign();
+    return {
+      success: true,
+      count: data.length,
+      data,
     };
   }
 }
