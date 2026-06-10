@@ -6,7 +6,9 @@ import { ItemAttributeMaster } from './entity/item-attribute-master.entity';
 import { ItemAttributeValue } from './entity/item-attribute-value.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ItemAttributeMaster, ItemAttributeValue])],
+  imports: [
+    TypeOrmModule.forFeature([ItemAttributeMaster, ItemAttributeValue]),
+  ],
   controllers: [ItemAttributeMasterController],
   providers: [ItemAttributeMasterService],
   exports: [ItemAttributeMasterService],

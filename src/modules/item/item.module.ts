@@ -8,7 +8,9 @@ import { ItemVariant } from './entity/item-variant.entity';
 import { ItemStoneDetail } from './entity/item-stone-detail.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Item, ItemBarcode, ItemVariant, ItemStoneDetail])],
+  imports: [
+    TypeOrmModule.forFeature([Item, ItemBarcode, ItemVariant, ItemStoneDetail]),
+  ],
   controllers: [ItemController],
   providers: [ItemService],
   exports: [ItemService],

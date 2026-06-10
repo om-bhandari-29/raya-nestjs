@@ -10,7 +10,8 @@ export const FindAllEngineeringTemplatesSwagger = () =>
   applyDecorators(
     ApiOperation({
       summary: 'Get all engineering templates with pagination',
-      description: 'Returns a paginated list of engineering templates. Use `search` to filter by Template ID, Zone, Shape, or Placement.',
+      description:
+        'Returns a paginated list of engineering templates. Use `search` to filter by Template ID, Zone, Shape, or Placement.',
     }),
     ApiResponse({
       status: 200,

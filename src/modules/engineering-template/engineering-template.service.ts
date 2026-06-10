@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as ExcelJS from 'exceljs';
@@ -110,7 +106,11 @@ export class EngineeringTemplateService {
     const colIndex: Record<string, number> = {};
     headers.forEach((h, i) => (colIndex[h] = i + 1));
 
-    const results = { inserted: 0, updated: 0, errors: [] as { row: number; message: string }[] };
+    const results = {
+      inserted: 0,
+      updated: 0,
+      errors: [] as { row: number; message: string }[],
+    };
 
     const totalRows = worksheet.rowCount;
     for (let rowNum = 2; rowNum <= totalRows; rowNum++) {
@@ -118,7 +118,11 @@ export class EngineeringTemplateService {
 
       // Skip completely empty rows
       const rawTemplateId = row.getCell(colIndex['Template_ID']).value;
-      if (rawTemplateId === null || rawTemplateId === undefined || String(rawTemplateId).trim() === '') {
+      if (
+        rawTemplateId === null ||
+        rawTemplateId === undefined ||
+        String(rawTemplateId).trim() === ''
+      ) {
         continue;
       }
 
@@ -130,10 +134,14 @@ export class EngineeringTemplateService {
           Dim_L: Number(row.getCell(colIndex['Dim_L']).value),
           Dim_W: Number(row.getCell(colIndex['Dim_W']).value),
           Dim_H: Number(row.getCell(colIndex['Dim_H']).value),
-          Dim_String: String(row.getCell(colIndex['Dim_String']).value ?? '').trim(),
+          Dim_String: String(
+            row.getCell(colIndex['Dim_String']).value ?? '',
+          ).trim(),
           Base_Qty: Number(row.getCell(colIndex['Base_Qty']).value),
           Weight_Each: Number(row.getCell(colIndex['Weight_Each']).value),
-          Placement: String(row.getCell(colIndex['Placement']).value ?? '').trim(),
+          Placement: String(
+            row.getCell(colIndex['Placement']).value ?? '',
+          ).trim(),
         };
 
         this.validateRow(rowNum, data);
@@ -180,20 +188,32 @@ export class EngineeringTemplateService {
       throw new Error('Template_ID is required');
     }
 
-    const numericFields: (keyof ExcelRow)[] = ['Dim_L', 'Dim_W', 'Dim_H', 'Base_Qty', 'Weight_Each'];
+    const numericFields: (keyof ExcelRow)[] = [
+      'Dim_L',
+      'Dim_W',
+      'Dim_H',
+      'Base_Qty',
+      'Weight_Each',
+    ];
     for (const field of numericFields) {
       if (isNaN(data[field] as number)) {
-        throw new Error(`"${field}" must be a valid number (got "${data[field]}")`);
+        throw new Error(
+          `"${field}" must be a valid number (got "${data[field]}")`,
+        );
       }
     }
 
     // Validate varchar lengths to give a clear error before the DB rejects it
-    const stringLimits: { field: keyof ExcelRow; column: string; maxLength: number }[] = [
-      { field: 'Template_ID', column: 'template_id',  maxLength: 150 },
-      { field: 'Zone',        column: 'zone_name',    maxLength: 50  },
-      { field: 'Shape',       column: 'stone_shape',  maxLength: 50  },
-      { field: 'Dim_String',  column: 'dim_string',   maxLength: 62  },
-      { field: 'Placement',   column: 'placement',    maxLength: 100  },
+    const stringLimits: {
+      field: keyof ExcelRow;
+      column: string;
+      maxLength: number;
+    }[] = [
+      { field: 'Template_ID', column: 'template_id', maxLength: 150 },
+      { field: 'Zone', column: 'zone_name', maxLength: 50 },
+      { field: 'Shape', column: 'stone_shape', maxLength: 50 },
+      { field: 'Dim_String', column: 'dim_string', maxLength: 62 },
+      { field: 'Placement', column: 'placement', maxLength: 100 },
     ];
 
     for (const { field, column, maxLength } of stringLimits) {
@@ -201,7 +221,7 @@ export class EngineeringTemplateService {
       if (value.length > maxLength) {
         throw new Error(
           `Column "${column}" (Excel header: "${field}") exceeds max length of ${maxLength} ` +
-          `— value has ${value.length} characters: "${value.substring(0, 60)}${value.length > 60 ? '…' : ''}"`,
+            `— value has ${value.length} characters: "${value.substring(0, 60)}${value.length > 60 ? '…' : ''}"`,
         );
       }
     }

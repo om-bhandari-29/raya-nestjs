@@ -52,7 +52,10 @@ export class UomController {
 
   @Patch(':id')
   @UpdateUomSwagger()
-  update(@Param('id', ParseIntPipe) id: number, @Body() updateUomDto: UpdateUomDto) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateUomDto: UpdateUomDto,
+  ) {
     return this.uomService.update(id, updateUomDto);
   }
 

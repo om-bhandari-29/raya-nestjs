@@ -43,7 +43,12 @@ export class ItemAttributeMasterService {
       statusCode: 200,
       data: {
         items,
-        pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
       },
     };
   }

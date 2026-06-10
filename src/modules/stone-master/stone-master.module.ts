@@ -12,7 +12,11 @@ import {
 
 @Module({
   imports: [TypeOrmModule.forFeature([StoneType, StoneClarity, StoneShape])],
-  controllers: [StoneTypeController, StoneClarityController, StoneShapeController],
+  controllers: [
+    StoneTypeController,
+    StoneClarityController,
+    StoneShapeController,
+  ],
   providers: [StoneMasterService],
   exports: [StoneMasterService],
 })

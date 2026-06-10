@@ -79,7 +79,9 @@ export class ProductsImportService {
     this.logger.log(`Parsed ${rows.length} raw rows from CSV.`);
 
     const groups = this.groupRows(rows);
-    this.logger.log(`Identified ${groups.size} unique design groups to process.`);
+    this.logger.log(
+      `Identified ${groups.size} unique design groups to process.`,
+    );
 
     const result: ImportResult = {
       blueprintsProcessed: 0,
@@ -166,7 +168,11 @@ export class ProductsImportService {
     const { designSlug, variantName, targetGender, rows } = group;
 
     // 1. Upsert the blueprint and get back its ID
-    const blueprintId = await this.upsertBlueprint(designSlug, variantName, targetGender);
+    const blueprintId = await this.upsertBlueprint(
+      designSlug,
+      variantName,
+      targetGender,
+    );
     result.blueprintsProcessed++;
 
     this.logger.debug(
@@ -293,7 +299,10 @@ export class ProductsImportService {
     const templateId = templateRow[templateCol].trim();
 
     // Analyse whether the qty fluctuates across different ring sizes
-    const { isDynamic, fixedQty } = this.analyseZoneDynamism(activeRows, qtyCol);
+    const { isDynamic, fixedQty } = this.analyseZoneDynamism(
+      activeRows,
+      qtyCol,
+    );
 
     // ── Upsert the zone slot ──────────────────────────────────────────────────
     const slotSql = `
@@ -425,5 +434,167 @@ export class ProductsImportService {
       ORDER BY design_slug ASC, id ASC
     `;
     return await this.dataSource.query(sql);
+  }
+
+  // async getProductDetails(designSlug: string) {
+  //   // STEP 1: Query Core Product Blueprint Meta
+  //   const blueprints = await this.dataSource.query(
+  //     `SELECT id, variant_name, target_gender
+  //      FROM product_blueprints
+  //      WHERE design_slug = $1`,
+  //     [designSlug],
+  //   );
+
+  //   if (!blueprints || blueprints.length === 0) {
+  //     const { NotFoundException } = await import('@nestjs/common');
+  //     throw new NotFoundException('Product blueprint not found');
+  //   }
+
+  //   const blueprint = blueprints[0];
+  //   const blueprintId = blueprint.id;
+
+  //   // STEP 2: Query Permitted Metal Options
+  //   const metalOptions = await this.dataSource.query(
+  //     `SELECT metal_purity, metal_color
+  //      FROM product_metal_options
+  //      WHERE blueprint_id = $1`,
+  //     [blueprintId],
+  //   );
+
+  //   // STEP 3: Query Active Structural Zone Slots
+  //   const zoneSlots = await this.dataSource.query(
+  //     `SELECT id as zone_slot_id, zone_name, template_id, is_dynamic_by_size, fixed_quantity
+  //      FROM blueprint_zone_slots
+  //      WHERE blueprint_id = $1`,
+  //     [blueprintId],
+  //   );
+
+  //   // STEP 4: Resolve the Sizing Sub-Matrix Array
+  //   for (const slot of zoneSlots) {
+  //     if (slot.is_dynamic_by_size) {
+  //       const matrix = await this.dataSource.query(
+  //         `SELECT ring_size, stone_quantity
+  //          FROM blueprint_size_matrix
+  //          WHERE zone_slot_id = $1
+  //          ORDER BY ring_size ASC`,
+  //         [slot.zone_slot_id],
+  //       );
+  //       slot.size_quantity_matrix = matrix;
+  //     } else {
+  //       slot.size_quantity_matrix = null;
+  //     }
+  //   }
+
+  //   return {
+  //     success: true,
+  //     data: {
+  //       design_slug: designSlug,
+  //       variant: blueprint.variant_name,
+  //       gender: blueprint.target_gender,
+  //       allowed_metals: metalOptions,
+  //       zone_slots: zoneSlots,
+  //     },
+  //   };
+  // }
+  async getProductDetails(designSlug: string) {
+    // STEP 1: Query ALL Core Product Blueprint Variants for the slug
+    const blueprints = await this.dataSource.query(
+      `SELECT id, variant_name, target_gender 
+     FROM product_blueprints 
+     WHERE design_slug = $1`,
+      [designSlug],
+    );
+
+    if (!blueprints || blueprints.length === 0) {
+      const { NotFoundException } = await import('@nestjs/common');
+      throw new NotFoundException(
+        'No product blueprints found for this design slug',
+      );
+    }
+
+    // Extract all blueprint IDs to batch-fetch related records
+    const blueprintIds = blueprints.map((b) => b.id);
+
+    // STEP 2: Query Permitted Metal Options for all fetched blueprints
+    const allMetalOptions = await this.dataSource.query(
+      `SELECT blueprint_id, metal_purity, metal_color 
+     FROM product_metal_options 
+     WHERE blueprint_id = ANY($1)`,
+      [blueprintIds],
+    );
+
+    // STEP 3: Query Active Structural Zone Slots for all fetched blueprints
+    const allZoneSlots = await this.dataSource.query(
+      `SELECT id as zone_slot_id, blueprint_id, zone_name, template_id, is_dynamic_by_size, fixed_quantity 
+     FROM blueprint_zone_slots 
+     WHERE blueprint_id = ANY($1)`,
+      [blueprintIds],
+    );
+
+    // STEP 4: Resolve Sizing Sub-Matrix Array if any slot is dynamic
+    const dynamicZoneSlotIds = allZoneSlots
+      .filter((slot) => slot.is_dynamic_by_size)
+      .map((slot) => slot.zone_slot_id);
+
+    let allMatrices = [];
+    if (dynamicZoneSlotIds.length > 0) {
+      allMatrices = await this.dataSource.query(
+        `SELECT zone_slot_id, ring_size, stone_quantity 
+       FROM blueprint_size_matrix 
+       WHERE zone_slot_id = ANY($1) 
+       ORDER BY ring_size ASC`,
+        [dynamicZoneSlotIds],
+      );
+    }
+
+    // STEP 5: Map Matrix Sub-Arrays back to their respective Zone Slots
+    const slotsWithMatrix = allZoneSlots.map((slot) => {
+      return {
+        zone_slot_id: slot.zone_slot_id,
+        blueprint_id: slot.blueprint_id,
+        zone_name: slot.zone_name,
+        template_id: slot.template_id,
+        is_dynamic_by_size: slot.is_dynamic_by_size,
+        fixed_quantity: slot.fixed_quantity,
+        size_quantity_matrix: slot.is_dynamic_by_size
+          ? allMatrices
+              .filter((m) => m.zone_slot_id === slot.zone_slot_id)
+              .map(({ ring_size, stone_quantity }) => ({
+                ring_size,
+                stone_quantity,
+              }))
+          : null,
+      };
+    });
+
+    // STEP 6: Assemble the final nested structure per variant
+    const variantsData = blueprints.map((blueprint) => {
+      const allowedMetals = allMetalOptions
+        .filter((m) => m.blueprint_id === blueprint.id)
+        .map(({ metal_purity, metal_color }) => ({
+          metal_purity,
+          metal_color,
+        }));
+
+      const zoneSlots = slotsWithMatrix
+        .filter((slot) => slot.blueprint_id === blueprint.id)
+        // Remove blueprint_id from final output to keep it clean
+        .map(({ blueprint_id, ...rest }) => rest);
+
+      return {
+        variant: blueprint.variant_name,
+        gender: blueprint.target_gender,
+        allowed_metals: allowedMetals,
+        zone_slots: zoneSlots,
+      };
+    });
+
+    return {
+      success: true,
+      data: {
+        design_slug: designSlug,
+        variants: variantsData,
+      },
+    };
   }
 }

@@ -74,7 +74,12 @@ export class ItemService {
       statusCode: 200,
       data: {
         items: items.map((i) => ({ id: i.id, name: i.name })),
-        pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
       },
     };
   }
@@ -108,7 +113,8 @@ export class ItemService {
       where: { name },
       relations: ITEM_RELATIONS,
     });
-    if (!item) throw new NotFoundException(`Item with name "${name}" not found`);
+    if (!item)
+      throw new NotFoundException(`Item with name "${name}" not found`);
     return {
       status: true,
       message: 'Item retrieved successfully',
@@ -179,7 +185,10 @@ export class ItemService {
         );
       } else {
         const { id: variantId, ...rest } = v;
-        await this.variantRepository.update(variantId, { ...rest, item_master_id: id });
+        await this.variantRepository.update(variantId, {
+          ...rest,
+          item_master_id: id,
+        });
       }
     }
 
@@ -187,7 +196,10 @@ export class ItemService {
       status: true,
       message: 'Weight and variants saved successfully',
       statusCode: 200,
-      data: await this.itemRepository.findOne({ where: { id }, relations: ['variants'] }),
+      data: await this.itemRepository.findOne({
+        where: { id },
+        relations: ['variants'],
+      }),
     };
   }
 

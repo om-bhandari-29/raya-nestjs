@@ -7,6 +7,7 @@ import {
   BadRequestException,
   HttpCode,
   HttpStatus,
+  Param,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -14,6 +15,7 @@ import {
   ApiOperation,
   ApiBody,
   ApiTags,
+  ApiParam,
 } from '@nestjs/swagger';
 import { ProductsImportService } from './products-import.service';
 import { BlueprintListResponseDto } from './dto/blueprint-list.dto';
@@ -47,9 +49,7 @@ export class ProductsImportController {
       required: ['file'],
     },
   })
-  async uploadCsv(
-    @UploadedFile() file: Express.Multer.File,
-  ): Promise<{
+  async uploadCsv(@UploadedFile() file: Express.Multer.File): Promise<{
     status: boolean;
     statusCode: number;
     message: string;
@@ -61,17 +61,28 @@ export class ProductsImportController {
     };
   }> {
     if (!file) {
-      throw new BadRequestException('No file uploaded. Please attach a CSV file under the field name "file".');
+      throw new BadRequestException(
+        'No file uploaded. Please attach a CSV file under the field name "file".',
+      );
     }
 
-    const allowedMimeTypes = ['text/csv', 'application/vnd.ms-excel', 'text/plain'];
-    if (!allowedMimeTypes.includes(file.mimetype) && !file.originalname.endsWith('.csv')) {
+    const allowedMimeTypes = [
+      'text/csv',
+      'application/vnd.ms-excel',
+      'text/plain',
+    ];
+    if (
+      !allowedMimeTypes.includes(file.mimetype) &&
+      !file.originalname.endsWith('.csv')
+    ) {
       throw new BadRequestException(
         `Unsupported file type "${file.mimetype}". Please upload a .csv file.`,
       );
     }
 
-    const result = await this.productsImportService.importFromBuffer(file.buffer);
+    const result = await this.productsImportService.importFromBuffer(
+      file.buffer,
+    );
 
     return {
       status: true,
@@ -84,14 +95,27 @@ export class ProductsImportController {
   @Get('blueprints')
   @ApiOperation({
     summary: 'Get list of product blueprints grouped by design slug',
-    description: 'This API will scan your product_blueprints table and group by design_slug',
+    description:
+      'This API will scan your product_blueprints table and group by design_slug',
   })
   async getBlueprints(): Promise<BlueprintListResponseDto> {
-    const data = await this.productsImportService.getBlueprintsGroupedByDesign();
+    const data =
+      await this.productsImportService.getBlueprintsGroupedByDesign();
     return {
       success: true,
       count: data.length,
       data,
     };
+  }
+
+  @Get('detail/:design_slug')
+  @ApiOperation({ summary: 'Get product details by design slug' })
+  @ApiParam({
+    name: 'design_slug',
+    description: 'Unique design slug of the product',
+    example: 'devotion-ring',
+  })
+  async getProductDetails(@Param('design_slug') designSlug: string) {
+    return this.productsImportService.getProductDetails(designSlug);
   }
 }

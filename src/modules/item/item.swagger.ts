@@ -191,7 +191,9 @@ export const RemoveItemSwagger = () =>
 
 export const OptionsItemSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Get item options (id and name) with pagination and search' }),
+    ApiOperation({
+      summary: 'Get item options (id and name) with pagination and search',
+    }),
     ApiResponse({
       status: 200,
       description: 'Item options retrieved successfully',
@@ -202,7 +204,10 @@ export const OptionsItemSwagger = () =>
           statusCode: 200,
           data: {
             items: [
-              { id: 1, name: 'White Gold Oval Hoop Earrings in Sterling Silver' },
+              {
+                id: 1,
+                name: 'White Gold Oval Hoop Earrings in Sterling Silver',
+              },
               { id: 2, name: 'Diamond Solitaire Ring' },
             ],
             pagination: { total: 50, page: 1, limit: 10, totalPages: 5 },

@@ -94,9 +94,7 @@ export class ItemGroupService {
       where: { name: dto.name },
     });
     if (!itemGroup) {
-      throw new NotFoundException(
-        `Item group "${dto.name}" not found`,
-      );
+      throw new NotFoundException(`Item group "${dto.name}" not found`);
     }
     itemGroup.liked = dto.liked;
     await this.itemGroupRepository.save(itemGroup);

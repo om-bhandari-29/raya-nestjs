@@ -12,7 +12,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 export class SaveWeightVariantDto {
-  @ApiProperty({ example: 0, description: '0 to create, existing id to update' })
+  @ApiProperty({
+    example: 0,
+    description: '0 to create, existing id to update',
+  })
   @IsInt()
   @Type(() => Number)
   id: number;
@@ -51,7 +54,10 @@ export class SaveWeightVariantDto {
   @MaxLength(255)
   value?: string;
 
-  @ApiPropertyOptional({ example: 5, description: 'item_master_id (variant of)' })
+  @ApiPropertyOptional({
+    example: 5,
+    description: 'item_master_id (variant of)',
+  })
   @IsInt()
   @IsOptional()
   @Type(() => Number)

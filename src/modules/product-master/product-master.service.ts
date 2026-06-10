@@ -23,7 +23,12 @@ export class ProductMasterService {
     };
   }
 
-  async combo(subCategoryId: number | null, page: number, limit: number, search?: string) {
+  async combo(
+    subCategoryId: number | null,
+    page: number,
+    limit: number,
+    search?: string,
+  ) {
     const query = this.productMasterRepository
       .createQueryBuilder('pm')
       .select(['pm.id', 'pm.name'])
@@ -49,7 +54,12 @@ export class ProductMasterService {
       statusCode: 200,
       data: {
         items,
-        pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
       },
     };
   }
