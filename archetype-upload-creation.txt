@@ -1,0 +1,35 @@
+Act as an expert backend developer specializing in NestJS, TypeScript, and raw PostgreSQL query optimization. We are replacing our old product import system with a clean, unpivoted import pipeline that reads from our new master design spreadsheet ('archetype_raw_2026-06-09.csv').
+
+Please generate the code for a new endpoint handler in `ProductsImportController` and the corresponding file processor logic method inside `ProductsImportService`.
+
+### Spreadsheet Input Columns Reference:
+The CSV data contains rows with the following column headers:
+config_id, design_slug, variant_slug, zone_name, position_index, shape_normalized, dim_l_mm, dim_w_mm, dim_h_mm, 
+qty_3_0, qty_3_5, qty_4_0, qty_4_5, qty_5_0, qty_5_5, qty_6_0, qty_6_5, qty_7_0, qty_7_5, qty_8_0, qty_8_5, qty_9_0, qty_9_5, qty_10_0, qty_10_5, qty_11_0, qty_11_5, qty_12_0, qty_12_5, qty_13_0, 
+metal_wt_3_0, metal_wt_3_5, metal_wt_4_0, metal_wt_4_5, metal_wt_5_0, metal_wt_5_5, metal_wt_6_0, metal_wt_6_5, metal_wt_7_0, metal_wt_7_5, metal_wt_8_0, metal_wt_8_5, metal_wt_9_0, metal_wt_9_5, metal_wt_10_0, metal_wt_10_5, metal_wt_11_0, metal_wt_11_5, metal_wt_12_0, metal_wt_12_5, metal_wt_13_0, 
+qty_model, setting_type
+
+### Required Database Processing Logic:
+
+1. Endpoints: Expose an HTTP POST route `api/products/import/archetypes` using the NestJS Multer `FileInterceptor` to receive the binary stream buffer.
+
+2. Distinct Blueprint Grouping:
+   - Stream the rows using 'csv-parser'.
+   - Group the file records by `design_slug` and `variant_slug`. (Since gender is not in this engineering file, default the 'target_gender' string column to 'Women' or 'Unisex' inside the database insert query).
+   - Execute an UPSERT statement into 'product_blueprints' using ON CONFLICT constraints, returning the active `blueprint_id`.
+
+3. Structural Component Slot Mapping:
+   - For every configuration row, generate a standardized template ID identifier string dynamically: 
+     `TPL-${row.zone_name}-${row.shape_normalized}-${row.dim_l_mm}x${row.dim_w_mm}`
+   - Evaluate the `qty_model` column. If it equals 'CIRCUMFERENCE_BASED', flag `is_dynamic_by_size = true` and `fixed_quantity = null`. If it equals 'FIXED', set `is_dynamic_by_size = false` and pass the numeric value found inside column `qty_7_0` into the `fixed_quantity` field.
+   - Insert this component record into 'blueprint_zone_slots', returning its auto-incremented primary key ID as `zone_slot_id`.
+
+4. Horizontal Column Unpivoting Loop:
+   - Create an array mapping all 21 key finger size checkpoints: 
+     `['3.0', '3.5', '4.0', '4.4', '5.0', '5.5', '6.0', '6.5', '7.0', '7.5', '8.0', '8.5', '9.0', '9.5', '10.0', '10.5', '11.0', '11.5', '12.0', '12.5', '13.0']`
+   - Loop through these sizes for *every single row* to extract the values from the corresponding size-specific columns dynamically (e.g., for size '7.5', fetch `qty_7_5` and `metal_wt_7_5`).
+   - UPSERT these unpivoted values into 'blueprint_size_matrix' (`zone_slot_id`, `ring_size`, `stone_quantity`, `metal_weight`). Use an `ON CONFLICT (zone_slot_id, ring_size) DO UPDATE SET...` clause to avoid duplicate key violations.
+
+5. Technical Standards:
+   - Keep operations transaction-safe and handle network exceptions using `InternalServerErrorException`.
+   - Implement descriptive, inline logging messages using the native NestJS Logger class.

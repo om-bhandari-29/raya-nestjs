@@ -16,12 +16,18 @@ import {
   ApiBody,
   ApiTags,
   ApiParam,
+  ApiResponse,
 } from '@nestjs/swagger';
 import { ProductsImportService } from './products-import.service';
 import { BlueprintListResponseDto } from './dto/blueprint-list.dto';
+import {
+  ImportResponseDto,
+  ArchetypeImportResponseDto,
+} from './dto/import-result.dto';
+import { ProductDetailResponseDto } from './dto/product-detail.dto';
 
 @ApiTags('Products Import')
-@Controller('products-import')
+@Controller('products')
 export class ProductsImportController {
   constructor(private readonly productsImportService: ProductsImportService) {}
 
@@ -49,17 +55,14 @@ export class ProductsImportController {
       required: ['file'],
     },
   })
-  async uploadCsv(@UploadedFile() file: Express.Multer.File): Promise<{
-    status: boolean;
-    statusCode: number;
-    message: string;
-    data: {
-      blueprintsProcessed: number;
-      metalOptionsInserted: number;
-      zoneSlotsInserted: number;
-      sizeMatrixRowsInserted: number;
-    };
-  }> {
+  @ApiResponse({
+    status: 200,
+    description: 'Import completed successfully.',
+    type: ImportResponseDto,
+  })
+  async uploadCsv(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<ImportResponseDto> {
     if (!file) {
       throw new BadRequestException(
         'No file uploaded. Please attach a CSV file under the field name "file".',
@@ -92,6 +95,53 @@ export class ProductsImportController {
     };
   }
 
+  @Post('import/archetypes')
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 50 * 1024 * 1024 },
+    }),
+  )
+  @ApiOperation({
+    summary: 'Import archetype blueprints from a clean, unpivoted CSV file',
+    description:
+      'Reads archetype_raw_2026-06-09.csv format, groups by design/variant, ' +
+      'maps zones to templates, and unpivots size-specific quantities and metal weights.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+      required: ['file'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Archetype import completed successfully.',
+    type: ArchetypeImportResponseDto,
+  })
+  async uploadArchetypes(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<ArchetypeImportResponseDto> {
+    if (!file) {
+      throw new BadRequestException('No file uploaded.');
+    }
+
+    const result = await this.productsImportService.importArchetypesFromBuffer(
+      file.buffer,
+    );
+
+    return {
+      status: true,
+      statusCode: HttpStatus.OK,
+      message: 'Archetype import completed successfully.',
+      data: result,
+    };
+  }
+
   @Get('blueprints')
   @ApiOperation({
     summary: 'Get list of product blueprints grouped by design slug',
@@ -115,7 +165,14 @@ export class ProductsImportController {
     description: 'Unique design slug of the product',
     example: 'devotion-ring',
   })
-  async getProductDetails(@Param('design_slug') designSlug: string) {
+  @ApiResponse({
+    status: 200,
+    description: 'Product details retrieved successfully.',
+    type: ProductDetailResponseDto,
+  })
+  async getProductDetails(
+    @Param('design_slug') designSlug: string,
+  ): Promise<ProductDetailResponseDto> {
     return this.productsImportService.getProductDetails(designSlug);
   }
 }
