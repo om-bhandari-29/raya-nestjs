@@ -1,0 +1,281 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource, QueryRunner } from 'typeorm';
+import { Readable } from 'stream';
+import * as csvParser from 'csv-parser';
+
+export interface ArchetypeCsvRow {
+  config_id?: string;
+  design_slug?: string;
+  variant_slug?: string;
+  zone_name?: string;
+  shape_normalized?: string;
+  dim_l_mm?: string;
+  dim_w_mm?: string;
+  qty_model?: string;
+  [key: string]: any;
+}
+
+export interface ImportMetrics {
+  blueprintsProcessed: number;
+  zoneSlotsInserted: number;
+  sizeMatrixRowsInserted: number;
+}
+
+@Injectable()
+export class ArchetypeImportService {
+  private readonly logger = new Logger(ArchetypeImportService.name);
+
+  constructor(
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
+  ) {}
+
+  async importArchetypesFromBuffer(buffer: Buffer): Promise<ImportMetrics> {
+    this.logger.log('Starting Archetype import processing pipeline...');
+
+    let rows: ArchetypeCsvRow[];
+    // Detect Excel format via PK header (Zip archive signature)
+    if (buffer[0] === 0x50 && buffer[1] === 0x4B) {
+      this.logger.log('Detected Excel (.xlsx) format. Parsing via exceljs...');
+      rows = await this.parseExcelBuffer(buffer);
+    } else {
+      this.logger.log('Detected CSV format. Parsing via csv-parser...');
+      rows = await this.convertCsvToObjects(buffer);
+    }
+
+    this.logger.log(`Parsed ${rows.length} total structural layout rows.`);
+
+    const groups = new Map<string, ArchetypeCsvRow[]>();
+    for (const row of rows) {
+      // Robust lookup for design and variant slugs
+      const designSlug = (row.design_slug || row.Design_Slug || row['design_slug'] || '').toString().trim();
+      const variantSlug = (row.variant_slug || row.Variant_Slug || row['variant_slug'] || '').toString().trim();
+
+      if (!designSlug || !variantSlug) {
+        continue;
+      }
+
+      const key = `${designSlug}::${variantSlug}`;
+      if (!groups.has(key)) {
+        groups.set(key, []);
+      }
+      groups.get(key).push(row);
+    }
+
+    this.logger.log(`Grouped into ${groups.size} distinct design/variant blueprint tracks.`);
+
+    const result: ImportMetrics = {
+      blueprintsProcessed: 0,
+      zoneSlotsInserted: 0,
+      sizeMatrixRowsInserted: 0,
+    };
+
+    if (groups.size === 0) {
+      this.logger.warn('No valid groups extracted from CSV data rows. Aborting database run.');
+      return result;
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      for (const [key, groupRows] of groups.entries()) {
+        const [designSlug, variantSlug] = key.split('::');
+
+        const blueprintId = await this.upsertArchetypeBlueprint(
+          queryRunner,
+          designSlug,
+          variantSlug,
+        );
+        result.blueprintsProcessed++;
+
+        for (const row of groupRows) {
+          const validZone = row.zone_name || row.Zone_Name || row['zone_name'];
+          if (!validZone) {
+            continue;
+          }
+
+          const slotId = await this.upsertArchetypeZoneSlot(
+            queryRunner,
+            blueprintId,
+            row,
+          );
+          result.zoneSlotsInserted++;
+
+          const matrixCount = await this.upsertArchetypeSizeMatrix(
+            queryRunner,
+            slotId,
+            row,
+          );
+          result.sizeMatrixRowsInserted += matrixCount;
+        }
+      }
+
+      await queryRunner.commitTransaction();
+      this.logger.log(`Archetype database transaction successfully committed. Blueprints: ${result.blueprintsProcessed}, Slots: ${result.zoneSlotsInserted}, Matrix Rows: ${result.sizeMatrixRowsInserted}`);
+    } catch (err) {
+      this.logger.error('Archetype data import failed, rolling back active transaction state...', err.stack);
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+
+    return result;
+  }
+
+  private async parseExcelBuffer(buffer: Buffer): Promise<ArchetypeCsvRow[]> {
+    const ExcelJS = require('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer);
+    const worksheet = workbook.getWorksheet(1);
+    const rows: ArchetypeCsvRow[] = [];
+
+    const headers: string[] = [];
+    const headerRow = worksheet.getRow(1);
+    headerRow.eachCell((cell, colNumber) => {
+      headers[colNumber] = cell.value ? cell.value.toString().trim().replace(/^\ufeff/, '') : '';
+    });
+
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return;
+      const rowData: ArchetypeCsvRow = {};
+      row.eachCell((cell, colNumber) => {
+        const header = headers[colNumber];
+        if (header) {
+          const val = cell.value && typeof cell.value === 'object' && 'result' in cell.value 
+            ? cell.value.result 
+            : cell.value;
+          rowData[header] = val;
+        }
+      });
+      rows.push(rowData);
+    });
+
+    return rows;
+  }
+
+  private async convertCsvToObjects(buffer: Buffer): Promise<ArchetypeCsvRow[]> {
+    return new Promise((resolve, reject) => {
+      const results: ArchetypeCsvRow[] = [];
+
+      Readable.from(buffer)
+        .pipe(csvParser({
+          mapHeaders: ({ header }) => header.trim().replace(/^\ufeff/, ''),
+        }))
+        .on('data', (data: ArchetypeCsvRow) => results.push(data))
+        .on('end', () => {
+          resolve(results);
+        })
+        .on('error', (error: any) => {
+          reject(error);
+        });
+    });
+  }
+
+  private async upsertArchetypeBlueprint(
+    queryRunner: QueryRunner,
+    designSlug: string,
+    variantName: string,
+  ): Promise<number> {
+    const sql = `
+    INSERT INTO product_blueprints (design_slug, variant_name, target_gender)
+    VALUES ($1, $2, $3)
+    ON CONFLICT (design_slug, variant_name, target_gender)
+    DO UPDATE SET variant_name = EXCLUDED.variant_name
+    RETURNING id;
+  `;
+    const res = await queryRunner.query(sql, [designSlug.trim(), variantName.trim(), 'Women']);
+    return res[0].id;
+  }
+
+  private async upsertArchetypeZoneSlot(
+    queryRunner: QueryRunner,
+    blueprintId: number,
+    row: ArchetypeCsvRow,
+  ): Promise<number> {
+    const zoneName = (row.zone_name || row.Zone_Name || row['zone_name']).trim();
+    const shapeNormalized = (row.shape_normalized || row.Shape_Normalized || row['shape_normalized'] || 'round').trim().toLowerCase();
+    const dimL = row.dim_l_mm || row.dim_l || '0';
+    const dimW = row.dim_w_mm || row.dim_w || '0';
+    const qtyModel = row.qty_model || row.Qty_Model || '';
+
+    const templateId = `TPL-${zoneName}-${shapeNormalized}-${dimL}x${dimW}`;
+    const isDynamic = qtyModel.trim() === 'CIRCUMFERENCE_BASED';
+
+    const rawFixedQty = row.qty_7_0 || row['qty_7_0'] || row.qty_70 || '0';
+    const fixedQty = isDynamic ? null : parseInt(rawFixedQty, 10);
+
+    const sql = `
+    INSERT INTO blueprint_zone_slots 
+      (blueprint_id, zone_name, template_id, is_dynamic_by_size, fixed_quantity)
+    VALUES ($1, $2, $3, $4, $5)
+    ON CONFLICT (blueprint_id, zone_name)
+    DO UPDATE SET
+      template_id = EXCLUDED.template_id,
+      is_dynamic_by_size = EXCLUDED.is_dynamic_by_size,
+      fixed_quantity = EXCLUDED.fixed_quantity
+    RETURNING id;
+  `;
+
+    const res = await queryRunner.query(sql, [
+      blueprintId,
+      zoneName,
+      templateId,
+      isDynamic,
+      fixedQty,
+    ]);
+
+    return res[0].id;
+  }
+
+  private async upsertArchetypeSizeMatrix(
+    queryRunner: QueryRunner,
+    zoneSlotId: number,
+    row: ArchetypeCsvRow,
+  ): Promise<number> {
+    const sizes = [
+      '3.0', '3.5', '4.0', '4.5', '5.0', '5.5', '6.0', '6.5', '7.0', '7.5',
+      '8.0', '8.5', '9.0', '9.5', '10.0', '10.5', '11.0', '11.5', '12.0', '12.5', '13.0'
+    ];
+
+    let insertedCount = 0;
+
+    for (const size of sizes) {
+      const colSuffix = size.replace('.', '_');
+      const qtyKey = `qty_${colSuffix}`;
+      const wtKey = `metal_wt_${colSuffix}`;
+
+      const rawQty = row[qtyKey] || row[qtyKey.toUpperCase()] || '0';
+      const rawWt = row[wtKey] || row[wtKey.toUpperCase()] || '0';
+
+      const qty = parseInt(rawQty, 10);
+      const metalWt = parseFloat(rawWt);
+
+      if (qty > 0 || metalWt > 0) {
+        const sql = `
+        INSERT INTO blueprint_size_matrix 
+          (zone_slot_id, ring_size, stone_quantity, metal_weight)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (zone_slot_id, ring_size)
+        DO UPDATE SET
+          stone_quantity = EXCLUDED.stone_quantity,
+          metal_weight = EXCLUDED.metal_weight;
+      `;
+
+        await queryRunner.query(sql, [
+          zoneSlotId,
+          parseFloat(size),
+          qty,
+          metalWt
+        ]);
+
+        insertedCount++;
+      }
+    }
+
+    return insertedCount;
+  }
+}

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductsImportService } from './products-import.service';
+import { ArchetypeImportService } from './archetype-import.service';
 import { ProductsImportController } from './products-import.controller';
 import { ProductBlueprint } from './entity/product-blueprint.entity';
 import { ProductMetalOption } from './entity/product-metal-option.entity';
@@ -19,8 +20,8 @@ import { BlueprintSizeMatrix } from './entity/blueprint-size-matrix.entity';
       BlueprintSizeMatrix,
     ]),
   ],
-  providers: [ProductsImportService],
+  providers: [ProductsImportService, ArchetypeImportService],
   controllers: [ProductsImportController],
-  exports: [ProductsImportService],
+  exports: [ProductsImportService, ArchetypeImportService],
 })
 export class ProductsImportModule {}

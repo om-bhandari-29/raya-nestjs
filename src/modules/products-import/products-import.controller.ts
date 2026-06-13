@@ -19,6 +19,7 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 import { ProductsImportService } from './products-import.service';
+import { ArchetypeImportService } from './archetype-import.service';
 import { BlueprintListResponseDto } from './dto/blueprint-list.dto';
 import {
   ImportResponseDto,
@@ -29,7 +30,10 @@ import { ProductDetailResponseDto } from './dto/product-detail.dto';
 @ApiTags('Products Import')
 @Controller('products')
 export class ProductsImportController {
-  constructor(private readonly productsImportService: ProductsImportService) {}
+  constructor(
+    private readonly productsImportService: ProductsImportService,
+    private readonly archetypeImportService: ArchetypeImportService,
+  ) { }
 
   @Post('upload')
   @HttpCode(HttpStatus.OK)
@@ -130,7 +134,7 @@ export class ProductsImportController {
       throw new BadRequestException('No file uploaded.');
     }
 
-    const result = await this.productsImportService.importArchetypesFromBuffer(
+    const result = await this.archetypeImportService.importArchetypesFromBuffer(
       file.buffer,
     );
 
