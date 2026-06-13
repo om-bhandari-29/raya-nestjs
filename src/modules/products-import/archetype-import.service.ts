@@ -278,4 +278,59 @@ export class ArchetypeImportService {
 
     return insertedCount;
   }
+
+  async getArchetypesPaginated(page: number = 1, limit: number = 10, search?: string) {
+    const offset = (page - 1) * limit;
+    const countParams: any[] = [];
+    const dataParams: any[] = [];
+    let whereClause = '';
+
+    if (search) {
+      const searchPattern = `%${search}%`;
+      whereClause = `WHERE (design_slug ILIKE $1 OR variant_name ILIKE $1)`;
+      countParams.push(searchPattern);
+      dataParams.push(searchPattern);
+    }
+
+    // Count unique design_slugs
+    const countSql = `SELECT COUNT(DISTINCT design_slug) as total FROM product_blueprints ${whereClause}`;
+    
+    // Adjust parameter indices for limit and offset in data query
+    const limitIdx = dataParams.length + 1;
+    const offsetIdx = dataParams.length + 2;
+    
+    // Use DISTINCT ON (design_slug) to get unique designs. 
+    // We order by design_slug first (required by DISTINCT ON) then by id DESC to get the "first" appearance.
+    const dataSql = `
+      SELECT DISTINCT ON (design_slug) 
+        id, design_slug, variant_name, target_gender 
+      FROM product_blueprints 
+      ${whereClause}
+      ORDER BY design_slug, id DESC 
+      LIMIT $${limitIdx} OFFSET $${offsetIdx}
+    `;
+    dataParams.push(limit, offset);
+
+    const [countRes, dataRes] = await Promise.all([
+      this.dataSource.query(countSql, countParams),
+      this.dataSource.query(dataSql, dataParams),
+    ]);
+
+    const total = parseInt(countRes[0].total, 10);
+
+    return {
+      status: true,
+      message: 'Archetypes retrieved successfully',
+      statusCode: 200,
+      data: {
+        items: dataRes,
+      },
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
 }

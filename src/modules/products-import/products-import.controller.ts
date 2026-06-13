@@ -8,6 +8,8 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -17,10 +19,12 @@ import {
   ApiTags,
   ApiParam,
   ApiResponse,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { ProductsImportService } from './products-import.service';
 import { ArchetypeImportService } from './archetype-import.service';
 import { BlueprintListResponseDto } from './dto/blueprint-list.dto';
+import { ArchetypeListPaginatedResponseDto } from './dto/archetype-list.dto';
 import {
   ImportResponseDto,
   ArchetypeImportResponseDto,
@@ -34,6 +38,27 @@ export class ProductsImportController {
     private readonly productsImportService: ProductsImportService,
     private readonly archetypeImportService: ArchetypeImportService,
   ) { }
+
+  @Get('archetypes')
+  @ApiOperation({
+    summary: 'Get paginated list of archetypes (product blueprints)',
+    description: 'Returns a paginated list of all structural layout blueprints.',
+  })
+  @ApiQuery({ name: 'page', required: false, example: 1, description: 'Page number' })
+  @ApiQuery({ name: 'limit', required: false, example: 10, description: 'Items per page' })
+  @ApiQuery({ name: 'search', required: false, example: 'ring', description: 'Search by design slug or variant name' })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated list of archetypes retrieved successfully.',
+    type: ArchetypeListPaginatedResponseDto,
+  })
+  async getArchetypes(
+    @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10,
+    @Query('search') search?: string,
+  ): Promise<ArchetypeListPaginatedResponseDto> {
+    return this.archetypeImportService.getArchetypesPaginated(page, limit, search);
+  }
 
   @Post('upload')
   @HttpCode(HttpStatus.OK)
