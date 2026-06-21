@@ -175,3 +175,30 @@ export const RemoveStoneSwagger = () =>
       schema: { example: notFoundExample },
     }),
   );
+
+export const GetStoneOptionsSwagger = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Get stone options filtered by origin, shape, and dimensions',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Stone options retrieved successfully',
+      schema: {
+        example: {
+          status: true,
+          message: 'Stone options retrieved successfully',
+          statusCode: 200,
+          data: [
+            {
+              id: 1,
+              Stone_name: 'Diamond',
+              Estimated_Weight_Final_ct: 1.25,
+              Price_per_ct_INR: 5000.0,
+              Price_per_ct_USD: 6000.0,
+            },
+          ],
+        },
+      },
+    }),
+  );

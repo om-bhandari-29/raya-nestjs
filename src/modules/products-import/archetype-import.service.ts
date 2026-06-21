@@ -208,21 +208,29 @@ export class ArchetypeImportService {
     const rawFixedQty = row.qty_7_0 || row['qty_7_0'] || row.qty_70 || '0';
     const fixedQty = isDynamic ? null : parseInt(rawFixedQty, 10);
 
+    const dimLVal = dimL ? parseFloat(dimL.toString()) : null;
+    const dimWVal = dimW ? parseFloat(dimW.toString()) : null;
+
     const sql = `
     INSERT INTO blueprint_zone_slots 
-      (blueprint_id, zone_name, template_id, is_dynamic_by_size, fixed_quantity)
-    VALUES ($1, $2, $3, $4, $5)
-    ON CONFLICT (blueprint_id, zone_name)
+      (blueprint_id, zone_name, shape_normalized, dim_l_mm, dim_w_mm, template_id, is_dynamic_by_size, fixed_quantity)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    ON CONFLICT (blueprint_id, zone_name, shape_normalized)
     DO UPDATE SET
-      template_id = EXCLUDED.template_id,
+      dim_l_mm           = EXCLUDED.dim_l_mm,
+      dim_w_mm           = EXCLUDED.dim_w_mm,
+      template_id        = EXCLUDED.template_id,
       is_dynamic_by_size = EXCLUDED.is_dynamic_by_size,
-      fixed_quantity = EXCLUDED.fixed_quantity
+      fixed_quantity     = EXCLUDED.fixed_quantity
     RETURNING id;
   `;
 
     const res = await queryRunner.query(sql, [
       blueprintId,
       zoneName,
+      shapeNormalized,
+      dimLVal,
+      dimWVal,
       templateId,
       isDynamic,
       fixedQty,

@@ -8,35 +8,58 @@ export class AllowedMetalDto {
   metal_color: string;
 }
 
-export class SizeMatrixEntryDto {
+export class SizeWeightMatrixEntryDto {
   @ApiProperty({ example: '7.0' })
   ring_size: string;
 
   @ApiProperty({ example: 20 })
   stone_quantity: number;
+
+  @ApiProperty({ example: 2.35 })
+  metal_weight: number;
 }
 
-export class ZoneSlotDto {
+export class ZoneSlotItemDto {
   @ApiProperty({ example: 101 })
   zone_slot_id: number;
 
-  @ApiProperty({ example: 'CENTER' })
-  zone_name: string;
+  @ApiProperty({ example: 'round' })
+  shape_normalized: string;
 
-  @ApiProperty({ example: 'TPL-CENTER-Round-6.0x6.0' })
-  template_id: string;
+  @ApiProperty({ example: '1.63479345577291', nullable: true })
+  dim_l_mm: string | null;
 
-  @ApiProperty({ example: true })
+  @ApiProperty({ example: '1.63479345577291', nullable: true })
+  dim_w_mm: string | null;
+
+  @ApiProperty({ example: false })
   is_dynamic_by_size: boolean;
 
-  @ApiProperty({ example: null, nullable: true })
-  fixed_quantity: number | null;
+  @ApiProperty({ type: [SizeWeightMatrixEntryDto], nullable: true })
+  size_wt_matrix: SizeWeightMatrixEntryDto[] | null;
+}
 
-  @ApiProperty({ type: [SizeMatrixEntryDto], nullable: true })
-  size_quantity_matrix: SizeMatrixEntryDto[] | null;
+export class ZoneSlotsDto {
+  @ApiProperty({ type: [ZoneSlotItemDto], description: 'Center zone slots' })
+  ZONE_CENTER: ZoneSlotItemDto[];
+
+  @ApiProperty({ type: [ZoneSlotItemDto], description: 'Halo zone slots' })
+  ZONE_HALO: ZoneSlotItemDto[];
+
+  @ApiProperty({ type: [ZoneSlotItemDto], description: 'Gallery zone slots' })
+  ZONE_GALLERY: ZoneSlotItemDto[];
+
+  @ApiProperty({ type: [ZoneSlotItemDto], description: 'Shank zone slots' })
+  ZONE_SHANK: ZoneSlotItemDto[];
+
+  @ApiProperty({ type: [ZoneSlotItemDto], description: 'Accent zone slots' })
+  ZONE_ACCENT: ZoneSlotItemDto[];
 }
 
 export class ProductVariantDetailDto {
+  @ApiProperty({ example: 42 })
+  variantId: number;
+
   @ApiProperty({ example: 'Standard' })
   variant: string;
 
@@ -46,8 +69,8 @@ export class ProductVariantDetailDto {
   @ApiProperty({ type: [AllowedMetalDto] })
   allowed_metals: AllowedMetalDto[];
 
-  @ApiProperty({ type: [ZoneSlotDto] })
-  zone_slots: ZoneSlotDto[];
+  @ApiProperty({ type: ZoneSlotsDto })
+  zone_slots: ZoneSlotsDto;
 }
 
 export class ProductDetailDataDto {
@@ -65,3 +88,23 @@ export class ProductDetailResponseDto {
   @ApiProperty({ type: ProductDetailDataDto })
   data: ProductDetailDataDto;
 }
+
+export class VariantDetailDto {
+  @ApiProperty({ example: 42 })
+  variantId: number;
+
+  @ApiProperty({ type: [AllowedMetalDto] })
+  allowed_metals: AllowedMetalDto[];
+
+  @ApiProperty({ type: ZoneSlotsDto })
+  zone_slots: ZoneSlotsDto;
+}
+
+export class VariantDetailResponseDto {
+  @ApiProperty({ example: true })
+  status: boolean;
+
+  @ApiProperty({ type: VariantDetailDto })
+  data: VariantDetailDto;
+}
+

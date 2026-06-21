@@ -8,6 +8,9 @@ import { DataSource, QueryRunner } from 'typeorm';
 import { Readable } from 'stream';
 import * as csvParser from 'csv-parser';
 import { BlueprintListItemDto } from './dto/blueprint-list.dto';
+import { ProductVariantsResponseDto } from './dto/product-variants.dto';
+import { VariantDetailResponseDto } from './dto/product-detail.dto';
+import { UpdateZoneSlotConfigDto, UpdateZoneSlotResponseDto } from './dto/update-zone-slot.dto';
 
 // ... (rest of imports and constants)
 
@@ -303,6 +306,21 @@ export class ProductsImportService {
 
     const templateId = templateRow[templateCol].trim();
 
+    // Extract shape and dimension for this zone
+    const shapeCol = `${zone}_Shape`;
+    const dimCol = `${zone}_Dim`;
+    const shapeRaw = (templateRow[shapeCol] ?? 'round').toString().trim().toLowerCase() || 'round';
+    const dimRaw = (templateRow[dimCol] ?? '').toString().trim();
+
+    // dim may be formatted as "LxW" e.g. "5.2x3.1" or a single value
+    let dimLVal: number | null = null;
+    let dimWVal: number | null = null;
+    if (dimRaw) {
+      const parts = dimRaw.split(/[xX×]/);
+      dimLVal = parts[0] ? parseFloat(parts[0]) : null;
+      dimWVal = parts[1] ? parseFloat(parts[1]) : (dimLVal); // square if only one value
+    }
+
     // Analyse whether the qty fluctuates across different ring sizes
     const { isDynamic, fixedQty } = this.analyseZoneDynamism(
       activeRows,
@@ -312,10 +330,12 @@ export class ProductsImportService {
     // ── Upsert the zone slot ──────────────────────────────────────────────────
     const slotSql = `
       INSERT INTO blueprint_zone_slots
-        (blueprint_id, zone_name, template_id, is_dynamic_by_size, fixed_quantity)
-      VALUES ($1, $2, $3, $4, $5)
-      ON CONFLICT (blueprint_id, zone_name)
+        (blueprint_id, zone_name, shape_normalized, dim_l_mm, dim_w_mm, template_id, is_dynamic_by_size, fixed_quantity)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      ON CONFLICT (blueprint_id, zone_name, shape_normalized)
       DO UPDATE SET
+        dim_l_mm           = EXCLUDED.dim_l_mm,
+        dim_w_mm           = EXCLUDED.dim_w_mm,
         template_id        = EXCLUDED.template_id,
         is_dynamic_by_size = EXCLUDED.is_dynamic_by_size,
         fixed_quantity     = EXCLUDED.fixed_quantity
@@ -324,7 +344,7 @@ export class ProductsImportService {
 
     const slotRows: Array<{ id: number }> = await this.dataSource.query(
       slotSql,
-      [blueprintId, zone, templateId, isDynamic, isDynamic ? null : fixedQty],
+      [blueprintId, zone, shapeRaw, dimLVal, dimWVal, templateId, isDynamic, isDynamic ? null : fixedQty],
     );
 
     const zoneSlotId = slotRows[0].id;
@@ -441,66 +461,6 @@ export class ProductsImportService {
     return await this.dataSource.query(sql);
   }
 
-  // async getProductDetails(designSlug: string) {
-  //   // STEP 1: Query Core Product Blueprint Meta
-  //   const blueprints = await this.dataSource.query(
-  //     `SELECT id, variant_name, target_gender
-  //      FROM product_blueprints
-  //      WHERE design_slug = $1`,
-  //     [designSlug],
-  //   );
-
-  //   if (!blueprints || blueprints.length === 0) {
-  //     const { NotFoundException } = await import('@nestjs/common');
-  //     throw new NotFoundException('Product blueprint not found');
-  //   }
-
-  //   const blueprint = blueprints[0];
-  //   const blueprintId = blueprint.id;
-
-  //   // STEP 2: Query Permitted Metal Options
-  //   const metalOptions = await this.dataSource.query(
-  //     `SELECT metal_purity, metal_color
-  //      FROM product_metal_options
-  //      WHERE blueprint_id = $1`,
-  //     [blueprintId],
-  //   );
-
-  //   // STEP 3: Query Active Structural Zone Slots
-  //   const zoneSlots = await this.dataSource.query(
-  //     `SELECT id as zone_slot_id, zone_name, template_id, is_dynamic_by_size, fixed_quantity
-  //      FROM blueprint_zone_slots
-  //      WHERE blueprint_id = $1`,
-  //     [blueprintId],
-  //   );
-
-  //   // STEP 4: Resolve the Sizing Sub-Matrix Array
-  //   for (const slot of zoneSlots) {
-  //     if (slot.is_dynamic_by_size) {
-  //       const matrix = await this.dataSource.query(
-  //         `SELECT ring_size, stone_quantity
-  //          FROM blueprint_size_matrix
-  //          WHERE zone_slot_id = $1
-  //          ORDER BY ring_size ASC`,
-  //         [slot.zone_slot_id],
-  //       );
-  //       slot.size_quantity_matrix = matrix;
-  //     } else {
-  //       slot.size_quantity_matrix = null;
-  //     }
-  //   }
-
-  //   return {
-  //     success: true,
-  //     data: {
-  //       design_slug: designSlug,
-  //       variant: blueprint.variant_name,
-  //       gender: blueprint.target_gender,
-  //       allowed_metals: metalOptions,
-  //       zone_slots: zoneSlots,
-  //     },
-  //   };
-  // }
   async getProductDetails(designSlug: string) {
     // STEP 1: Query ALL Core Product Blueprint Variants for the slug
     const blueprints = await this.dataSource.query(
@@ -530,7 +490,7 @@ export class ProductsImportService {
 
     // STEP 3: Query Active Structural Zone Slots for all fetched blueprints
     const allZoneSlots = await this.dataSource.query(
-      `SELECT id as zone_slot_id, blueprint_id, zone_name, template_id, is_dynamic_by_size, fixed_quantity 
+      `SELECT id as zone_slot_id, blueprint_id, zone_name, shape_normalized, dim_l_mm, dim_w_mm, template_id, is_dynamic_by_size, fixed_quantity 
      FROM blueprint_zone_slots 
      WHERE blueprint_id = ANY($1)`,
       [blueprintIds],
@@ -544,7 +504,7 @@ export class ProductsImportService {
     let allMatrices = [];
     if (dynamicZoneSlotIds.length > 0) {
       allMatrices = await this.dataSource.query(
-        `SELECT zone_slot_id, ring_size, stone_quantity 
+        `SELECT zone_slot_id, ring_size, stone_quantity, metal_weight 
        FROM blueprint_size_matrix 
        WHERE zone_slot_id = ANY($1) 
        ORDER BY ring_size ASC`,
@@ -558,19 +518,38 @@ export class ProductsImportService {
         zone_slot_id: slot.zone_slot_id,
         blueprint_id: slot.blueprint_id,
         zone_name: slot.zone_name,
-        template_id: slot.template_id,
+        shape_normalized: slot.shape_normalized,
+        dim_l_mm: slot.dim_l_mm,
+        dim_w_mm: slot.dim_w_mm,
         is_dynamic_by_size: slot.is_dynamic_by_size,
-        fixed_quantity: slot.fixed_quantity,
-        size_quantity_matrix: slot.is_dynamic_by_size
+        size_wt_matrix: slot.is_dynamic_by_size
           ? allMatrices
             .filter((m) => m.zone_slot_id === slot.zone_slot_id)
-            .map(({ ring_size, stone_quantity }) => ({
+            .map(({ ring_size, stone_quantity, metal_weight }) => ({
               ring_size,
               stone_quantity,
+              metal_weight: metal_weight !== null ? Number(metal_weight) : 0,
             }))
           : null,
       };
     });
+
+    // Zone name to RingComponentZone key mapping
+    const zoneKeyMap: Record<string, string> = {
+      CENTER: 'ZONE_CENTER',
+      HALO: 'ZONE_HALO',
+      GALLERY: 'ZONE_GALLERY',
+      SHANK: 'ZONE_SHANK',
+      ACCENT: 'ZONE_ACCENT',
+      ZONE_CENTER: 'ZONE_CENTER',
+      ZONE_HALO: 'ZONE_HALO',
+      ZONE_GALLERY: 'ZONE_GALLERY',
+      ZONE_SHANK: 'ZONE_SHANK',
+      ZONE_ACCENT: 'ZONE_ACCENT',
+    };
+
+    // All zone keys — always present in response even if empty
+    const allZoneKeys = ['ZONE_CENTER', 'ZONE_HALO', 'ZONE_GALLERY', 'ZONE_SHANK', 'ZONE_ACCENT'];
 
     // STEP 6: Assemble the final nested structure per variant
     const variantsData = blueprints.map((blueprint) => {
@@ -581,12 +560,27 @@ export class ProductsImportService {
           metal_color,
         }));
 
-      const zoneSlots = slotsWithMatrix
-        .filter((slot) => slot.blueprint_id === blueprint.id)
-        // Remove blueprint_id from final output to keep it clean
-        .map(({ blueprint_id, ...rest }) => rest);
+      // Build zone_slots as an object keyed by RingComponentZone
+      const blueprintSlots = slotsWithMatrix.filter(
+        (slot) => slot.blueprint_id === blueprint.id,
+      );
+
+      const zoneSlots: Record<string, any[]> = {};
+      for (const key of allZoneKeys) {
+        zoneSlots[key] = [];
+      }
+
+      for (const slot of blueprintSlots) {
+        const zoneKey = zoneKeyMap[slot.zone_name] || slot.zone_name;
+        if (!zoneSlots[zoneKey]) {
+          zoneSlots[zoneKey] = [];
+        }
+        const { blueprint_id, zone_name, ...slotData } = slot;
+        zoneSlots[zoneKey].push(slotData);
+      }
 
       return {
+        variantId: blueprint.id,
         variant: blueprint.variant_name,
         gender: blueprint.target_gender,
         allowed_metals: allowedMetals,
@@ -602,4 +596,236 @@ export class ProductsImportService {
       },
     };
   }
+
+  async getVariantsByDesign(designSlug: string): Promise<ProductVariantsResponseDto> {
+    const blueprints = await this.dataSource.query(
+      `SELECT id, variant_name, target_gender 
+       FROM product_blueprints 
+       WHERE design_slug = $1`,
+      [designSlug],
+    );
+
+    if (!blueprints || blueprints.length === 0) {
+      const { NotFoundException } = await import('@nestjs/common');
+      throw new NotFoundException(
+        'No product blueprints found for this design slug',
+      );
+    }
+
+    const variants = blueprints.map((blueprint) => ({
+      variantId: blueprint.id,
+      variant_name: blueprint.variant_name,
+      target_gender: blueprint.target_gender,
+    }));
+
+    return {
+      status: true,
+      data: variants,
+    };
+  }
+
+  async getVariantDetails(variantId: number): Promise<VariantDetailResponseDto> {
+    // STEP 1: Check if the blueprint variant actually exists
+    const blueprints = await this.dataSource.query(
+      `SELECT id, variant_name, target_gender 
+       FROM product_blueprints 
+       WHERE id = $1`,
+      [variantId],
+    );
+
+    if (!blueprints || blueprints.length === 0) {
+      const { NotFoundException } = await import('@nestjs/common');
+      throw new NotFoundException(
+        'No product blueprint found for this variant ID',
+      );
+    }
+
+    // STEP 2: Query Permitted Metal Options for the blueprint ID
+    const metalOptions = await this.dataSource.query(
+      `SELECT metal_purity, metal_color 
+       FROM product_metal_options 
+       WHERE blueprint_id = $1`,
+      [variantId],
+    );
+
+    // STEP 3: Query Active Structural Zone Slots for the blueprint ID
+    const zoneSlotsQuery = await this.dataSource.query(
+      `SELECT id as zone_slot_id, zone_name, shape_normalized, dim_l_mm, dim_w_mm, template_id, is_dynamic_by_size, fixed_quantity 
+       FROM blueprint_zone_slots 
+       WHERE blueprint_id = $1`,
+      [variantId],
+    );
+
+    // STEP 4: Resolve Sizing Sub-Matrix Array if any slot is dynamic
+    const dynamicZoneSlotIds = zoneSlotsQuery
+      .filter((slot) => slot.is_dynamic_by_size)
+      .map((slot) => slot.zone_slot_id);
+
+    let allMatrices = [];
+    if (dynamicZoneSlotIds.length > 0) {
+      allMatrices = await this.dataSource.query(
+        `SELECT zone_slot_id, ring_size, stone_quantity, metal_weight 
+         FROM blueprint_size_matrix 
+         WHERE zone_slot_id = ANY($1) 
+         ORDER BY ring_size ASC`,
+        [dynamicZoneSlotIds],
+      );
+    }
+
+    // STEP 5: Map Matrix Sub-Arrays back to their respective Zone Slots
+    const slotsWithMatrix = zoneSlotsQuery.map((slot) => {
+      return {
+        zone_slot_id: slot.zone_slot_id,
+        zone_name: slot.zone_name,
+        shape_normalized: slot.shape_normalized,
+        dim_l_mm: slot.dim_l_mm,
+        dim_w_mm: slot.dim_w_mm,
+        is_dynamic_by_size: slot.is_dynamic_by_size,
+        size_wt_matrix: slot.is_dynamic_by_size
+          ? allMatrices
+            .filter((m) => m.zone_slot_id === slot.zone_slot_id)
+            .map(({ ring_size, stone_quantity, metal_weight }) => ({
+              ring_size,
+              stone_quantity,
+              metal_weight: metal_weight !== null ? Number(metal_weight) : 0,
+            }))
+          : null,
+      };
+    });
+
+    // Zone name to RingComponentZone key mapping
+    const zoneKeyMap: Record<string, string> = {
+      CENTER: 'ZONE_CENTER',
+      HALO: 'ZONE_HALO',
+      GALLERY: 'ZONE_GALLERY',
+      SHANK: 'ZONE_SHANK',
+      ACCENT: 'ZONE_ACCENT',
+      ZONE_CENTER: 'ZONE_CENTER',
+      ZONE_HALO: 'ZONE_HALO',
+      ZONE_GALLERY: 'ZONE_GALLERY',
+      ZONE_SHANK: 'ZONE_SHANK',
+      ZONE_ACCENT: 'ZONE_ACCENT',
+    };
+
+    // All zone keys — always present in response even if empty
+    const allZoneKeys = ['ZONE_CENTER', 'ZONE_HALO', 'ZONE_GALLERY', 'ZONE_SHANK', 'ZONE_ACCENT'];
+
+    const zoneSlots: Record<string, any[]> = {};
+    for (const key of allZoneKeys) {
+      zoneSlots[key] = [];
+    }
+
+    for (const slot of slotsWithMatrix) {
+      const zoneKey = zoneKeyMap[slot.zone_name] || slot.zone_name;
+      if (!zoneSlots[zoneKey]) {
+        zoneSlots[zoneKey] = [];
+      }
+      const { zone_name, ...slotData } = slot;
+      zoneSlots[zoneKey].push(slotData);
+    }
+
+    return {
+      status: true,
+      data: {
+        variantId,
+        allowed_metals: metalOptions.map(({ metal_purity, metal_color }) => ({
+          metal_purity,
+          metal_color,
+        })),
+        zone_slots: zoneSlots as any,
+      },
+    };
+  }
+
+  async updateZoneSlotConfig(dto: UpdateZoneSlotConfigDto): Promise<UpdateZoneSlotResponseDto> {
+    const { zone_slot_id, shape_normalized, dim_l_mm, dim_w_mm, is_dynamic_by_size, size_wt_matrix } = dto;
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // 1. Verify existence of the zone slot
+      const existingSlots = await queryRunner.query(
+        `SELECT id, is_dynamic_by_size FROM blueprint_zone_slots WHERE id = $1`,
+        [zone_slot_id],
+      );
+
+      if (!existingSlots || existingSlots.length === 0) {
+        const { NotFoundException } = await import('@nestjs/common');
+        throw new NotFoundException(`Zone slot with ID ${zone_slot_id} not found`);
+      }
+
+      // If switching from dynamic to static, set fixed_quantity to the stone_quantity of the first entry
+      let fixedQty: number | null = null;
+      if(!is_dynamic_by_size){
+        fixedQty = 1;
+      }
+      // if (!is_dynamic_by_size && size_wt_matrix && size_wt_matrix.length > 0) {
+      //   fixedQty = size_wt_matrix[0].stone_quantity;
+      // }
+
+      // 2. Update blueprint_zone_slots
+      await queryRunner.query(
+        `UPDATE blueprint_zone_slots 
+         SET shape_normalized = $1,
+             dim_l_mm = $2,
+             dim_w_mm = $3,
+             is_dynamic_by_size = $4,
+             fixed_quantity = $5
+         WHERE id = $6`,
+        [
+          shape_normalized,
+          dim_l_mm,
+          dim_w_mm,
+          is_dynamic_by_size,
+          is_dynamic_by_size ? null : fixedQty,
+          zone_slot_id,
+        ],
+      );
+
+      // 3. Update blueprint_size_matrix
+      // Always clean up existing entries to avoid orphaned/unwanted rows
+      await queryRunner.query(
+        `DELETE FROM blueprint_size_matrix WHERE zone_slot_id = $1`,
+        [zone_slot_id],
+      );
+
+      // If dynamic, insert the new entries
+      if (is_dynamic_by_size && size_wt_matrix && size_wt_matrix.length > 0) {
+        const insertSql = `
+          INSERT INTO blueprint_size_matrix (zone_slot_id, ring_size, stone_quantity)
+          VALUES ($1, $2, $3)
+          ON CONFLICT (zone_slot_id, ring_size)
+          DO UPDATE SET stone_quantity = EXCLUDED.stone_quantity
+        `;
+
+        for (const entry of size_wt_matrix) {
+          const ringSizeNum = parseFloat(entry.ring_size);
+          if (isNaN(ringSizeNum)) {
+            const { BadRequestException } = await import('@nestjs/common');
+            throw new BadRequestException(`Invalid ring size value: "${entry.ring_size}"`);
+          }
+          await queryRunner.query(insertSql, [
+            zone_slot_id,
+            ringSizeNum,
+            entry.stone_quantity,
+          ]);
+        }
+      }
+
+      await queryRunner.commitTransaction();
+
+      return {
+        status: true,
+        message: 'Zone slot configuration updated successfully',
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
 }
+

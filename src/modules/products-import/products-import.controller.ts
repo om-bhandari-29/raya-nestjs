@@ -29,7 +29,8 @@ import {
   ImportResponseDto,
   ArchetypeImportResponseDto,
 } from './dto/import-result.dto';
-import { ProductDetailResponseDto } from './dto/product-detail.dto';
+import { ProductDetailResponseDto, VariantDetailResponseDto } from './dto/product-detail.dto';
+import { ProductVariantsResponseDto } from './dto/product-variants.dto';
 
 @ApiTags('Products Import')
 @Controller('products')
@@ -203,5 +204,48 @@ export class ProductsImportController {
     @Param('design_slug') designSlug: string,
   ): Promise<ProductDetailResponseDto> {
     return this.productsImportService.getProductDetails(designSlug);
+  }
+
+  @Get('variants/:design_slug')
+  @ApiOperation({
+    summary: 'Get all variant with variantId by design slug',
+    description: 'Returns all variants and their variantId for a given design slug',
+  })
+  @ApiParam({
+    name: 'design_slug',
+    description: 'Unique design slug of the product',
+    example: 'devotion-ring',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Product variants retrieved successfully.',
+    type: ProductVariantsResponseDto,
+  })
+  async getVariantsByDesign(
+    @Param('design_slug') designSlug: string,
+  ): Promise<ProductVariantsResponseDto> {
+    return this.productsImportService.getVariantsByDesign(designSlug);
+  }
+
+  @Get('variant/:variantId')
+  @ApiOperation({
+    summary: 'Get variant allowed metals and zone slots by variant ID',
+    description: 'Returns the allowed metals and structural zone slots configured for a specific variant ID',
+  })
+  @ApiParam({
+    name: 'variantId',
+    description: 'Unique variant (blueprint) ID',
+    example: 42,
+    type: Number,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Variant configuration retrieved successfully.',
+    type: VariantDetailResponseDto,
+  })
+  async getVariantDetails(
+    @Param('variantId', ParseIntPipe) variantId: number,
+  ): Promise<VariantDetailResponseDto> {
+    return this.productsImportService.getVariantDetails(variantId);
   }
 }

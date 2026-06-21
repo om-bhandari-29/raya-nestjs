@@ -30,6 +30,7 @@ import {
   UpdateStoneSwagger,
   RemoveStoneSwagger,
   ComboStoneSwagger,
+  GetStoneOptionsSwagger,
 } from './stone.swagger';
 
 @ApiTags('stone')
@@ -94,6 +95,52 @@ export class StoneController {
   @CreateStoneSwagger()
   create(@Body() createStoneDto: CreateStoneDto) {
     return this.stoneService.create(createStoneDto);
+  }
+
+  @Get('option')
+  @GetStoneOptionsSwagger()
+  @ApiQuery({
+    name: 'stoneOriginType',
+    required: true,
+    type: String,
+    description: 'Stone type origin (e.g. Natural, Labgrown)',
+    example: 'Natural',
+  })
+  @ApiQuery({
+    name: 'shapeNormalised',
+    required: true,
+    type: String,
+    description: 'Shape of the stone (e.g. Round, Oval, Princess)',
+    example: 'Round',
+  })
+  @ApiQuery({
+    name: 'dim_l_mm',
+    required: true,
+    type: Number,
+    description: 'Dimension length in mm',
+    example: 5.25,
+  })
+  @ApiQuery({
+    name: 'dim_w_mm',
+    required: true,
+    type: Number,
+    description: 'Dimension width in mm',
+    example: 5.25,
+  })
+  getStoneOptions(
+    @Query('stoneOriginType') stoneOriginType: string,
+    @Query('shapeNormalised') shapeNormalised: string,
+    @Query('dim_l_mm') dimLMm: string,
+    @Query('dim_w_mm') dimWMm: string,
+  ) {
+    const l = parseFloat(dimLMm);
+    const w = parseFloat(dimWMm);
+    return this.stoneService.getStoneOptions(
+      stoneOriginType,
+      shapeNormalised,
+      l,
+      w,
+    );
   }
 
   @Get('combo')

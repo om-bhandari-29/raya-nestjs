@@ -11,7 +11,7 @@ import { ProductBlueprint } from './product-blueprint.entity';
 import { BlueprintSizeMatrix } from './blueprint-size-matrix.entity';
 
 @Entity('blueprint_zone_slots')
-@Unique(['blueprint_id', 'zone_name'])
+@Unique(['blueprint_id', 'zone_name', 'shape_normalized'])
 export class BlueprintZoneSlot {
   @PrimaryGeneratedColumn()
   id: number;
@@ -27,6 +27,15 @@ export class BlueprintZoneSlot {
 
   @Column({ type: 'varchar', length: 50 })
   zone_name: string;
+
+  @Column({ type: 'varchar', length: 50 })
+  shape_normalized: string;
+
+  @Column({ type: 'numeric', precision: 20, scale: 14, nullable: true })
+  dim_l_mm: number | null;
+
+  @Column({ type: 'numeric', precision: 20, scale: 14, nullable: true })
+  dim_w_mm: number | null;
 
   @Column({ type: 'varchar', length: 150 })
   template_id: string;

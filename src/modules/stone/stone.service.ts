@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Stone } from './entity/stone.entity';
@@ -113,6 +113,66 @@ export class StoneService {
       message: 'Stone combo retrieved successfully',
       statusCode: 200,
       data: stones,
+    };
+  }
+
+  async getStoneOptions(
+    stoneOriginType: string,
+    shapeNormalised: string,
+    dimLMm: number,
+    dimWMm: number,
+  ) {
+    if (!stoneOriginType) {
+      throw new BadRequestException('stoneOriginType is required');
+    }
+    if (!shapeNormalised) {
+      throw new BadRequestException('shapeNormalised is required');
+    }
+    if (dimLMm === undefined || dimLMm === null || isNaN(dimLMm)) {
+      throw new BadRequestException('dim_l_mm must be a valid number');
+    }
+    if (dimWMm === undefined || dimWMm === null || isNaN(dimWMm)) {
+      throw new BadRequestException('dim_w_mm must be a valid number');
+    }
+
+    const queryBuilder = this.stoneRepository
+      .createQueryBuilder('stone')
+      .where('stone.stoneType ILIKE :stoneOriginType', { stoneOriginType })
+      .andWhere('stone.shape ILIKE :shapeNormalised', { shapeNormalised })
+      .andWhere('stone.length = :dimLMm', { dimLMm })
+      .andWhere('stone.width = :dimWMm', { dimWMm })
+      .andWhere('stone.is_active = true');
+
+    const matchingStones = await queryBuilder.getMany();
+
+    // Group by stoneName and select the one with the largest estimatedWeightInCt
+    const stoneMap = new Map<string, Stone>();
+    for (const stone of matchingStones) {
+      const existing = stoneMap.get(stone.stoneName);
+      const weight = stone.estimatedWeightInCt ? Number(stone.estimatedWeightInCt) : 0;
+      if (!existing) {
+        stoneMap.set(stone.stoneName, stone);
+      } else {
+        const existingWeight = existing.estimatedWeightInCt ? Number(existing.estimatedWeightInCt) : 0;
+        if (weight > existingWeight) {
+          stoneMap.set(stone.stoneName, stone);
+        }
+      }
+    }
+
+    const data = Array.from(stoneMap.values()).map((stone) => ({
+      id: stone.id,
+      Stone_name: stone.stoneName,
+      Estimated_Weight_Final_ct: stone.estimatedWeightInCt ? Number(stone.estimatedWeightInCt) : null,
+      Price_per_ct_INR: stone.pricePerCt ? Number(stone.pricePerCt) : null,
+      Price_per_ct_USD: stone.pricePerCtUsd ? Number(stone.pricePerCtUsd) : null,
+    }));
+
+    return {
+      status: true,
+      message: 'Stone options retrieved successfully',
+      statusCode: 200,
+      data,
     };
   }
 }

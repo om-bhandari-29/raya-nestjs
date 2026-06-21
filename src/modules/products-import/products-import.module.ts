@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductsImportService } from './products-import.service';
 import { ArchetypeImportService } from './archetype-import.service';
 import { ProductsImportController } from './products-import.controller';
+import { BlueprintZoneConfigController } from './blueprint-zone-config.controller';
 import { ProductBlueprint } from './entity/product-blueprint.entity';
 import { ProductMetalOption } from './entity/product-metal-option.entity';
 import { BlueprintZoneSlot } from './entity/blueprint-zone-slot.entity';
@@ -21,7 +22,7 @@ import { BlueprintSizeMatrix } from './entity/blueprint-size-matrix.entity';
     ]),
   ],
   providers: [ProductsImportService, ArchetypeImportService],
-  controllers: [ProductsImportController],
+  controllers: [ProductsImportController, BlueprintZoneConfigController],
   exports: [ProductsImportService, ArchetypeImportService],
 })
 export class ProductsImportModule {}
