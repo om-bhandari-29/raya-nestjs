@@ -84,9 +84,10 @@ export class ArchetypeImportService {
       for (const [key, groupRows] of groups.entries()) {
         const [designSlug, variantSlug] = key.split('::');
 
+        const designId = await this.upsertProductDesign(queryRunner, designSlug);
         const blueprintId = await this.upsertArchetypeBlueprint(
           queryRunner,
-          designSlug,
+          designId,
           variantSlug,
         );
         result.blueprintsProcessed++;
@@ -175,19 +176,41 @@ export class ArchetypeImportService {
     });
   }
 
-  private async upsertArchetypeBlueprint(
+  private async upsertProductDesign(
     queryRunner: QueryRunner,
     designSlug: string,
+  ): Promise<number> {
+    const sql = `
+      INSERT INTO product_designs (design_slug)
+      VALUES ($1)
+      ON CONFLICT (design_slug)
+      DO NOTHING
+      RETURNING id;
+    `;
+    const res = await queryRunner.query(sql, [designSlug.trim()]);
+    if (res && res.length > 0) {
+      return res[0].id;
+    }
+    const selectRes = await queryRunner.query(
+      `SELECT id FROM product_designs WHERE design_slug = $1`,
+      [designSlug.trim()]
+    );
+    return selectRes[0].id;
+  }
+
+  private async upsertArchetypeBlueprint(
+    queryRunner: QueryRunner,
+    designId: number,
     variantName: string,
   ): Promise<number> {
     const sql = `
-    INSERT INTO product_blueprints (design_slug, variant_name, target_gender)
+    INSERT INTO product_blueprints (design_id, variant_name, target_gender)
     VALUES ($1, $2, $3)
-    ON CONFLICT (design_slug, variant_name, target_gender)
+    ON CONFLICT (design_id, variant_name, target_gender)
     DO UPDATE SET variant_name = EXCLUDED.variant_name
     RETURNING id;
   `;
-    const res = await queryRunner.query(sql, [designSlug.trim(), variantName.trim(), 'Women']);
+    const res = await queryRunner.query(sql, [designId, variantName.trim(), 'Women']);
     return res[0].id;
   }
 
@@ -295,26 +318,36 @@ export class ArchetypeImportService {
 
     if (search) {
       const searchPattern = `%${search}%`;
-      whereClause = `WHERE (design_slug ILIKE $1 OR variant_name ILIKE $1)`;
+      whereClause = `WHERE (pd.design_slug ILIKE $1 OR pb.variant_name ILIKE $1)`;
       countParams.push(searchPattern);
       dataParams.push(searchPattern);
     }
 
     // Count unique design_slugs
-    const countSql = `SELECT COUNT(DISTINCT design_slug) as total FROM product_blueprints ${whereClause}`;
+    const countSql = `
+      SELECT COUNT(DISTINCT pd.design_slug) as total 
+      FROM product_blueprints pb
+      INNER JOIN product_designs pd ON pb.design_id = pd.id
+      ${whereClause}
+    `;
     
     // Adjust parameter indices for limit and offset in data query
     const limitIdx = dataParams.length + 1;
     const offsetIdx = dataParams.length + 2;
     
-    // Use DISTINCT ON (design_slug) to get unique designs. 
-    // We order by design_slug first (required by DISTINCT ON) then by id DESC to get the "first" appearance.
+    // Get unique designs and order by the latest variant ID descending
     const dataSql = `
-      SELECT DISTINCT ON (design_slug) 
-        id, design_slug, variant_name, target_gender 
-      FROM product_blueprints 
+      SELECT 
+        pb.id, pb.design_id, pd.design_slug, pb.variant_name, pb.target_gender 
+      FROM (
+        SELECT DISTINCT ON (design_id) 
+          id, design_id, variant_name, target_gender
+        FROM product_blueprints
+        ORDER BY design_id, id DESC
+      ) pb
+      INNER JOIN product_designs pd ON pb.design_id = pd.id
       ${whereClause}
-      ORDER BY design_slug, id DESC 
+      ORDER BY pb.id DESC 
       LIMIT $${limitIdx} OFFSET $${offsetIdx}
     `;
     dataParams.push(limit, offset);

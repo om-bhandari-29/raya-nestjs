@@ -4,6 +4,9 @@ export class BlueprintListItemDto {
   @ApiProperty({ example: 1 })
   id: number;
 
+  @ApiProperty({ example: 10 })
+  design_id: number;
+
   @ApiProperty({ example: 'devotion-ring' })
   design_slug: string;
 
@@ -24,3 +27,4 @@ export class BlueprintListResponseDto {
   @ApiProperty({ type: [BlueprintListItemDto] })
   data: BlueprintListItemDto[];
 }
+

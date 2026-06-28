@@ -213,19 +213,39 @@ export class ProductsImportService {
     variantName: string,
     targetGender: string,
   ): Promise<number> {
+    // 1. Upsert product design
+    const designSql = `
+      INSERT INTO product_designs (design_slug)
+      VALUES ($1)
+      ON CONFLICT (design_slug)
+      DO NOTHING
+      RETURNING id
+    `;
+    let designRows = await this.dataSource.query(designSql, [designSlug]);
+    let designId: number;
+    if (designRows && designRows.length > 0) {
+      designId = designRows[0].id;
+    } else {
+      const selectRes = await this.dataSource.query(
+        `SELECT id FROM product_designs WHERE design_slug = $1`,
+        [designSlug]
+      );
+      designId = selectRes[0].id;
+    }
+
+    // 2. Upsert product blueprint (variant)
     const sql = `
-      INSERT INTO product_blueprints (design_slug, variant_name, target_gender)
+      INSERT INTO product_blueprints (design_id, variant_name, target_gender)
       VALUES ($1, $2, $3)
-      ON CONFLICT (design_slug, variant_name, target_gender)
+      ON CONFLICT (design_id, variant_name, target_gender)
       DO UPDATE SET
-        design_slug   = EXCLUDED.design_slug,
         variant_name  = EXCLUDED.variant_name,
         target_gender = EXCLUDED.target_gender
       RETURNING id
     `;
 
     const rows: Array<{ id: number }> = await this.dataSource.query(sql, [
-      designSlug,
+      designId,
       variantName,
       targetGender,
     ]);
@@ -455,30 +475,38 @@ export class ProductsImportService {
    */
   async getBlueprintsGroupedByDesign(): Promise<BlueprintListItemDto[]> {
     const sql = `
-      SELECT DISTINCT ON (design_slug)
-        id,
-        design_slug,
-        variant_name,
-        target_gender
-      FROM product_blueprints
-      ORDER BY design_slug ASC, id ASC
+      SELECT 
+        pb.id,
+        pb.design_id,
+        pd.design_slug,
+        pb.variant_name,
+        pb.target_gender
+      FROM (
+        SELECT DISTINCT ON (design_id) 
+          id, design_id, variant_name, target_gender
+        FROM product_blueprints
+        ORDER BY design_id, id DESC
+      ) pb
+      INNER JOIN product_designs pd ON pb.design_id = pd.id
+      ORDER BY pb.id DESC
     `;
     return await this.dataSource.query(sql);
   }
 
-  async getProductDetails(designSlug: string) {
-    // STEP 1: Query ALL Core Product Blueprint Variants for the slug
+  async getProductDetails(designId: number) {
+    // STEP 1: Query ALL Core Product Blueprint Variants for the ID
     const blueprints = await this.dataSource.query(
-      `SELECT id, variant_name, target_gender 
-     FROM product_blueprints 
-     WHERE design_slug = $1`,
-      [designSlug],
+      `SELECT pb.id, pb.variant_name, pb.target_gender, pd.design_slug 
+      FROM product_blueprints pb
+      INNER JOIN product_designs pd ON pb.design_id = pd.id
+      WHERE pb.design_id = $1`,
+      [designId],
     );
 
     if (!blueprints || blueprints.length === 0) {
       const { NotFoundException } = await import('@nestjs/common');
       throw new NotFoundException(
-        'No product blueprints found for this design slug',
+        'No product blueprints found for this design ID',
       );
     }
 
@@ -488,16 +516,16 @@ export class ProductsImportService {
     // STEP 2: Query Permitted Metal Options for all fetched blueprints
     const allMetalOptions = await this.dataSource.query(
       `SELECT blueprint_id, metal_purity, metal_color 
-     FROM product_metal_options 
-     WHERE blueprint_id = ANY($1)`,
+      FROM product_metal_options 
+      WHERE blueprint_id = ANY($1)`,
       [blueprintIds],
     );
 
     // STEP 3: Query Active Structural Zone Slots for all fetched blueprints
     const allZoneSlots = await this.dataSource.query(
       `SELECT id as zone_slot_id, blueprint_id, zone_name, shape_normalized, dim_l_mm, dim_w_mm, template_id, is_dynamic_by_size, fixed_quantity 
-     FROM blueprint_zone_slots 
-     WHERE blueprint_id = ANY($1)`,
+      FROM blueprint_zone_slots 
+      WHERE blueprint_id = ANY($1)`,
       [blueprintIds],
     );
 
@@ -510,9 +538,9 @@ export class ProductsImportService {
     if (dynamicZoneSlotIds.length > 0) {
       allMatrices = await this.dataSource.query(
         `SELECT zone_slot_id, ring_size, stone_quantity, metal_weight 
-       FROM blueprint_size_matrix 
-       WHERE zone_slot_id = ANY($1) 
-       ORDER BY ring_size ASC`,
+        FROM blueprint_size_matrix 
+        WHERE zone_slot_id = ANY($1) 
+        ORDER BY ring_size ASC`,
         [dynamicZoneSlotIds],
       );
     }
@@ -594,6 +622,8 @@ export class ProductsImportService {
       };
     });
 
+    const designSlug = blueprints[0]?.design_slug || '';
+
     return {
       success: true,
       data: {
@@ -603,20 +633,34 @@ export class ProductsImportService {
     };
   }
 
-  async getVariantsByDesign(designSlug: string): Promise<ProductVariantsResponseDto> {
+  async getVariantsByDesign(designId: number): Promise<ProductVariantsResponseDto> {
     const blueprints = await this.dataSource.query(
-      `SELECT id, variant_name, target_gender 
-       FROM product_blueprints 
-       WHERE design_slug = $1`,
-      [designSlug],
+      `SELECT pb.id, pb.variant_name, pb.target_gender, pd.design_slug 
+       FROM product_blueprints pb
+       INNER JOIN product_designs pd ON pb.design_id = pd.id
+       WHERE pb.design_id = $1`,
+      [designId],
     );
 
     if (!blueprints || blueprints.length === 0) {
-      const { NotFoundException } = await import('@nestjs/common');
-      throw new NotFoundException(
-        'No product blueprints found for this design slug',
+      const designExists = await this.dataSource.query(
+        `SELECT design_slug FROM product_designs WHERE id = $1`,
+        [designId]
       );
+      if (!designExists || designExists.length === 0) {
+        const { NotFoundException } = await import('@nestjs/common');
+        throw new NotFoundException(
+          'No design found for this design ID',
+        );
+      }
+      return {
+        status: true,
+        design_slug: designExists[0].design_slug,
+        data: [],
+      };
     }
+
+    const designSlug = blueprints[0].design_slug;
 
     const variants = blueprints.map((blueprint) => ({
       variantId: blueprint.id,
@@ -626,6 +670,7 @@ export class ProductsImportService {
 
     return {
       status: true,
+      design_slug: designSlug,
       data: variants,
     };
   }
@@ -961,9 +1006,10 @@ export class ProductsImportService {
 
     // 1. Verify existence of the variant
     const blueprints = await this.dataSource.query(
-      `SELECT id, design_slug, variant_name, target_gender 
-       FROM product_blueprints 
-       WHERE id = $1`,
+      `SELECT pb.id, pb.design_id, pd.design_slug 
+       FROM product_blueprints pb
+       INNER JOIN product_designs pd ON pb.design_id = pd.id
+       WHERE pb.id = $1`,
       [variant_id],
     );
 
@@ -972,17 +1018,18 @@ export class ProductsImportService {
       throw new NotFoundException(`Product blueprint with variant ID ${variant_id} not found`);
     }
 
+    const designId = blueprints[0].design_id;
     const designSlug = blueprints[0].design_slug;
 
     // 2. Check for unique key conflict
     const conflict = await this.dataSource.query(
       `SELECT id 
        FROM product_blueprints 
-       WHERE design_slug = $1 
+       WHERE design_id = $1 
          AND variant_name = $2 
          AND target_gender = $3 
          AND id != $4`,
-      [designSlug, trimmedVariantName, trimmedTargetGender, variant_id],
+      [designId, trimmedVariantName, trimmedTargetGender, variant_id],
     );
 
     if (conflict && conflict.length > 0) {
@@ -1017,14 +1064,34 @@ export class ProductsImportService {
       throw new BadRequestException('design_slug, variant_name, and target_gender cannot be empty');
     }
 
-    // 1. Check for unique key conflict
+    // 1. Upsert product design to get design_id
+    const designSql = `
+      INSERT INTO product_designs (design_slug)
+      VALUES ($1)
+      ON CONFLICT (design_slug)
+      DO NOTHING
+      RETURNING id
+    `;
+    let designRows = await this.dataSource.query(designSql, [trimmedDesignSlug]);
+    let designId: number;
+    if (designRows && designRows.length > 0) {
+      designId = designRows[0].id;
+    } else {
+      const selectRes = await this.dataSource.query(
+        `SELECT id FROM product_designs WHERE design_slug = $1`,
+        [trimmedDesignSlug]
+      );
+      designId = selectRes[0].id;
+    }
+
+    // 2. Check for unique key conflict
     const conflict = await this.dataSource.query(
       `SELECT id 
        FROM product_blueprints 
-       WHERE design_slug = $1 
+       WHERE design_id = $1 
          AND variant_name = $2 
          AND target_gender = $3`,
-      [trimmedDesignSlug, trimmedVariantName, trimmedTargetGender],
+      [designId, trimmedVariantName, trimmedTargetGender],
     );
 
     if (conflict && conflict.length > 0) {
@@ -1034,12 +1101,12 @@ export class ProductsImportService {
       );
     }
 
-    // 2. Insert the new blueprint variant
+    // 3. Insert the new blueprint variant
     const insertResult = await this.dataSource.query(
-      `INSERT INTO product_blueprints (design_slug, variant_name, target_gender)
+      `INSERT INTO product_blueprints (design_id, variant_name, target_gender)
        VALUES ($1, $2, $3)
        RETURNING id`,
-      [trimmedDesignSlug, trimmedVariantName, trimmedTargetGender],
+      [designId, trimmedVariantName, trimmedTargetGender],
     );
 
     const variantId = insertResult[0].id;
@@ -1079,35 +1146,51 @@ export class ProductsImportService {
       seen.add(key);
     }
 
-    // 2. Query DB to check if the design_slug already exists
-    const existingDesign = await this.dataSource.query(
-      `SELECT id 
-       FROM product_blueprints 
-       WHERE design_slug = $1 
-       LIMIT 1`,
-      [trimmedDesignSlug],
-    );
-
-    if (existingDesign && existingDesign.length > 0) {
-      const { ConflictException } = await import('@nestjs/common');
-      throw new ConflictException(
-        `Design slug "${trimmedDesignSlug}" already exists. New variants for existing designs must be added individually.`,
-      );
-    }
-
-    // 3. Save them all in a transaction
+    // 2. Save them all in a transaction
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
+      // Find or create the design slug
+      const designSql = `
+        INSERT INTO product_designs (design_slug)
+        VALUES ($1)
+        ON CONFLICT (design_slug)
+        DO NOTHING
+        RETURNING id
+      `;
+      let designRows = await queryRunner.query(designSql, [trimmedDesignSlug]);
+      let designId: number;
+      if (designRows && designRows.length > 0) {
+        designId = designRows[0].id;
+      } else {
+        const selectRes = await queryRunner.query(
+          `SELECT id FROM product_designs WHERE design_slug = $1`,
+          [trimmedDesignSlug]
+        );
+        designId = selectRes[0].id;
+      }
+
       const insertedIds: number[] = [];
       for (const v of variant) {
+        // Check database unique constraint conflict
+        const conflict = await queryRunner.query(
+          `SELECT id FROM product_blueprints WHERE design_id = $1 AND variant_name = $2 AND target_gender = $3`,
+          [designId, v.variant_name.trim(), v.target_gender.trim()]
+        );
+        if (conflict && conflict.length > 0) {
+          const { ConflictException } = await import('@nestjs/common');
+          throw new ConflictException(
+            `A variant with name "${v.variant_name.trim()}" and target gender "${v.target_gender.trim()}" already exists for design "${trimmedDesignSlug}"`,
+          );
+        }
+
         const res = await queryRunner.query(
-          `INSERT INTO product_blueprints (design_slug, variant_name, target_gender)
+          `INSERT INTO product_blueprints (design_id, variant_name, target_gender)
            VALUES ($1, $2, $3)
            RETURNING id`,
-          [trimmedDesignSlug, v.variant_name.trim(), v.target_gender.trim()],
+          [designId, v.variant_name.trim(), v.target_gender.trim()],
         );
         insertedIds.push(res[0].id);
       }
@@ -1117,7 +1200,7 @@ export class ProductsImportService {
       return {
         status: true,
         message: 'Variants created successfully',
-        variant_ids: insertedIds,
+        data: designId,
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();

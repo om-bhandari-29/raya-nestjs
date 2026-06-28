@@ -31,6 +31,7 @@ export class BulkCreateVariantsResponseDto {
   @ApiProperty({ example: 'Variants created successfully' })
   message: string;
 
-  @ApiProperty({ example: [101, 102], description: 'IDs of the newly created variants' })
-  variant_ids: number[];
+  @ApiProperty({ example: 10, description: 'ID of the product design' })
+  data: number;
 }
+

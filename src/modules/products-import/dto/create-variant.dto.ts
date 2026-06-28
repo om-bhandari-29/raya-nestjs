@@ -25,3 +25,4 @@ export class CreateVariantResponseDto {
   @ApiProperty({ example: 42, description: 'ID of the newly created variant' })
   data: number;
 }
+

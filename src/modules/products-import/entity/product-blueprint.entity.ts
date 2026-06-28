@@ -4,18 +4,25 @@ import {
   Column,
   Unique,
   OneToMany,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { ProductMetalOption } from './product-metal-option.entity';
 import { BlueprintZoneSlot } from './blueprint-zone-slot.entity';
+import { ProductDesign } from './product-design.entity';
 
 @Entity('product_blueprints')
-@Unique(['design_slug', 'variant_name', 'target_gender'])
+@Unique(['design_id', 'variant_name', 'target_gender'])
 export class ProductBlueprint {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 100 })
-  design_slug: string;
+  @Column({ name: 'design_id' })
+  design_id: number;
+
+  @ManyToOne(() => ProductDesign, (design) => design.blueprints, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'design_id' })
+  design: ProductDesign;
 
   @Column({ type: 'varchar', length: 100 })
   variant_name: string;
@@ -29,3 +36,4 @@ export class ProductBlueprint {
   @OneToMany(() => BlueprintZoneSlot, (slot) => slot.blueprint)
   zone_slots: BlueprintZoneSlot[];
 }
+

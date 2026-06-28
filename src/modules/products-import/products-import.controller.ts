@@ -193,12 +193,13 @@ export class ProductsImportController {
     };
   }
 
-  @Get('detail/:design_slug')
-  @ApiOperation({ summary: 'Get product details by design slug' })
+  @Get('detail/:design_id')
+  @ApiOperation({ summary: 'Get product details by design ID' })
   @ApiParam({
-    name: 'design_slug',
-    description: 'Unique design slug of the product',
-    example: 'devotion-ring',
+    name: 'design_id',
+    description: 'Unique design ID of the product',
+    example: 10,
+    type: Number,
   })
   @ApiResponse({
     status: 200,
@@ -206,20 +207,21 @@ export class ProductsImportController {
     type: ProductDetailResponseDto,
   })
   async getProductDetails(
-    @Param('design_slug') designSlug: string,
+    @Param('design_id', ParseIntPipe) designId: number,
   ): Promise<ProductDetailResponseDto> {
-    return this.productsImportService.getProductDetails(designSlug);
+    return this.productsImportService.getProductDetails(designId);
   }
 
-  @Get('variants/:design_slug')
+  @Get('variants/:design_id')
   @ApiOperation({
-    summary: 'Get all variant with variantId by design slug',
-    description: 'Returns all variants and their variantId for a given design slug',
+    summary: 'Get all variants with variantId by design ID',
+    description: 'Returns all variants and their variantId for a given design ID',
   })
   @ApiParam({
-    name: 'design_slug',
-    description: 'Unique design slug of the product',
-    example: 'devotion-ring',
+    name: 'design_id',
+    description: 'Unique design ID of the product',
+    example: 10,
+    type: Number,
   })
   @ApiResponse({
     status: 200,
@@ -227,9 +229,9 @@ export class ProductsImportController {
     type: ProductVariantsResponseDto,
   })
   async getVariantsByDesign(
-    @Param('design_slug') designSlug: string,
+    @Param('design_id', ParseIntPipe) designId: number,
   ): Promise<ProductVariantsResponseDto> {
-    return this.productsImportService.getVariantsByDesign(designSlug);
+    return this.productsImportService.getVariantsByDesign(designId);
   }
 
   @Get('variant/:variantId')

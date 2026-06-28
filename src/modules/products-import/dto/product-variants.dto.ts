@@ -15,6 +15,9 @@ export class ProductVariantsResponseDto {
   @ApiProperty({ example: true })
   status: boolean;
 
+  @ApiProperty({ example: 'devotion-ring', description: 'Design slug' })
+  design_slug: string;
+
   @ApiProperty({ type: [ProductVariantItemDto] })
   data: ProductVariantItemDto[];
 }
