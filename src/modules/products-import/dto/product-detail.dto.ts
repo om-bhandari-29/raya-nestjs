@@ -35,6 +35,9 @@ export class ZoneSlotItemDto {
   @ApiProperty({ example: false })
   is_dynamic_by_size: boolean;
 
+  @ApiProperty({ example: 1, nullable: true })
+  fixed_quantity: number | null;
+
   @ApiProperty({ type: [SizeWeightMatrixEntryDto], nullable: true })
   size_wt_matrix: SizeWeightMatrixEntryDto[] | null;
 }

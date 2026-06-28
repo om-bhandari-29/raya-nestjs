@@ -2,6 +2,8 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
+  Body,
   UploadedFile,
   UseInterceptors,
   BadRequestException,
@@ -31,6 +33,9 @@ import {
 } from './dto/import-result.dto';
 import { ProductDetailResponseDto, VariantDetailResponseDto } from './dto/product-detail.dto';
 import { ProductVariantsResponseDto } from './dto/product-variants.dto';
+import { UpdateVariantDto, UpdateVariantResponseDto } from './dto/update-variant.dto';
+import { CreateVariantDto, CreateVariantResponseDto } from './dto/create-variant.dto';
+import { BulkCreateVariantsDto, BulkCreateVariantsResponseDto } from './dto/bulk-create-variants.dto';
 
 @ApiTags('Products Import')
 @Controller('products')
@@ -247,5 +252,56 @@ export class ProductsImportController {
     @Param('variantId', ParseIntPipe) variantId: number,
   ): Promise<VariantDetailResponseDto> {
     return this.productsImportService.getVariantDetails(variantId);
+  }
+
+  @Patch('variant')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Update variant name and target gender of a product blueprint',
+    description: 'Finds a product blueprint by its ID and updates its variant name and target gender.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Variant updated successfully.',
+    type: UpdateVariantResponseDto,
+  })
+  async updateVariant(
+    @Body() body: UpdateVariantDto,
+  ): Promise<UpdateVariantResponseDto> {
+    return this.productsImportService.updateVariant(body);
+  }
+
+  @Post('variant')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Create a new variant of a product blueprint',
+    description: 'Creates a new variant with design_slug, variant_name, and target_gender, and returns the newly created variant ID.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Variant created successfully.',
+    type: CreateVariantResponseDto,
+  })
+  async createVariant(
+    @Body() body: CreateVariantDto,
+  ): Promise<CreateVariantResponseDto> {
+    return this.productsImportService.createVariant(body);
+  }
+
+  @Post('bulk-variants')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Bulk create variants under a design slug',
+    description: 'Registers multiple variants under a design slug and performs unique constraints checks.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Variants created successfully.',
+    type: BulkCreateVariantsResponseDto,
+  })
+  async bulkCreateVariants(
+    @Body() body: BulkCreateVariantsDto,
+  ): Promise<BulkCreateVariantsResponseDto> {
+    return this.productsImportService.bulkCreateVariants(body);
   }
 }

@@ -1,21 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsBoolean, IsString, IsArray, ValidateNested, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
+import { SizeWtMatrixEntryInputDto } from './update-zone-slot.dto';
 
-export class SizeWtMatrixEntryInputDto {
-  @ApiProperty({ example: '7.0', description: 'Ring size' })
+export class CreateZoneSlotConfigDto {
+  @ApiProperty({ example: 12, description: 'ID of the product blueprint (variant)' })
+  @IsNumber()
+  variant_id: number;
+
+  @ApiProperty({ example: 'Halo', description: 'Zone name' })
   @IsString()
-  ring_size: string;
-
-  @ApiProperty({ example: 20, description: 'Stone quantity' })
-  @IsNumber()
-  stone_quantity: number;
-}
-
-export class UpdateZoneSlotConfigDto {
-  @ApiProperty({ example: 101, description: 'ID of the zone slot to update' })
-  @IsNumber()
-  zone_slot_id: number;
+  zone: string;
 
   @ApiProperty({ example: 'round', description: 'Normalized shape' })
   @IsString()
@@ -48,10 +43,13 @@ export class UpdateZoneSlotConfigDto {
   fixed_quantity?: number | null;
 }
 
-export class UpdateZoneSlotResponseDto {
+export class CreateZoneSlotResponseDto {
   @ApiProperty({ example: true })
   status: boolean;
 
-  @ApiProperty({ example: 'Zone slot configuration updated successfully' })
+  @ApiProperty({ example: 'Zone slot configuration added successfully' })
   message: string;
+
+  @ApiProperty({ example: 102, description: 'The generated ID of the new zone slot' })
+  data: number;
 }

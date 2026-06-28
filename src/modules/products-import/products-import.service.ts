@@ -11,6 +11,11 @@ import { BlueprintListItemDto } from './dto/blueprint-list.dto';
 import { ProductVariantsResponseDto } from './dto/product-variants.dto';
 import { VariantDetailResponseDto } from './dto/product-detail.dto';
 import { UpdateZoneSlotConfigDto, UpdateZoneSlotResponseDto } from './dto/update-zone-slot.dto';
+import { UpdateVariantDto, UpdateVariantResponseDto } from './dto/update-variant.dto';
+import { CreateVariantDto, CreateVariantResponseDto } from './dto/create-variant.dto';
+import { BulkCreateVariantsDto, BulkCreateVariantsResponseDto } from './dto/bulk-create-variants.dto';
+import { CreateZoneSlotConfigDto, CreateZoneSlotResponseDto } from './dto/create-zone-slot.dto';
+
 
 // ... (rest of imports and constants)
 
@@ -522,6 +527,7 @@ export class ProductsImportService {
         dim_l_mm: slot.dim_l_mm,
         dim_w_mm: slot.dim_w_mm,
         is_dynamic_by_size: slot.is_dynamic_by_size,
+        fixed_quantity: slot.fixed_quantity !== null ? Number(slot.fixed_quantity) : null,
         size_wt_matrix: slot.is_dynamic_by_size
           ? allMatrices
             .filter((m) => m.zone_slot_id === slot.zone_slot_id)
@@ -681,6 +687,7 @@ export class ProductsImportService {
         dim_l_mm: slot.dim_l_mm,
         dim_w_mm: slot.dim_w_mm,
         is_dynamic_by_size: slot.is_dynamic_by_size,
+        fixed_quantity: slot.fixed_quantity !== null ? Number(slot.fixed_quantity) : null,
         size_wt_matrix: slot.is_dynamic_by_size
           ? allMatrices
             .filter((m) => m.zone_slot_id === slot.zone_slot_id)
@@ -738,7 +745,7 @@ export class ProductsImportService {
   }
 
   async updateZoneSlotConfig(dto: UpdateZoneSlotConfigDto): Promise<UpdateZoneSlotResponseDto> {
-    const { zone_slot_id, shape_normalized, dim_l_mm, dim_w_mm, is_dynamic_by_size, size_wt_matrix } = dto;
+    const { zone_slot_id, shape_normalized, dim_l_mm, dim_w_mm, is_dynamic_by_size, size_wt_matrix, fixed_quantity } = dto;
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -756,14 +763,21 @@ export class ProductsImportService {
         throw new NotFoundException(`Zone slot with ID ${zone_slot_id} not found`);
       }
 
-      // If switching from dynamic to static, set fixed_quantity to the stone_quantity of the first entry
-      let fixedQty: number | null = null;
-      if(!is_dynamic_by_size){
-        fixedQty = 1;
+      // Determine fixed quantity based on is_dynamic_by_size
+      let finalFixedQty: number | null = null;
+      if (!is_dynamic_by_size) {
+        if (fixed_quantity === undefined || fixed_quantity === null) {
+          const { BadRequestException } = await import('@nestjs/common');
+          throw new BadRequestException('fixed_quantity must be provided when is_dynamic_by_size is false');
+        }
+        finalFixedQty = fixed_quantity;
+      } else {
+        if (is_dynamic_by_size && (!size_wt_matrix || size_wt_matrix.length === 0)) {
+          const { BadRequestException } = await import('@nestjs/common');
+          throw new BadRequestException('size_wt_matrix must be provided when is_dynamic_by_size is true');
+        }
+        finalFixedQty = null;
       }
-      // if (!is_dynamic_by_size && size_wt_matrix && size_wt_matrix.length > 0) {
-      //   fixedQty = size_wt_matrix[0].stone_quantity;
-      // }
 
       // 2. Update blueprint_zone_slots
       await queryRunner.query(
@@ -779,7 +793,7 @@ export class ProductsImportService {
           dim_l_mm,
           dim_w_mm,
           is_dynamic_by_size,
-          is_dynamic_by_size ? null : fixedQty,
+          finalFixedQty,
           zone_slot_id,
         ],
       );
@@ -819,6 +833,291 @@ export class ProductsImportService {
       return {
         status: true,
         message: 'Zone slot configuration updated successfully',
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async createZoneSlotConfig(dto: CreateZoneSlotConfigDto): Promise<CreateZoneSlotResponseDto> {
+    const { variant_id, zone, shape_normalized, dim_l_mm, dim_w_mm, is_dynamic_by_size, size_wt_matrix, fixed_quantity } = dto;
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // 1. Verify existence of the variant (blueprint_id)
+      const blueprints = await queryRunner.query(
+        `SELECT id FROM product_blueprints WHERE id = $1`,
+        [variant_id],
+      );
+
+      if (!blueprints || blueprints.length === 0) {
+        const { NotFoundException } = await import('@nestjs/common');
+        throw new NotFoundException(`Variant (Blueprint) with ID ${variant_id} not found`);
+      }
+
+      // 2. Check for unique constraint: blueprint_id, zone_name, shape_normalized
+      const existingSlots = await queryRunner.query(
+        `SELECT id FROM blueprint_zone_slots WHERE blueprint_id = $1 AND zone_name = $2 AND shape_normalized = $3`,
+        [variant_id, zone, shape_normalized],
+      );
+
+      if (existingSlots && existingSlots.length > 0) {
+        const { ConflictException } = await import('@nestjs/common');
+        throw new ConflictException(`A zone slot configuration for variant ${variant_id}, zone "${zone}", and shape "${shape_normalized}" already exists`);
+      }
+
+      // Determine fixed quantity based on is_dynamic_by_size
+      let finalFixedQty: number | null = null;
+      if (!is_dynamic_by_size) {
+        if (fixed_quantity === undefined || fixed_quantity === null) {
+          const { BadRequestException } = await import('@nestjs/common');
+          throw new BadRequestException('fixed_quantity must be provided when is_dynamic_by_size is false');
+        }
+        finalFixedQty = fixed_quantity;
+      } else {
+        if (is_dynamic_by_size && (!size_wt_matrix || size_wt_matrix.length === 0)) {
+          const { BadRequestException } = await import('@nestjs/common');
+          throw new BadRequestException('size_wt_matrix must be provided when is_dynamic_by_size is true');
+        }
+        finalFixedQty = null;
+      }
+
+      // Generate template_id automatically: TPL-${zone}-${shape_normalized}-${dimL}x${dimW}
+      const dimL = dim_l_mm ?? 0;
+      const dimW = dim_w_mm ?? 0;
+      const templateId = `TPL-${zone}-${shape_normalized}-${dimL}x${dimW}`;
+
+      // 3. Insert into blueprint_zone_slots
+      const insertSlotRes = await queryRunner.query(
+        `INSERT INTO blueprint_zone_slots 
+          (blueprint_id, zone_name, shape_normalized, dim_l_mm, dim_w_mm, template_id, is_dynamic_by_size, fixed_quantity)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         RETURNING id`,
+        [
+          variant_id,
+          zone,
+          shape_normalized,
+          dim_l_mm,
+          dim_w_mm,
+          templateId,
+          is_dynamic_by_size,
+          finalFixedQty,
+        ],
+      );
+
+      const zoneSlotId = insertSlotRes[0].id;
+
+      // 4. Insert size matrix if dynamic
+      if (is_dynamic_by_size && size_wt_matrix && size_wt_matrix.length > 0) {
+        const insertSql = `
+          INSERT INTO blueprint_size_matrix (zone_slot_id, ring_size, stone_quantity)
+          VALUES ($1, $2, $3)
+        `;
+
+        for (const entry of size_wt_matrix) {
+          const ringSizeNum = parseFloat(entry.ring_size);
+          if (isNaN(ringSizeNum)) {
+            const { BadRequestException } = await import('@nestjs/common');
+            throw new BadRequestException(`Invalid ring size value: "${entry.ring_size}"`);
+          }
+          await queryRunner.query(insertSql, [
+            zoneSlotId,
+            ringSizeNum,
+            entry.stone_quantity,
+          ]);
+        }
+      }
+
+      await queryRunner.commitTransaction();
+
+      return {
+        status: true,
+        message: 'Zone slot configuration added successfully',
+        data: zoneSlotId,
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async updateVariant(dto: UpdateVariantDto): Promise<UpdateVariantResponseDto> {
+    const { variant_id, variant_name, target_gender } = dto;
+    const trimmedVariantName = (variant_name ?? '').trim();
+    const trimmedTargetGender = (target_gender ?? '').trim();
+
+    if (!trimmedVariantName || !trimmedTargetGender) {
+      const { BadRequestException } = await import('@nestjs/common');
+      throw new BadRequestException('variant_name and target_gender cannot be empty');
+    }
+
+    // 1. Verify existence of the variant
+    const blueprints = await this.dataSource.query(
+      `SELECT id, design_slug, variant_name, target_gender 
+       FROM product_blueprints 
+       WHERE id = $1`,
+      [variant_id],
+    );
+
+    if (!blueprints || blueprints.length === 0) {
+      const { NotFoundException } = await import('@nestjs/common');
+      throw new NotFoundException(`Product blueprint with variant ID ${variant_id} not found`);
+    }
+
+    const designSlug = blueprints[0].design_slug;
+
+    // 2. Check for unique key conflict
+    const conflict = await this.dataSource.query(
+      `SELECT id 
+       FROM product_blueprints 
+       WHERE design_slug = $1 
+         AND variant_name = $2 
+         AND target_gender = $3 
+         AND id != $4`,
+      [designSlug, trimmedVariantName, trimmedTargetGender, variant_id],
+    );
+
+    if (conflict && conflict.length > 0) {
+      const { ConflictException } = await import('@nestjs/common');
+      throw new ConflictException(
+        `A variant with name "${trimmedVariantName}" and target gender "${trimmedTargetGender}" already exists for design "${designSlug}"`,
+      );
+    }
+
+    // 3. Update the blueprint variant name and target gender
+    await this.dataSource.query(
+      `UPDATE product_blueprints 
+       SET variant_name = $1, target_gender = $2 
+       WHERE id = $3`,
+      [trimmedVariantName, trimmedTargetGender, variant_id],
+    );
+
+    return {
+      status: true,
+      message: 'Product blueprint variant updated successfully',
+    };
+  }
+
+  async createVariant(dto: CreateVariantDto): Promise<CreateVariantResponseDto> {
+    const { design_slug, variant_name, target_gender } = dto;
+    const trimmedDesignSlug = (design_slug ?? '').trim();
+    const trimmedVariantName = (variant_name ?? '').trim();
+    const trimmedTargetGender = (target_gender ?? '').trim();
+
+    if (!trimmedDesignSlug || !trimmedVariantName || !trimmedTargetGender) {
+      const { BadRequestException } = await import('@nestjs/common');
+      throw new BadRequestException('design_slug, variant_name, and target_gender cannot be empty');
+    }
+
+    // 1. Check for unique key conflict
+    const conflict = await this.dataSource.query(
+      `SELECT id 
+       FROM product_blueprints 
+       WHERE design_slug = $1 
+         AND variant_name = $2 
+         AND target_gender = $3`,
+      [trimmedDesignSlug, trimmedVariantName, trimmedTargetGender],
+    );
+
+    if (conflict && conflict.length > 0) {
+      const { ConflictException } = await import('@nestjs/common');
+      throw new ConflictException(
+        `A variant with name "${trimmedVariantName}" and target gender "${trimmedTargetGender}" already exists for design "${trimmedDesignSlug}"`,
+      );
+    }
+
+    // 2. Insert the new blueprint variant
+    const insertResult = await this.dataSource.query(
+      `INSERT INTO product_blueprints (design_slug, variant_name, target_gender)
+       VALUES ($1, $2, $3)
+       RETURNING id`,
+      [trimmedDesignSlug, trimmedVariantName, trimmedTargetGender],
+    );
+
+    const variantId = insertResult[0].id;
+
+    return {
+      status: true,
+      message: 'Product blueprint variant created successfully',
+      data: variantId,
+    };
+  }
+
+  async bulkCreateVariants(dto: BulkCreateVariantsDto): Promise<BulkCreateVariantsResponseDto> {
+    const { design_slug, variant } = dto;
+    const trimmedDesignSlug = (design_slug ?? '').trim();
+
+    if (!trimmedDesignSlug || !variant || variant.length === 0) {
+      const { BadRequestException } = await import('@nestjs/common');
+      throw new BadRequestException('design_slug and variant list cannot be empty');
+    }
+
+    // 1. Check for duplicates within the input payload itself
+    const seen = new Set<string>();
+    for (const v of variant) {
+      const trimmedName = (v.variant_name ?? '').trim();
+      const trimmedGender = (v.target_gender ?? '').trim();
+
+      if (!trimmedName || !trimmedGender) {
+        const { BadRequestException } = await import('@nestjs/common');
+        throw new BadRequestException('variant_name and target_gender cannot be empty for any variant');
+      }
+
+      const key = `${trimmedName.toLowerCase()}::${trimmedGender.toLowerCase()}`;
+      if (seen.has(key)) {
+        const { BadRequestException } = await import('@nestjs/common');
+        throw new BadRequestException(`Duplicate variant detected in payload: name "${trimmedName}" with target_gender "${trimmedGender}"`);
+      }
+      seen.add(key);
+    }
+
+    // 2. Query DB to check if the design_slug already exists
+    const existingDesign = await this.dataSource.query(
+      `SELECT id 
+       FROM product_blueprints 
+       WHERE design_slug = $1 
+       LIMIT 1`,
+      [trimmedDesignSlug],
+    );
+
+    if (existingDesign && existingDesign.length > 0) {
+      const { ConflictException } = await import('@nestjs/common');
+      throw new ConflictException(
+        `Design slug "${trimmedDesignSlug}" already exists. New variants for existing designs must be added individually.`,
+      );
+    }
+
+    // 3. Save them all in a transaction
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const insertedIds: number[] = [];
+      for (const v of variant) {
+        const res = await queryRunner.query(
+          `INSERT INTO product_blueprints (design_slug, variant_name, target_gender)
+           VALUES ($1, $2, $3)
+           RETURNING id`,
+          [trimmedDesignSlug, v.variant_name.trim(), v.target_gender.trim()],
+        );
+        insertedIds.push(res[0].id);
+      }
+
+      await queryRunner.commitTransaction();
+
+      return {
+        status: true,
+        message: 'Variants created successfully',
+        variant_ids: insertedIds,
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
