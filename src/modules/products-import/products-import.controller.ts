@@ -36,6 +36,12 @@ import { ProductVariantsResponseDto } from './dto/product-variants.dto';
 import { UpdateVariantDto, UpdateVariantResponseDto } from './dto/update-variant.dto';
 import { CreateVariantDto, CreateVariantResponseDto } from './dto/create-variant.dto';
 import { BulkCreateVariantsDto, BulkCreateVariantsResponseDto } from './dto/bulk-create-variants.dto';
+import {
+  VariantAllowedMetalsDto,
+  VariantAllowedMetalsResponseDto,
+  UpdateVariantAllowedMetalsDto,
+  UpdateVariantAllowedMetalsResponseDto,
+} from './dto/variant-allowed-metals.dto';
 
 @ApiTags('Products Import')
 @Controller('products')
@@ -254,6 +260,45 @@ export class ProductsImportController {
     @Param('variantId', ParseIntPipe) variantId: number,
   ): Promise<VariantDetailResponseDto> {
     return this.productsImportService.getVariantDetails(variantId);
+  }
+
+  @Get('variant/:variantId/allowed-metals')
+  @ApiOperation({
+    summary: 'Get allowed metals (purities and colors) by variant ID',
+    description: 'Returns all metal purities mapped with their allowed colors for a given variant ID',
+  })
+  @ApiParam({
+    name: 'variantId',
+    description: 'Unique variant (blueprint) ID',
+    example: 42,
+    type: Number,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Allowed metals retrieved successfully.',
+    type: VariantAllowedMetalsResponseDto,
+  })
+  async getAllowedMetalsForVariant(
+    @Param('variantId', ParseIntPipe) variantId: number,
+  ): Promise<VariantAllowedMetalsResponseDto> {
+    return this.productsImportService.getAllowedMetalsForVariant(variantId);
+  }
+
+  @Post('variant/allowed-metals')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Update/set allowed metals (purities and colors) for a variant ID',
+    description: 'Deletes existing allowed metal configurations for a variant, and saves the new list.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Allowed metals updated successfully.',
+    type: UpdateVariantAllowedMetalsResponseDto,
+  })
+  async updateAllowedMetalsForVariant(
+    @Body() body: UpdateVariantAllowedMetalsDto,
+  ): Promise<UpdateVariantAllowedMetalsResponseDto> {
+    return this.productsImportService.updateAllowedMetalsForVariant(body);
   }
 
   @Patch('variant')

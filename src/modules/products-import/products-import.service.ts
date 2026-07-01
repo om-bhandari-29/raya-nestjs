@@ -15,6 +15,13 @@ import { UpdateVariantDto, UpdateVariantResponseDto } from './dto/update-variant
 import { CreateVariantDto, CreateVariantResponseDto } from './dto/create-variant.dto';
 import { BulkCreateVariantsDto, BulkCreateVariantsResponseDto } from './dto/bulk-create-variants.dto';
 import { CreateZoneSlotConfigDto, CreateZoneSlotResponseDto } from './dto/create-zone-slot.dto';
+import {
+  VariantAllowedMetalsDto,
+  VariantAllowedMetalsResponseDto,
+  UpdateVariantAllowedMetalsDto,
+  UpdateVariantAllowedMetalsResponseDto,
+} from './dto/variant-allowed-metals.dto';
+import { MetalPurity } from '../../core/enum/metal-purity.enum';
 
 
 // ... (rest of imports and constants)
@@ -521,6 +528,14 @@ export class ProductsImportService {
       [blueprintIds],
     );
 
+    // Query design_variant_allowed_metals table for all fetched blueprints
+    const allDesignVariantAllowedMetals = await this.dataSource.query(
+      `SELECT variant_id, metal_purity, metal_color 
+      FROM design_variant_allowed_metals 
+      WHERE variant_id = ANY($1)`,
+      [blueprintIds],
+    );
+
     // STEP 3: Query Active Structural Zone Slots for all fetched blueprints
     const allZoneSlots = await this.dataSource.query(
       `SELECT id as zone_slot_id, blueprint_id, zone_name, shape_normalized, dim_l_mm, dim_w_mm, template_id, is_dynamic_by_size, fixed_quantity 
@@ -613,11 +628,24 @@ export class ProductsImportService {
         zoneSlots[zoneKey].push(slotData);
       }
 
+      // Group design_variant_allowed_metals by metal purity enum values
+      const designVariantAllowedMetals = Object.values(MetalPurity).map((purity) => {
+        const allowedColors = allDesignVariantAllowedMetals
+          .filter((m) => m.variant_id === blueprint.id && m.metal_purity === purity)
+          .map((m) => m.metal_color);
+
+        return {
+          metal_purity: purity,
+          allowed_colors: allowedColors,
+        };
+      });
+
       return {
         variantId: blueprint.id,
         variant: blueprint.variant_name,
         gender: blueprint.target_gender,
         allowed_metals: allowedMetals,
+        design_variant_allowed_metals: designVariantAllowedMetals,
         zone_slots: zoneSlots,
       };
     });
@@ -696,6 +724,14 @@ export class ProductsImportService {
       `SELECT metal_purity, metal_color 
        FROM product_metal_options 
        WHERE blueprint_id = $1`,
+      [variantId],
+    );
+
+    // Query design_variant_allowed_metals for the variant ID
+    const designVariantAllowedMetalsRaw = await this.dataSource.query(
+      `SELECT metal_purity, metal_color 
+       FROM design_variant_allowed_metals 
+       WHERE variant_id = $1`,
       [variantId],
     );
 
@@ -784,6 +820,15 @@ export class ProductsImportService {
           metal_purity,
           metal_color,
         })),
+        design_variant_allowed_metals: Object.values(MetalPurity).map((purity) => {
+          const allowedColors = designVariantAllowedMetalsRaw
+            .filter((m) => m.metal_purity === purity)
+            .map((m) => m.metal_color);
+          return {
+            metal_purity: purity,
+            allowed_colors: allowedColors,
+          };
+        }),
         zone_slots: zoneSlots as any,
       },
     };
@@ -1201,6 +1246,104 @@ export class ProductsImportService {
         status: true,
         message: 'Variants created successfully',
         data: designId,
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async getAllowedMetalsForVariant(variantId: number): Promise<VariantAllowedMetalsResponseDto> {
+    // 1. Check if the blueprint variant actually exists
+    const blueprints = await this.dataSource.query(
+      `SELECT id FROM product_blueprints WHERE id = $1`,
+      [variantId],
+    );
+
+    if (!blueprints || blueprints.length === 0) {
+      const { NotFoundException } = await import('@nestjs/common');
+      throw new NotFoundException(
+        `No product blueprint found for variant ID ${variantId}`,
+      );
+    }
+
+    // 2. Query design_variant_allowed_metals table
+    const rows = await this.dataSource.query(
+      `SELECT metal_purity, metal_color 
+       FROM design_variant_allowed_metals 
+       WHERE variant_id = $1`,
+      [variantId],
+    );
+
+    // 3. Group allowed colors by metal purity enum values
+    const data = Object.values(MetalPurity).map((purity) => {
+      const allowedColors = rows
+        .filter((row) => row.metal_purity === purity)
+        .map((row) => row.metal_color);
+
+      return {
+        metal_purity: purity,
+        allowed_colors: allowedColors,
+      };
+    });
+
+    return {
+      status: true,
+      message: 'Allowed metals retrieved successfully',
+      data,
+    };
+  }
+
+  async updateAllowedMetalsForVariant(
+    body: UpdateVariantAllowedMetalsDto,
+  ): Promise<UpdateVariantAllowedMetalsResponseDto> {
+    const { variant_id, allowed_metals } = body;
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // 1. Check if the blueprint variant actually exists
+      const blueprints = await queryRunner.query(
+        `SELECT id FROM product_blueprints WHERE id = $1`,
+        [variant_id],
+      );
+
+      if (!blueprints || blueprints.length === 0) {
+        const { NotFoundException } = await import('@nestjs/common');
+        throw new NotFoundException(
+          `No product blueprint found for variant ID ${variant_id}`,
+        );
+      }
+
+      // 2. Delete existing allowed metals for this variant
+      await queryRunner.query(
+        `DELETE FROM design_variant_allowed_metals WHERE variant_id = $1`,
+        [variant_id],
+      );
+
+      // 3. Insert new allowed metals
+      for (const metal of allowed_metals) {
+        const { metal_purity, metal_color } = metal;
+        for (const color of metal_color) {
+          await queryRunner.query(
+            `INSERT INTO design_variant_allowed_metals (variant_id, metal_purity, metal_color)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (variant_id, metal_purity, metal_color) DO NOTHING`,
+            [variant_id, metal_purity, color],
+          );
+        }
+      }
+
+      await queryRunner.commitTransaction();
+
+      return {
+        status: true,
+        message: 'Allowed metals updated successfully',
+        data: variant_id,
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();

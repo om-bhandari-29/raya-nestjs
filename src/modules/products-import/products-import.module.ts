@@ -9,6 +9,7 @@ import { ProductMetalOption } from './entity/product-metal-option.entity';
 import { BlueprintZoneSlot } from './entity/blueprint-zone-slot.entity';
 import { BlueprintSizeMatrix } from './entity/blueprint-size-matrix.entity';
 import { ProductDesign } from './entity/product-design.entity';
+import { DesignVariantAllowedMetal } from './entity/design-variant-allowed-metal.entity';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ProductDesign } from './entity/product-design.entity';
       BlueprintZoneSlot,
       BlueprintSizeMatrix,
       ProductDesign,
+      DesignVariantAllowedMetal,
     ]),
   ],
   providers: [ProductsImportService, ArchetypeImportService],
