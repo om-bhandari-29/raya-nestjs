@@ -16,6 +16,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PGTypeORMconfig } from './config/pgsql.config';
 import { ConfigModule } from '@nestjs/config';
 import { ProductsImportModule } from './modules/products-import/products-import.module';
+import { MetalModule } from './modules/metal/metal.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { ProductsImportModule } from './modules/products-import/products-import.
     StoneModule,
     EngineeringTemplateModule,
     ProductsImportModule,
+    MetalModule,
   ],
   controllers: [AppController],
   providers: [AppService],

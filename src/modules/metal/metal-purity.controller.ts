@@ -1,0 +1,67 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+} from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { MetalPurityService } from './metal-purity.service';
+import { CreateMetalPurityDto } from './dto/create-metal-purity.dto';
+import { UpdateMetalPurityDto } from './dto/update-metal-purity.dto';
+import {
+  ComboMetalPuritySwagger,
+  CreateMetalPuritySwagger,
+  FindAllMetalPuritiesSwagger,
+  FindOneMetalPuritySwagger,
+  UpdateMetalPuritySwagger,
+  RemoveMetalPuritySwagger,
+} from './metal.swagger';
+
+@ApiTags('metal-purity')
+@Controller('metal-purity')
+export class MetalPurityController {
+  constructor(private readonly metalPurityService: MetalPurityService) {}
+
+  @Post()
+  @CreateMetalPuritySwagger()
+  create(@Body() createMetalPurityDto: CreateMetalPurityDto) {
+    return this.metalPurityService.create(createMetalPurityDto);
+  }
+
+  @Get('combo')
+  @ComboMetalPuritySwagger()
+  combo() {
+    return this.metalPurityService.combo();
+  }
+
+  @Get()
+  @FindAllMetalPuritiesSwagger()
+  findAll() {
+    return this.metalPurityService.findAll();
+  }
+
+  @Get(':id')
+  @FindOneMetalPuritySwagger()
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.metalPurityService.findOne(id);
+  }
+
+  @Patch(':id')
+  @UpdateMetalPuritySwagger()
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateMetalPurityDto: UpdateMetalPurityDto,
+  ) {
+    return this.metalPurityService.update(id, updateMetalPurityDto);
+  }
+
+  @Delete(':id')
+  @RemoveMetalPuritySwagger()
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.metalPurityService.remove(id);
+  }
+}
