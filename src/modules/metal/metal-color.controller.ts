@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { MetalColorService } from './metal-color.service';
@@ -40,8 +41,12 @@ export class MetalColorController {
 
   @Get()
   @FindAllMetalColorsSwagger()
-  findAll() {
-    return this.metalColorService.findAll();
+  findAll(
+    @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10,
+    @Query('search') search?: string,
+  ) {
+    return this.metalColorService.findAll(page, limit, search);
   }
 
   @Get(':id')

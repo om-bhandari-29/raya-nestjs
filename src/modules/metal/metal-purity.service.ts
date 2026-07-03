@@ -49,13 +49,35 @@ export class MetalPurityService {
     };
   }
 
-  async findAll() {
-    const metalPurities = await this.metalPurityRepository.find();
+  async findAll(page: number = 1, limit: number = 10, search?: string) {
+    const query = this.metalPurityRepository.createQueryBuilder('mp');
+
+    if (search) {
+      query.where(
+        '(mp.name ILIKE :search OR mp.code ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    const [items, total] = await query
+      .orderBy('mp.id', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
     return {
       status: true,
       message: 'Metal purities retrieved successfully',
       statusCode: 200,
-      data: metalPurities,
+      data: {
+        items,
+      },
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 

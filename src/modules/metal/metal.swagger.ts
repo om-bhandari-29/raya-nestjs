@@ -1,5 +1,5 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 
 // ===== Metal Purity Examples =====
 
@@ -97,7 +97,10 @@ export const CreateMetalPuritySwagger = () =>
 
 export const FindAllMetalPuritiesSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Get all metal purities' }),
+    ApiOperation({ summary: 'Get paginated list of metal purities' }),
+    ApiQuery({ name: 'page', required: false, example: 1, description: 'Page number' }),
+    ApiQuery({ name: 'limit', required: false, example: 10, description: 'Items per page' }),
+    ApiQuery({ name: 'search', required: false, example: '14K', description: 'Search by name or code' }),
     ApiResponse({
       status: 200,
       description: 'Metal purities retrieved successfully',
@@ -106,7 +109,15 @@ export const FindAllMetalPuritiesSwagger = () =>
           status: true,
           message: 'Metal purities retrieved successfully',
           statusCode: 200,
-          data: [metalPurityExample],
+          data: {
+            items: [metalPurityExample],
+          },
+          meta: {
+            total: 1,
+            page: 1,
+            limit: 10,
+            totalPages: 1,
+          },
         },
       },
     }),
@@ -234,7 +245,10 @@ export const CreateMetalColorSwagger = () =>
 
 export const FindAllMetalColorsSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Get all metal colors' }),
+    ApiOperation({ summary: 'Get paginated list of metal colors' }),
+    ApiQuery({ name: 'page', required: false, example: 1, description: 'Page number' }),
+    ApiQuery({ name: 'limit', required: false, example: 10, description: 'Items per page' }),
+    ApiQuery({ name: 'search', required: false, example: 'Yellow', description: 'Search by name or code' }),
     ApiResponse({
       status: 200,
       description: 'Metal colors retrieved successfully',
@@ -243,7 +257,15 @@ export const FindAllMetalColorsSwagger = () =>
           status: true,
           message: 'Metal colors retrieved successfully',
           statusCode: 200,
-          data: [metalColorExample],
+          data: {
+            items: [metalColorExample],
+          },
+          meta: {
+            total: 1,
+            page: 1,
+            limit: 10,
+            totalPages: 1,
+          },
         },
       },
     }),

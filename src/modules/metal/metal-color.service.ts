@@ -49,13 +49,35 @@ export class MetalColorService {
     };
   }
 
-  async findAll() {
-    const metalColors = await this.metalColorRepository.find();
+  async findAll(page: number = 1, limit: number = 10, search?: string) {
+    const query = this.metalColorRepository.createQueryBuilder('mc');
+
+    if (search) {
+      query.where(
+        '(mc.name ILIKE :search OR mc.code ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    const [items, total] = await query
+      .orderBy('mc.id', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
     return {
       status: true,
       message: 'Metal colors retrieved successfully',
       statusCode: 200,
-      data: metalColors,
+      data: {
+        items,
+      },
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 

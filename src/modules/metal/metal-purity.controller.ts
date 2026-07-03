@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { MetalPurityService } from './metal-purity.service';
@@ -40,8 +41,12 @@ export class MetalPurityController {
 
   @Get()
   @FindAllMetalPuritiesSwagger()
-  findAll() {
-    return this.metalPurityService.findAll();
+  findAll(
+    @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10,
+    @Query('search') search?: string,
+  ) {
+    return this.metalPurityService.findAll(page, limit, search);
   }
 
   @Get(':id')
