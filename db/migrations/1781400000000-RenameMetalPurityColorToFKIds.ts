@@ -22,14 +22,29 @@ export class RenameMetalPurityColorToFKIds1781400000000
         DROP COLUMN "metal_color"`,
     );
 
-    // 3. Add new integer FK columns
+    // 3. Add new integer FK columns as nullable first (table may have existing rows)
     await queryRunner.query(
       `ALTER TABLE "design_variant_allowed_metals"
-        ADD COLUMN "metal_purity_id" integer NOT NULL`,
+        ADD COLUMN "metal_purity_id" integer`,
     );
     await queryRunner.query(
       `ALTER TABLE "design_variant_allowed_metals"
-        ADD COLUMN "metal_color_id" integer NOT NULL`,
+        ADD COLUMN "metal_color_id" integer`,
+    );
+
+    // 3a. Delete any existing rows that can't be mapped (orphaned rows without valid FK values)
+    await queryRunner.query(
+      `DELETE FROM "design_variant_allowed_metals"`,
+    );
+
+    // 3b. Now enforce NOT NULL
+    await queryRunner.query(
+      `ALTER TABLE "design_variant_allowed_metals"
+        ALTER COLUMN "metal_purity_id" SET NOT NULL`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "design_variant_allowed_metals"
+        ALTER COLUMN "metal_color_id" SET NOT NULL`,
     );
 
     // 4. Add FK: metal_purity_id → metal_purities(id)
