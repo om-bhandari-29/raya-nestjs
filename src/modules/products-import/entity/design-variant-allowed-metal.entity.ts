@@ -7,11 +7,11 @@ import {
   Unique,
 } from 'typeorm';
 import { ProductBlueprint } from './product-blueprint.entity';
-import { MetalPurity } from '../../../core/enum/metal-purity.enum';
-import { MetalColor } from '../../../core/enum/metal-color.enum';
+import { MetalPurity } from '../../metal/entity/metal-purity.entity';
+import { MetalColor } from '../../metal/entity/metal-color.entity';
 
 @Entity('design_variant_allowed_metals')
-@Unique(['variant_id', 'metal_purity', 'metal_color'])
+@Unique(['variant_id', 'metal_purity_id', 'metal_color_id'])
 export class DesignVariantAllowedMetal {
   @PrimaryGeneratedColumn()
   id: number;
@@ -23,9 +23,17 @@ export class DesignVariantAllowedMetal {
   @Column({ type: 'int' })
   variant_id: number;
 
-  @Column({ type: 'enum', enum: MetalPurity })
-  metal_purity: MetalPurity;
+  @ManyToOne(() => MetalPurity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'metal_purity_id' })
+  metalPurity: MetalPurity;
 
-  @Column({ type: 'enum', enum: MetalColor })
-  metal_color: MetalColor;
+  @Column({ type: 'int' })
+  metal_purity_id: number;
+
+  @ManyToOne(() => MetalColor, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'metal_color_id' })
+  metalColor: MetalColor;
+
+  @Column({ type: 'int' })
+  metal_color_id: number;
 }

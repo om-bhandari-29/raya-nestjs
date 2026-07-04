@@ -3,11 +3,11 @@ import { VariantAllowedMetalsDto } from './variant-allowed-metals.dto';
 
 
 export class AllowedMetalDto {
-  @ApiProperty({ example: '18K' })
-  metal_purity: string;
+  @ApiProperty({ example: 1 })
+  metal_purity_id: number;
 
-  @ApiProperty({ example: 'Rose Gold' })
-  metal_color: string;
+  @ApiProperty({ example: 2 })
+  metal_color_id: number;
 }
 
 export class SizeWeightMatrixEntryDto {

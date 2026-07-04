@@ -35,8 +35,11 @@ export class MetalColorController {
 
   @Get('combo')
   @ComboMetalColorSwagger()
-  combo() {
-    return this.metalColorService.combo();
+  combo(
+    @Query('variantId', new ParseIntPipe({ optional: true })) variantId: number = null,
+    @Query('metalPurityId', new ParseIntPipe({ optional: true })) metalPurityId: number = null,
+  ) {
+    return this.metalColorService.combo(variantId, metalPurityId);
   }
 
   @Get()

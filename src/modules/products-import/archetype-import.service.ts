@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, QueryRunner } from 'typeorm';
 import { Readable } from 'stream';
-import * as csvParser from 'csv-parser';
+import csvParser from 'csv-parser';
 
 export interface ArchetypeCsvRow {
   config_id?: string;
@@ -117,7 +117,7 @@ export class ArchetypeImportService {
       await queryRunner.commitTransaction();
       this.logger.log(`Archetype database transaction successfully committed. Blueprints: ${result.blueprintsProcessed}, Slots: ${result.zoneSlotsInserted}, Matrix Rows: ${result.sizeMatrixRowsInserted}`);
     } catch (err) {
-      this.logger.error('Archetype data import failed, rolling back active transaction state...', err.stack);
+      this.logger.error('Archetype data import failed, rolling back active transaction state...', (err as Error).stack);
       await queryRunner.rollbackTransaction();
       throw err;
     } finally {

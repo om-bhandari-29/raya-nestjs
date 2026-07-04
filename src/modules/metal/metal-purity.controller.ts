@@ -20,6 +20,7 @@ import {
   FindOneMetalPuritySwagger,
   UpdateMetalPuritySwagger,
   RemoveMetalPuritySwagger,
+  GetAllowedMetalsByVariantSwagger,
 } from './metal.swagger';
 
 @ApiTags('metal-purity')
@@ -68,5 +69,11 @@ export class MetalPurityController {
   @RemoveMetalPuritySwagger()
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.metalPurityService.remove(id);
+  }
+
+  @Get('variant/:variantId')
+  @GetAllowedMetalsByVariantSwagger()
+  findByVariantId(@Param('variantId', ParseIntPipe) variantId: number) {
+    return this.metalPurityService.findByVariantId(variantId);
   }
 }

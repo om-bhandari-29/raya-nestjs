@@ -53,10 +53,9 @@ export class MetalPurityService {
     const query = this.metalPurityRepository.createQueryBuilder('mp');
 
     if (search) {
-      query.where(
-        '(mp.name ILIKE :search OR mp.code ILIKE :search)',
-        { search: `%${search}%` },
-      );
+      query.where('(mp.name ILIKE :search OR mp.code ILIKE :search)', {
+        search: `%${search}%`,
+      });
     }
 
     const [items, total] = await query
@@ -142,5 +141,37 @@ export class MetalPurityService {
       statusCode: 200,
       data: null,
     };
+  }
+
+  async findByVariantId(variantId: number) {
+    // Check if the product blueprint variant exists
+    const blueprints = await this.metalPurityRepository.query(
+      `SELECT id FROM product_blueprints WHERE id = $1`,
+      [variantId],
+    );
+
+    if (!blueprints || blueprints.length === 0) {
+      throw new NotFoundException(
+        `Product variant/blueprint with ID '${variantId}' not found`,
+      );
+    }
+
+    // Added DISTINCT and removed id / metal_color_id to get unique purities
+    const rows = await this.metalPurityRepository.query(
+      `SELECT DISTINCT
+        dvam.metal_purity_id as id, 
+        mp.name
+     FROM design_variant_allowed_metals dvam
+     JOIN metal_purities mp ON dvam.metal_purity_id = mp.id
+     WHERE dvam.variant_id = $1`,
+      [variantId],
+    );
+
+    return {
+      status: true,
+      message: 'Allowed metals for variant retrieved successfully',
+      statusCode: 200,
+      data: rows,
+    }; // <-- Fixed: Changed ) to }
   }
 }

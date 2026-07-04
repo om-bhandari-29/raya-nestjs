@@ -197,6 +197,46 @@ export const RemoveMetalPuritySwagger = () =>
     }),
   );
 
+export const GetAllowedMetalsByVariantSwagger = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Get metal purities and colors for a given variant ID with purity name',
+      description: 'Returns list containing id, metal_purity_id, metal_color_id, and metal_purity_name.',
+    }),
+    ApiParam({ name: 'variantId', type: 'number', example: 1, description: 'The variant (blueprint) ID' }),
+    ApiResponse({
+      status: 200,
+      description: 'Allowed metals retrieved successfully',
+      schema: {
+        example: {
+          status: true,
+          message: 'Allowed metals for variant retrieved successfully',
+          statusCode: 200,
+          data: [
+            {
+              id: 1,
+              metal_purity_id: 2,
+              metal_color_id: 3,
+              metal_purity_name: '18K Gold',
+            },
+          ],
+        },
+      },
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Product variant/blueprint not found',
+      schema: {
+        example: {
+          status: false,
+          message: "Product variant/blueprint with ID '1' not found",
+          statusCode: 404,
+          data: null,
+        },
+      },
+    }),
+  );
+
 // ===== Metal Color Swagger Decorators =====
 
 export const ComboMetalColorSwagger = () =>

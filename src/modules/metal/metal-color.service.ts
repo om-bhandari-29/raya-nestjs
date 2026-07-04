@@ -16,11 +16,43 @@ export class MetalColorService {
     private readonly metalColorRepository: Repository<MetalColor>,
   ) {}
 
-  async combo() {
-    const data = await this.metalColorRepository.find({
-      select: ['id', 'name', 'code'],
-      order: { name: 'ASC' },
-    });
+  // async comboplane() {
+  //   const data = await this.metalColorRepository.find({
+  //     select: ['id', 'name', 'code'],
+  //     order: { name: 'ASC' },
+  //   });
+  //   return {
+  //     status: true,
+  //     message: 'Metal color combo retrieved successfully',
+  //     statusCode: 200,
+  //     data,
+  //   };
+  // }
+  async combo(variantId: number = null, metalPurityId: number = null) {
+    // 1. Build the dynamic query using parameterized inputs to prevent SQL injection
+    const query = `
+    SELECT DISTINCT
+      mc.id,
+      mc.name,
+      mc.code
+    FROM metal_colors mc
+    -- We join the mapping table if we want to filter by variant or purity
+    LEFT JOIN design_variant_allowed_metals dvam ON dvam.metal_color_id = mc.id
+    WHERE 
+      -- If variantId is null, skip this condition. Otherwise, match it.
+      ($1::integer IS NULL OR dvam.variant_id = $1)
+      AND
+      -- If metalPurityId is null, skip this condition. Otherwise, match it.
+      ($2::integer IS NULL OR dvam.metal_purity_id = $2)
+    ORDER BY mc.name ASC
+  `;
+
+    // 2. Execute the query passing the parameters
+    const data = await this.metalColorRepository.query(query, [
+      variantId,
+      metalPurityId,
+    ]);
+
     return {
       status: true,
       message: 'Metal color combo retrieved successfully',
@@ -53,10 +85,9 @@ export class MetalColorService {
     const query = this.metalColorRepository.createQueryBuilder('mc');
 
     if (search) {
-      query.where(
-        '(mc.name ILIKE :search OR mc.code ILIKE :search)',
-        { search: `%${search}%` },
-      );
+      query.where('(mc.name ILIKE :search OR mc.code ILIKE :search)', {
+        search: `%${search}%`,
+      });
     }
 
     const [items, total] = await query

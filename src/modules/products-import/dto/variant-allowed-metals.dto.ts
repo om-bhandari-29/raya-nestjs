@@ -1,25 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsArray, IsEnum, ValidateNested } from 'class-validator';
+import { IsInt, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { MetalPurity } from '../../../core/enum/metal-purity.enum';
-import { MetalColor } from '../../../core/enum/metal-color.enum';
 
 export class VariantAllowedMetalsDto {
   @ApiProperty({
-    enum: MetalPurity,
-    example: MetalPurity.GOLD_14K,
-    description: 'The purity of the metal',
+    example: 1,
+    description: 'The metal purity ID (FK to metal_purities)',
   })
-  metal_purity: MetalPurity;
+  metal_purity_id: number;
 
   @ApiProperty({
-    type: [String],
-    enum: MetalColor,
-    isArray: true,
-    example: [MetalColor.YELLOW, MetalColor.WHITE],
-    description: 'Allowed metal colors for this purity',
+    type: [Number],
+    example: [1, 2],
+    description: 'Allowed metal color IDs for this purity',
   })
-  allowed_colors: MetalColor[];
+  allowed_color_ids: number[];
 }
 
 export class VariantAllowedMetalsResponseDto {
@@ -35,23 +30,20 @@ export class VariantAllowedMetalsResponseDto {
 
 export class AllowedMetalInputDto {
   @ApiProperty({
-    enum: MetalPurity,
-    example: MetalPurity.GOLD_14K,
-    description: 'The purity of the metal',
+    example: 1,
+    description: 'The metal purity ID (FK to metal_purities)',
   })
-  @IsEnum(MetalPurity)
-  metal_purity: MetalPurity;
+  @IsInt()
+  metal_purity: number;
 
   @ApiProperty({
-    type: [String],
-    enum: MetalColor,
-    isArray: true,
-    example: [MetalColor.YELLOW, MetalColor.WHITE],
-    description: 'Allowed metal colors for this purity',
+    type: [Number],
+    example: [1, 2],
+    description: 'Allowed metal color IDs for this purity',
   })
   @IsArray()
-  @IsEnum(MetalColor, { each: true })
-  metal_color: MetalColor[];
+  @IsInt({ each: true })
+  metal_color: number[];
 }
 
 export class UpdateVariantAllowedMetalsDto {
@@ -64,7 +56,7 @@ export class UpdateVariantAllowedMetalsDto {
 
   @ApiProperty({
     type: [AllowedMetalInputDto],
-    description: 'List of allowed metal purities and colors',
+    description: 'List of allowed metal purities and color IDs',
   })
   @IsArray()
   @ValidateNested({ each: true })

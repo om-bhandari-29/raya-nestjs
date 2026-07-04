@@ -6,7 +6,7 @@ import {
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, QueryRunner } from 'typeorm';
 import { Readable } from 'stream';
-import * as csvParser from 'csv-parser';
+import csvParser from 'csv-parser';
 import { BlueprintListItemDto } from './dto/blueprint-list.dto';
 import { ProductVariantsResponseDto } from './dto/product-variants.dto';
 import { VariantDetailResponseDto } from './dto/product-detail.dto';
@@ -21,7 +21,7 @@ import {
   UpdateVariantAllowedMetalsDto,
   UpdateVariantAllowedMetalsResponseDto,
 } from './dto/variant-allowed-metals.dto';
-import { MetalPurity } from '../../core/enum/metal-purity.enum';
+
 
 
 // ... (rest of imports and constants)
@@ -530,7 +530,7 @@ export class ProductsImportService {
 
     // Query design_variant_allowed_metals table for all fetched blueprints
     const allDesignVariantAllowedMetals = await this.dataSource.query(
-      `SELECT variant_id, metal_purity, metal_color 
+      `SELECT variant_id, metal_purity_id, metal_color_id 
       FROM design_variant_allowed_metals 
       WHERE variant_id = ANY($1)`,
       [blueprintIds],
@@ -605,8 +605,8 @@ export class ProductsImportService {
       const allowedMetals = allMetalOptions
         .filter((m) => m.blueprint_id === blueprint.id)
         .map(({ metal_purity, metal_color }) => ({
-          metal_purity,
-          metal_color,
+          metal_purity_id: metal_purity,
+          metal_color_id: metal_color,
         }));
 
       // Build zone_slots as an object keyed by RingComponentZone
@@ -628,15 +628,20 @@ export class ProductsImportService {
         zoneSlots[zoneKey].push(slotData);
       }
 
-      // Group design_variant_allowed_metals by metal purity enum values
-      const designVariantAllowedMetals = Object.values(MetalPurity).map((purity) => {
-        const allowedColors = allDesignVariantAllowedMetals
-          .filter((m) => m.variant_id === blueprint.id && m.metal_purity === purity)
-          .map((m) => m.metal_color);
+      // Group design_variant_allowed_metals by metal_purity_id
+      const purityIds = [...new Set(
+        allDesignVariantAllowedMetals
+          .filter((m) => m.variant_id === blueprint.id)
+          .map((m) => m.metal_purity_id),
+      )];
+      const designVariantAllowedMetals = purityIds.map((purityId) => {
+        const allowedColorIds = allDesignVariantAllowedMetals
+          .filter((m) => m.variant_id === blueprint.id && m.metal_purity_id === purityId)
+          .map((m) => m.metal_color_id);
 
         return {
-          metal_purity: purity,
-          allowed_colors: allowedColors,
+          metal_purity_id: purityId,
+          allowed_color_ids: allowedColorIds,
         };
       });
 
@@ -729,7 +734,7 @@ export class ProductsImportService {
 
     // Query design_variant_allowed_metals for the variant ID
     const designVariantAllowedMetalsRaw = await this.dataSource.query(
-      `SELECT metal_purity, metal_color 
+      `SELECT metal_purity_id, metal_color_id 
        FROM design_variant_allowed_metals 
        WHERE variant_id = $1`,
       [variantId],
@@ -817,18 +822,23 @@ export class ProductsImportService {
       data: {
         variantId,
         allowed_metals: metalOptions.map(({ metal_purity, metal_color }) => ({
-          metal_purity,
-          metal_color,
+          metal_purity_id: metal_purity,
+          metal_color_id: metal_color,
         })),
-        design_variant_allowed_metals: Object.values(MetalPurity).map((purity) => {
-          const allowedColors = designVariantAllowedMetalsRaw
-            .filter((m) => m.metal_purity === purity)
-            .map((m) => m.metal_color);
-          return {
-            metal_purity: purity,
-            allowed_colors: allowedColors,
-          };
-        }),
+        design_variant_allowed_metals: (() => {
+          const purityIds = [...new Set<number>(
+            designVariantAllowedMetalsRaw.map((m) => m.metal_purity_id),
+          )];
+          return purityIds.map((purityId) => {
+            const allowedColorIds = designVariantAllowedMetalsRaw
+              .filter((m) => m.metal_purity_id === purityId)
+              .map((m) => m.metal_color_id);
+            return {
+              metal_purity_id: purityId,
+              allowed_color_ids: allowedColorIds,
+            };
+          });
+        })(),
         zone_slots: zoneSlots as any,
       },
     };
@@ -1271,21 +1281,22 @@ export class ProductsImportService {
 
     // 2. Query design_variant_allowed_metals table
     const rows = await this.dataSource.query(
-      `SELECT metal_purity, metal_color 
+      `SELECT metal_purity_id, metal_color_id 
        FROM design_variant_allowed_metals 
        WHERE variant_id = $1`,
       [variantId],
     );
 
-    // 3. Group allowed colors by metal purity enum values
-    const data = Object.values(MetalPurity).map((purity) => {
-      const allowedColors = rows
-        .filter((row) => row.metal_purity === purity)
-        .map((row) => row.metal_color);
+    // 3. Group allowed color IDs by metal_purity_id
+    const purityIds = [...new Set<number>(rows.map((row) => row.metal_purity_id))];
+    const data = purityIds.map((purityId) => {
+      const allowedColorIds = rows
+        .filter((row) => row.metal_purity_id === purityId)
+        .map((row) => row.metal_color_id);
 
       return {
-        metal_purity: purity,
-        allowed_colors: allowedColors,
+        metal_purity_id: purityId,
+        allowed_color_ids: allowedColorIds,
       };
     });
 
@@ -1328,12 +1339,12 @@ export class ProductsImportService {
       // 3. Insert new allowed metals
       for (const metal of allowed_metals) {
         const { metal_purity, metal_color } = metal;
-        for (const color of metal_color) {
+        for (const colorId of metal_color) {
           await queryRunner.query(
-            `INSERT INTO design_variant_allowed_metals (variant_id, metal_purity, metal_color)
+            `INSERT INTO design_variant_allowed_metals (variant_id, metal_purity_id, metal_color_id)
              VALUES ($1, $2, $3)
-             ON CONFLICT (variant_id, metal_purity, metal_color) DO NOTHING`,
-            [variant_id, metal_purity, color],
+             ON CONFLICT (variant_id, metal_purity_id, metal_color_id) DO NOTHING`,
+            [variant_id, metal_purity, colorId],
           );
         }
       }
