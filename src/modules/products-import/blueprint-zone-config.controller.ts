@@ -1,8 +1,21 @@
-import { Controller, Put, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Put,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ProductsImportService } from './products-import.service';
-import { UpdateZoneSlotConfigDto, UpdateZoneSlotResponseDto } from './dto/update-zone-slot.dto';
-import { CreateZoneSlotConfigDto, CreateZoneSlotResponseDto } from './dto/create-zone-slot.dto';
+import {
+  UpdateZoneSlotConfigDto,
+  UpdateZoneSlotResponseDto,
+} from './dto/update-zone-slot.dto';
+import {
+  CreateZoneSlotConfigDto,
+  CreateZoneSlotResponseDto,
+} from './dto/create-zone-slot.dto';
 
 @ApiTags('Blueprint Zone Config')
 @Controller('blueprint-zones')
@@ -13,7 +26,8 @@ export class BlueprintZoneConfigController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Add a new zone slot configuration and its size matrix config',
-    description: 'Creates a new zone slot configuration for a specific variant and zone, optionally with size weight matrix values if dynamic.',
+    description:
+      'Creates a new zone slot configuration for a specific variant and zone, optionally with size weight matrix values if dynamic.',
   })
   @ApiResponse({
     status: 200,
@@ -30,7 +44,8 @@ export class BlueprintZoneConfigController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Update zone slot configurations and its size matrix config',
-    description: 'Updates dimensions, dynamism, shape of a zone slot, and replaces its sizing matrix values if dynamic.',
+    description:
+      'Updates dimensions, dynamism, shape of a zone slot, and replaces its sizing matrix values if dynamic.',
   })
   @ApiResponse({
     status: 200,
@@ -43,4 +58,3 @@ export class BlueprintZoneConfigController {
     return this.productsImportService.updateZoneSlotConfig(body);
   }
 }
-

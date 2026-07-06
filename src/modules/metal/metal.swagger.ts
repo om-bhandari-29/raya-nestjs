@@ -30,7 +30,6 @@ const metalPurityConflictExample = {
 const metalColorExample = {
   id: 1,
   name: 'Yellow',
-  code: 'YELLOW',
   created_at: '2026-07-03T00:00:00.000Z',
   updated_at: '2026-07-03T00:00:00.000Z',
 };
@@ -44,7 +43,7 @@ const metalColorNotFoundExample = {
 
 const metalColorConflictExample = {
   status: false,
-  message: "Metal color with code 'YELLOW' already exists",
+  message: "Metal color with name 'Yellow' already exists",
   statusCode: 409,
   data: null,
 };
@@ -98,9 +97,24 @@ export const CreateMetalPuritySwagger = () =>
 export const FindAllMetalPuritiesSwagger = () =>
   applyDecorators(
     ApiOperation({ summary: 'Get paginated list of metal purities' }),
-    ApiQuery({ name: 'page', required: false, example: 1, description: 'Page number' }),
-    ApiQuery({ name: 'limit', required: false, example: 10, description: 'Items per page' }),
-    ApiQuery({ name: 'search', required: false, example: '14K', description: 'Search by name or code' }),
+    ApiQuery({
+      name: 'page',
+      required: false,
+      example: 1,
+      description: 'Page number',
+    }),
+    ApiQuery({
+      name: 'limit',
+      required: false,
+      example: 10,
+      description: 'Items per page',
+    }),
+    ApiQuery({
+      name: 'search',
+      required: false,
+      example: '14K',
+      description: 'Search by name or code',
+    }),
     ApiResponse({
       status: 200,
       description: 'Metal purities retrieved successfully',
@@ -200,10 +214,17 @@ export const RemoveMetalPuritySwagger = () =>
 export const GetAllowedMetalsByVariantSwagger = () =>
   applyDecorators(
     ApiOperation({
-      summary: 'Get metal purities and colors for a given variant ID with purity name',
-      description: 'Returns list containing id, metal_purity_id, metal_color_id, and metal_purity_name.',
+      summary:
+        'Get metal purities and colors for a given variant ID with purity name',
+      description:
+        'Returns list containing id, metal_purity_id, metal_color_id, and metal_purity_name.',
     }),
-    ApiParam({ name: 'variantId', type: 'number', example: 1, description: 'The variant (blueprint) ID' }),
+    ApiParam({
+      name: 'variantId',
+      type: 'number',
+      example: 1,
+      description: 'The variant (blueprint) ID',
+    }),
     ApiResponse({
       status: 200,
       description: 'Allowed metals retrieved successfully',
@@ -242,7 +263,7 @@ export const GetAllowedMetalsByVariantSwagger = () =>
 export const ComboMetalColorSwagger = () =>
   applyDecorators(
     ApiOperation({
-      summary: 'Get metal colors for dropdown (id, name, and code only)',
+      summary: 'Get metal colors for dropdown (id and name only)',
     }),
     ApiResponse({
       status: 200,
@@ -253,8 +274,8 @@ export const ComboMetalColorSwagger = () =>
           message: 'Metal color combo retrieved successfully',
           statusCode: 200,
           data: [
-            { id: 1, name: 'Yellow', code: 'YELLOW' },
-            { id: 2, name: 'Rose', code: 'ROSE' },
+            { id: 1, name: 'Yellow' },
+            { id: 2, name: 'Rose' },
           ],
         },
       },
@@ -286,9 +307,24 @@ export const CreateMetalColorSwagger = () =>
 export const FindAllMetalColorsSwagger = () =>
   applyDecorators(
     ApiOperation({ summary: 'Get paginated list of metal colors' }),
-    ApiQuery({ name: 'page', required: false, example: 1, description: 'Page number' }),
-    ApiQuery({ name: 'limit', required: false, example: 10, description: 'Items per page' }),
-    ApiQuery({ name: 'search', required: false, example: 'Yellow', description: 'Search by name or code' }),
+    ApiQuery({
+      name: 'page',
+      required: false,
+      example: 1,
+      description: 'Page number',
+    }),
+    ApiQuery({
+      name: 'limit',
+      required: false,
+      example: 10,
+      description: 'Items per page',
+    }),
+    ApiQuery({
+      name: 'search',
+      required: false,
+      example: 'Yellow',
+      description: 'Search by name',
+    }),
     ApiResponse({
       status: 200,
       description: 'Metal colors retrieved successfully',

@@ -20,7 +20,9 @@ export class ProductBlueprint {
   @Column({ name: 'design_id' })
   design_id: number;
 
-  @ManyToOne(() => ProductDesign, (design) => design.blueprints, { onDelete: 'CASCADE' })
+  @ManyToOne(() => ProductDesign, (design) => design.blueprints, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'design_id' })
   design: ProductDesign;
 
@@ -36,4 +38,3 @@ export class ProductBlueprint {
   @OneToMany(() => BlueprintZoneSlot, (slot) => slot.blueprint)
   zone_slots: BlueprintZoneSlot[];
 }
-

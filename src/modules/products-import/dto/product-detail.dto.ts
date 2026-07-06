@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { VariantAllowedMetalsDto } from './variant-allowed-metals.dto';
 
-
 export class AllowedMetalDto {
   @ApiProperty({ example: 1 })
   metal_purity_id: number;
@@ -74,7 +73,10 @@ export class ProductVariantDetailDto {
   @ApiProperty({ type: [AllowedMetalDto] })
   allowed_metals: AllowedMetalDto[];
 
-  @ApiProperty({ type: [VariantAllowedMetalsDto], description: 'Grouped allowed metals variant wise' })
+  @ApiProperty({
+    type: [VariantAllowedMetalsDto],
+    description: 'Grouped allowed metals variant wise',
+  })
   design_variant_allowed_metals: VariantAllowedMetalsDto[];
 
   @ApiProperty({ type: ZoneSlotsDto })
@@ -104,7 +106,10 @@ export class VariantDetailDto {
   @ApiProperty({ type: [AllowedMetalDto] })
   allowed_metals: AllowedMetalDto[];
 
-  @ApiProperty({ type: [VariantAllowedMetalsDto], description: 'Grouped allowed metals variant wise' })
+  @ApiProperty({
+    type: [VariantAllowedMetalsDto],
+    description: 'Grouped allowed metals variant wise',
+  })
   design_variant_allowed_metals: VariantAllowedMetalsDto[];
 
   @ApiProperty({ type: ZoneSlotsDto })
@@ -118,4 +123,3 @@ export class VariantDetailResponseDto {
   @ApiProperty({ type: VariantDetailDto })
   data: VariantDetailDto;
 }
-

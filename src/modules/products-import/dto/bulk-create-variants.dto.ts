@@ -34,4 +34,3 @@ export class BulkCreateVariantsResponseDto {
   @ApiProperty({ example: 10, description: 'ID of the product design' })
   data: number;
 }
-

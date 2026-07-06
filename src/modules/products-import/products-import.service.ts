@@ -10,19 +10,32 @@ import csvParser from 'csv-parser';
 import { BlueprintListItemDto } from './dto/blueprint-list.dto';
 import { ProductVariantsResponseDto } from './dto/product-variants.dto';
 import { VariantDetailResponseDto } from './dto/product-detail.dto';
-import { UpdateZoneSlotConfigDto, UpdateZoneSlotResponseDto } from './dto/update-zone-slot.dto';
-import { UpdateVariantDto, UpdateVariantResponseDto } from './dto/update-variant.dto';
-import { CreateVariantDto, CreateVariantResponseDto } from './dto/create-variant.dto';
-import { BulkCreateVariantsDto, BulkCreateVariantsResponseDto } from './dto/bulk-create-variants.dto';
-import { CreateZoneSlotConfigDto, CreateZoneSlotResponseDto } from './dto/create-zone-slot.dto';
+import {
+  UpdateZoneSlotConfigDto,
+  UpdateZoneSlotResponseDto,
+} from './dto/update-zone-slot.dto';
+import {
+  UpdateVariantDto,
+  UpdateVariantResponseDto,
+} from './dto/update-variant.dto';
+import {
+  CreateVariantDto,
+  CreateVariantResponseDto,
+} from './dto/create-variant.dto';
+import {
+  BulkCreateVariantsDto,
+  BulkCreateVariantsResponseDto,
+} from './dto/bulk-create-variants.dto';
+import {
+  CreateZoneSlotConfigDto,
+  CreateZoneSlotResponseDto,
+} from './dto/create-zone-slot.dto';
 import {
   VariantAllowedMetalsDto,
   VariantAllowedMetalsResponseDto,
   UpdateVariantAllowedMetalsDto,
   UpdateVariantAllowedMetalsResponseDto,
 } from './dto/variant-allowed-metals.dto';
-
-
 
 // ... (rest of imports and constants)
 
@@ -88,7 +101,7 @@ export class ProductsImportService {
   constructor(
     @InjectDataSource()
     private readonly dataSource: DataSource,
-  ) { }
+  ) {}
 
   // ─── Public entry-point ─────────────────────────────────────────────────────
 
@@ -116,9 +129,9 @@ export class ProductsImportService {
 
     this.logger.log(
       `Import finished — blueprints: ${result.blueprintsProcessed}, ` +
-      `metal options: ${result.metalOptionsInserted}, ` +
-      `zone slots: ${result.zoneSlotsInserted}, ` +
-      `size matrix rows: ${result.sizeMatrixRowsInserted}.`,
+        `metal options: ${result.metalOptionsInserted}, ` +
+        `zone slots: ${result.zoneSlotsInserted}, ` +
+        `size matrix rows: ${result.sizeMatrixRowsInserted}.`,
     );
 
     return result;
@@ -228,14 +241,14 @@ export class ProductsImportService {
       DO NOTHING
       RETURNING id
     `;
-    let designRows = await this.dataSource.query(designSql, [designSlug]);
+    const designRows = await this.dataSource.query(designSql, [designSlug]);
     let designId: number;
     if (designRows && designRows.length > 0) {
       designId = designRows[0].id;
     } else {
       const selectRes = await this.dataSource.query(
         `SELECT id FROM product_designs WHERE design_slug = $1`,
-        [designSlug]
+        [designSlug],
       );
       designId = selectRes[0].id;
     }
@@ -341,7 +354,9 @@ export class ProductsImportService {
     // Extract shape and dimension for this zone
     const shapeCol = `${zone}_Shape`;
     const dimCol = `${zone}_Dim`;
-    const shapeRaw = (templateRow[shapeCol] ?? 'round').toString().trim().toLowerCase() || 'round';
+    const shapeRaw =
+      (templateRow[shapeCol] ?? 'round').toString().trim().toLowerCase() ||
+      'round';
     const dimRaw = (templateRow[dimCol] ?? '').toString().trim();
 
     // dim may be formatted as "LxW" e.g. "5.2x3.1" or a single value
@@ -350,7 +365,7 @@ export class ProductsImportService {
     if (dimRaw) {
       const parts = dimRaw.split(/[xX×]/);
       dimLVal = parts[0] ? parseFloat(parts[0]) : null;
-      dimWVal = parts[1] ? parseFloat(parts[1]) : (dimLVal); // square if only one value
+      dimWVal = parts[1] ? parseFloat(parts[1]) : dimLVal; // square if only one value
     }
 
     // Analyse whether the qty fluctuates across different ring sizes
@@ -376,14 +391,23 @@ export class ProductsImportService {
 
     const slotRows: Array<{ id: number }> = await this.dataSource.query(
       slotSql,
-      [blueprintId, zone, shapeRaw, dimLVal, dimWVal, templateId, isDynamic, isDynamic ? null : fixedQty],
+      [
+        blueprintId,
+        zone,
+        shapeRaw,
+        dimLVal,
+        dimWVal,
+        templateId,
+        isDynamic,
+        isDynamic ? null : fixedQty,
+      ],
     );
 
     const zoneSlotId = slotRows[0].id;
 
     this.logger.debug(
       `  [Zone ${zone}] blueprint #${blueprintId}: slot #${zoneSlotId} upserted ` +
-      `(dynamic=${isDynamic}, fixedQty=${fixedQty ?? 'n/a'}).`,
+        `(dynamic=${isDynamic}, fixedQty=${fixedQty ?? 'n/a'}).`,
     );
 
     // ── Upsert size matrix only when the zone is dynamic ─────────────────────
@@ -570,15 +594,16 @@ export class ProductsImportService {
         dim_l_mm: slot.dim_l_mm,
         dim_w_mm: slot.dim_w_mm,
         is_dynamic_by_size: slot.is_dynamic_by_size,
-        fixed_quantity: slot.fixed_quantity !== null ? Number(slot.fixed_quantity) : null,
+        fixed_quantity:
+          slot.fixed_quantity !== null ? Number(slot.fixed_quantity) : null,
         size_wt_matrix: slot.is_dynamic_by_size
           ? allMatrices
-            .filter((m) => m.zone_slot_id === slot.zone_slot_id)
-            .map(({ ring_size, stone_quantity, metal_weight }) => ({
-              ring_size,
-              stone_quantity,
-              metal_weight: metal_weight !== null ? Number(metal_weight) : 0,
-            }))
+              .filter((m) => m.zone_slot_id === slot.zone_slot_id)
+              .map(({ ring_size, stone_quantity, metal_weight }) => ({
+                ring_size,
+                stone_quantity,
+                metal_weight: metal_weight !== null ? Number(metal_weight) : 0,
+              }))
           : null,
       };
     });
@@ -598,7 +623,13 @@ export class ProductsImportService {
     };
 
     // All zone keys — always present in response even if empty
-    const allZoneKeys = ['ZONE_CENTER', 'ZONE_HALO', 'ZONE_GALLERY', 'ZONE_SHANK', 'ZONE_ACCENT'];
+    const allZoneKeys = [
+      'ZONE_CENTER',
+      'ZONE_HALO',
+      'ZONE_GALLERY',
+      'ZONE_SHANK',
+      'ZONE_ACCENT',
+    ];
 
     // STEP 6: Assemble the final nested structure per variant
     const variantsData = blueprints.map((blueprint) => {
@@ -629,14 +660,19 @@ export class ProductsImportService {
       }
 
       // Group design_variant_allowed_metals by metal_purity_id
-      const purityIds = [...new Set(
-        allDesignVariantAllowedMetals
-          .filter((m) => m.variant_id === blueprint.id)
-          .map((m) => m.metal_purity_id),
-      )];
+      const purityIds = [
+        ...new Set(
+          allDesignVariantAllowedMetals
+            .filter((m) => m.variant_id === blueprint.id)
+            .map((m) => m.metal_purity_id),
+        ),
+      ];
       const designVariantAllowedMetals = purityIds.map((purityId) => {
         const allowedColorIds = allDesignVariantAllowedMetals
-          .filter((m) => m.variant_id === blueprint.id && m.metal_purity_id === purityId)
+          .filter(
+            (m) =>
+              m.variant_id === blueprint.id && m.metal_purity_id === purityId,
+          )
           .map((m) => m.metal_color_id);
 
         return {
@@ -666,7 +702,9 @@ export class ProductsImportService {
     };
   }
 
-  async getVariantsByDesign(designId: number): Promise<ProductVariantsResponseDto> {
+  async getVariantsByDesign(
+    designId: number,
+  ): Promise<ProductVariantsResponseDto> {
     const blueprints = await this.dataSource.query(
       `SELECT pb.id, pb.variant_name, pb.target_gender, pd.design_slug 
        FROM product_blueprints pb
@@ -678,13 +716,11 @@ export class ProductsImportService {
     if (!blueprints || blueprints.length === 0) {
       const designExists = await this.dataSource.query(
         `SELECT design_slug FROM product_designs WHERE id = $1`,
-        [designId]
+        [designId],
       );
       if (!designExists || designExists.length === 0) {
         const { NotFoundException } = await import('@nestjs/common');
-        throw new NotFoundException(
-          'No design found for this design ID',
-        );
+        throw new NotFoundException('No design found for this design ID');
       }
       return {
         status: true,
@@ -708,7 +744,9 @@ export class ProductsImportService {
     };
   }
 
-  async getVariantDetails(variantId: number): Promise<VariantDetailResponseDto> {
+  async getVariantDetails(
+    variantId: number,
+  ): Promise<VariantDetailResponseDto> {
     // STEP 1: Check if the blueprint variant actually exists
     const blueprints = await this.dataSource.query(
       `SELECT id, variant_name, target_gender 
@@ -773,15 +811,16 @@ export class ProductsImportService {
         dim_l_mm: slot.dim_l_mm,
         dim_w_mm: slot.dim_w_mm,
         is_dynamic_by_size: slot.is_dynamic_by_size,
-        fixed_quantity: slot.fixed_quantity !== null ? Number(slot.fixed_quantity) : null,
+        fixed_quantity:
+          slot.fixed_quantity !== null ? Number(slot.fixed_quantity) : null,
         size_wt_matrix: slot.is_dynamic_by_size
           ? allMatrices
-            .filter((m) => m.zone_slot_id === slot.zone_slot_id)
-            .map(({ ring_size, stone_quantity, metal_weight }) => ({
-              ring_size,
-              stone_quantity,
-              metal_weight: metal_weight !== null ? Number(metal_weight) : 0,
-            }))
+              .filter((m) => m.zone_slot_id === slot.zone_slot_id)
+              .map(({ ring_size, stone_quantity, metal_weight }) => ({
+                ring_size,
+                stone_quantity,
+                metal_weight: metal_weight !== null ? Number(metal_weight) : 0,
+              }))
           : null,
       };
     });
@@ -801,7 +840,13 @@ export class ProductsImportService {
     };
 
     // All zone keys — always present in response even if empty
-    const allZoneKeys = ['ZONE_CENTER', 'ZONE_HALO', 'ZONE_GALLERY', 'ZONE_SHANK', 'ZONE_ACCENT'];
+    const allZoneKeys = [
+      'ZONE_CENTER',
+      'ZONE_HALO',
+      'ZONE_GALLERY',
+      'ZONE_SHANK',
+      'ZONE_ACCENT',
+    ];
 
     const zoneSlots: Record<string, any[]> = {};
     for (const key of allZoneKeys) {
@@ -826,9 +871,11 @@ export class ProductsImportService {
           metal_color_id: metal_color,
         })),
         design_variant_allowed_metals: (() => {
-          const purityIds = [...new Set<number>(
-            designVariantAllowedMetalsRaw.map((m) => m.metal_purity_id),
-          )];
+          const purityIds = [
+            ...new Set<number>(
+              designVariantAllowedMetalsRaw.map((m) => m.metal_purity_id),
+            ),
+          ];
           return purityIds.map((purityId) => {
             const allowedColorIds = designVariantAllowedMetalsRaw
               .filter((m) => m.metal_purity_id === purityId)
@@ -844,8 +891,18 @@ export class ProductsImportService {
     };
   }
 
-  async updateZoneSlotConfig(dto: UpdateZoneSlotConfigDto): Promise<UpdateZoneSlotResponseDto> {
-    const { zone_slot_id, shape_normalized, dim_l_mm, dim_w_mm, is_dynamic_by_size, size_wt_matrix, fixed_quantity } = dto;
+  async updateZoneSlotConfig(
+    dto: UpdateZoneSlotConfigDto,
+  ): Promise<UpdateZoneSlotResponseDto> {
+    const {
+      zone_slot_id,
+      shape_normalized,
+      dim_l_mm,
+      dim_w_mm,
+      is_dynamic_by_size,
+      size_wt_matrix,
+      fixed_quantity,
+    } = dto;
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -860,7 +917,9 @@ export class ProductsImportService {
 
       if (!existingSlots || existingSlots.length === 0) {
         const { NotFoundException } = await import('@nestjs/common');
-        throw new NotFoundException(`Zone slot with ID ${zone_slot_id} not found`);
+        throw new NotFoundException(
+          `Zone slot with ID ${zone_slot_id} not found`,
+        );
       }
 
       // Determine fixed quantity based on is_dynamic_by_size
@@ -868,13 +927,20 @@ export class ProductsImportService {
       if (!is_dynamic_by_size) {
         if (fixed_quantity === undefined || fixed_quantity === null) {
           const { BadRequestException } = await import('@nestjs/common');
-          throw new BadRequestException('fixed_quantity must be provided when is_dynamic_by_size is false');
+          throw new BadRequestException(
+            'fixed_quantity must be provided when is_dynamic_by_size is false',
+          );
         }
         finalFixedQty = fixed_quantity;
       } else {
-        if (is_dynamic_by_size && (!size_wt_matrix || size_wt_matrix.length === 0)) {
+        if (
+          is_dynamic_by_size &&
+          (!size_wt_matrix || size_wt_matrix.length === 0)
+        ) {
           const { BadRequestException } = await import('@nestjs/common');
-          throw new BadRequestException('size_wt_matrix must be provided when is_dynamic_by_size is true');
+          throw new BadRequestException(
+            'size_wt_matrix must be provided when is_dynamic_by_size is true',
+          );
         }
         finalFixedQty = null;
       }
@@ -918,7 +984,9 @@ export class ProductsImportService {
           const ringSizeNum = parseFloat(entry.ring_size);
           if (isNaN(ringSizeNum)) {
             const { BadRequestException } = await import('@nestjs/common');
-            throw new BadRequestException(`Invalid ring size value: "${entry.ring_size}"`);
+            throw new BadRequestException(
+              `Invalid ring size value: "${entry.ring_size}"`,
+            );
           }
           await queryRunner.query(insertSql, [
             zone_slot_id,
@@ -942,8 +1010,19 @@ export class ProductsImportService {
     }
   }
 
-  async createZoneSlotConfig(dto: CreateZoneSlotConfigDto): Promise<CreateZoneSlotResponseDto> {
-    const { variant_id, zone, shape_normalized, dim_l_mm, dim_w_mm, is_dynamic_by_size, size_wt_matrix, fixed_quantity } = dto;
+  async createZoneSlotConfig(
+    dto: CreateZoneSlotConfigDto,
+  ): Promise<CreateZoneSlotResponseDto> {
+    const {
+      variant_id,
+      zone,
+      shape_normalized,
+      dim_l_mm,
+      dim_w_mm,
+      is_dynamic_by_size,
+      size_wt_matrix,
+      fixed_quantity,
+    } = dto;
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -958,7 +1037,9 @@ export class ProductsImportService {
 
       if (!blueprints || blueprints.length === 0) {
         const { NotFoundException } = await import('@nestjs/common');
-        throw new NotFoundException(`Variant (Blueprint) with ID ${variant_id} not found`);
+        throw new NotFoundException(
+          `Variant (Blueprint) with ID ${variant_id} not found`,
+        );
       }
 
       // 2. Check for unique constraint: blueprint_id, zone_name, shape_normalized
@@ -969,7 +1050,9 @@ export class ProductsImportService {
 
       if (existingSlots && existingSlots.length > 0) {
         const { ConflictException } = await import('@nestjs/common');
-        throw new ConflictException(`A zone slot configuration for variant ${variant_id}, zone "${zone}", and shape "${shape_normalized}" already exists`);
+        throw new ConflictException(
+          `A zone slot configuration for variant ${variant_id}, zone "${zone}", and shape "${shape_normalized}" already exists`,
+        );
       }
 
       // Determine fixed quantity based on is_dynamic_by_size
@@ -977,13 +1060,20 @@ export class ProductsImportService {
       if (!is_dynamic_by_size) {
         if (fixed_quantity === undefined || fixed_quantity === null) {
           const { BadRequestException } = await import('@nestjs/common');
-          throw new BadRequestException('fixed_quantity must be provided when is_dynamic_by_size is false');
+          throw new BadRequestException(
+            'fixed_quantity must be provided when is_dynamic_by_size is false',
+          );
         }
         finalFixedQty = fixed_quantity;
       } else {
-        if (is_dynamic_by_size && (!size_wt_matrix || size_wt_matrix.length === 0)) {
+        if (
+          is_dynamic_by_size &&
+          (!size_wt_matrix || size_wt_matrix.length === 0)
+        ) {
           const { BadRequestException } = await import('@nestjs/common');
-          throw new BadRequestException('size_wt_matrix must be provided when is_dynamic_by_size is true');
+          throw new BadRequestException(
+            'size_wt_matrix must be provided when is_dynamic_by_size is true',
+          );
         }
         finalFixedQty = null;
       }
@@ -1024,7 +1114,9 @@ export class ProductsImportService {
           const ringSizeNum = parseFloat(entry.ring_size);
           if (isNaN(ringSizeNum)) {
             const { BadRequestException } = await import('@nestjs/common');
-            throw new BadRequestException(`Invalid ring size value: "${entry.ring_size}"`);
+            throw new BadRequestException(
+              `Invalid ring size value: "${entry.ring_size}"`,
+            );
           }
           await queryRunner.query(insertSql, [
             zoneSlotId,
@@ -1049,14 +1141,18 @@ export class ProductsImportService {
     }
   }
 
-  async updateVariant(dto: UpdateVariantDto): Promise<UpdateVariantResponseDto> {
+  async updateVariant(
+    dto: UpdateVariantDto,
+  ): Promise<UpdateVariantResponseDto> {
     const { variant_id, variant_name, target_gender } = dto;
     const trimmedVariantName = (variant_name ?? '').trim();
     const trimmedTargetGender = (target_gender ?? '').trim();
 
     if (!trimmedVariantName || !trimmedTargetGender) {
       const { BadRequestException } = await import('@nestjs/common');
-      throw new BadRequestException('variant_name and target_gender cannot be empty');
+      throw new BadRequestException(
+        'variant_name and target_gender cannot be empty',
+      );
     }
 
     // 1. Verify existence of the variant
@@ -1070,7 +1166,9 @@ export class ProductsImportService {
 
     if (!blueprints || blueprints.length === 0) {
       const { NotFoundException } = await import('@nestjs/common');
-      throw new NotFoundException(`Product blueprint with variant ID ${variant_id} not found`);
+      throw new NotFoundException(
+        `Product blueprint with variant ID ${variant_id} not found`,
+      );
     }
 
     const designId = blueprints[0].design_id;
@@ -1108,7 +1206,9 @@ export class ProductsImportService {
     };
   }
 
-  async createVariant(dto: CreateVariantDto): Promise<CreateVariantResponseDto> {
+  async createVariant(
+    dto: CreateVariantDto,
+  ): Promise<CreateVariantResponseDto> {
     const { design_slug, variant_name, target_gender } = dto;
     const trimmedDesignSlug = (design_slug ?? '').trim();
     const trimmedVariantName = (variant_name ?? '').trim();
@@ -1116,7 +1216,9 @@ export class ProductsImportService {
 
     if (!trimmedDesignSlug || !trimmedVariantName || !trimmedTargetGender) {
       const { BadRequestException } = await import('@nestjs/common');
-      throw new BadRequestException('design_slug, variant_name, and target_gender cannot be empty');
+      throw new BadRequestException(
+        'design_slug, variant_name, and target_gender cannot be empty',
+      );
     }
 
     // 1. Upsert product design to get design_id
@@ -1127,14 +1229,16 @@ export class ProductsImportService {
       DO NOTHING
       RETURNING id
     `;
-    let designRows = await this.dataSource.query(designSql, [trimmedDesignSlug]);
+    const designRows = await this.dataSource.query(designSql, [
+      trimmedDesignSlug,
+    ]);
     let designId: number;
     if (designRows && designRows.length > 0) {
       designId = designRows[0].id;
     } else {
       const selectRes = await this.dataSource.query(
         `SELECT id FROM product_designs WHERE design_slug = $1`,
-        [trimmedDesignSlug]
+        [trimmedDesignSlug],
       );
       designId = selectRes[0].id;
     }
@@ -1173,13 +1277,17 @@ export class ProductsImportService {
     };
   }
 
-  async bulkCreateVariants(dto: BulkCreateVariantsDto): Promise<BulkCreateVariantsResponseDto> {
+  async bulkCreateVariants(
+    dto: BulkCreateVariantsDto,
+  ): Promise<BulkCreateVariantsResponseDto> {
     const { design_slug, variant } = dto;
     const trimmedDesignSlug = (design_slug ?? '').trim();
 
     if (!trimmedDesignSlug || !variant || variant.length === 0) {
       const { BadRequestException } = await import('@nestjs/common');
-      throw new BadRequestException('design_slug and variant list cannot be empty');
+      throw new BadRequestException(
+        'design_slug and variant list cannot be empty',
+      );
     }
 
     // 1. Check for duplicates within the input payload itself
@@ -1190,13 +1298,17 @@ export class ProductsImportService {
 
       if (!trimmedName || !trimmedGender) {
         const { BadRequestException } = await import('@nestjs/common');
-        throw new BadRequestException('variant_name and target_gender cannot be empty for any variant');
+        throw new BadRequestException(
+          'variant_name and target_gender cannot be empty for any variant',
+        );
       }
 
       const key = `${trimmedName.toLowerCase()}::${trimmedGender.toLowerCase()}`;
       if (seen.has(key)) {
         const { BadRequestException } = await import('@nestjs/common');
-        throw new BadRequestException(`Duplicate variant detected in payload: name "${trimmedName}" with target_gender "${trimmedGender}"`);
+        throw new BadRequestException(
+          `Duplicate variant detected in payload: name "${trimmedName}" with target_gender "${trimmedGender}"`,
+        );
       }
       seen.add(key);
     }
@@ -1215,14 +1327,16 @@ export class ProductsImportService {
         DO NOTHING
         RETURNING id
       `;
-      let designRows = await queryRunner.query(designSql, [trimmedDesignSlug]);
+      const designRows = await queryRunner.query(designSql, [
+        trimmedDesignSlug,
+      ]);
       let designId: number;
       if (designRows && designRows.length > 0) {
         designId = designRows[0].id;
       } else {
         const selectRes = await queryRunner.query(
           `SELECT id FROM product_designs WHERE design_slug = $1`,
-          [trimmedDesignSlug]
+          [trimmedDesignSlug],
         );
         designId = selectRes[0].id;
       }
@@ -1232,7 +1346,7 @@ export class ProductsImportService {
         // Check database unique constraint conflict
         const conflict = await queryRunner.query(
           `SELECT id FROM product_blueprints WHERE design_id = $1 AND variant_name = $2 AND target_gender = $3`,
-          [designId, v.variant_name.trim(), v.target_gender.trim()]
+          [designId, v.variant_name.trim(), v.target_gender.trim()],
         );
         if (conflict && conflict.length > 0) {
           const { ConflictException } = await import('@nestjs/common');
@@ -1265,7 +1379,9 @@ export class ProductsImportService {
     }
   }
 
-  async getAllowedMetalsForVariant(variantId: number): Promise<VariantAllowedMetalsResponseDto> {
+  async getAllowedMetalsForVariant(
+    variantId: number,
+  ): Promise<VariantAllowedMetalsResponseDto> {
     // 1. Check if the blueprint variant actually exists
     const blueprints = await this.dataSource.query(
       `SELECT id FROM product_blueprints WHERE id = $1`,
@@ -1288,7 +1404,9 @@ export class ProductsImportService {
     );
 
     // 3. Group allowed color IDs by metal_purity_id
-    const purityIds = [...new Set<number>(rows.map((row) => row.metal_purity_id))];
+    const purityIds = [
+      ...new Set<number>(rows.map((row) => row.metal_purity_id)),
+    ];
     const data = purityIds.map((purityId) => {
       const allowedColorIds = rows
         .filter((row) => row.metal_purity_id === purityId)
@@ -1364,4 +1482,3 @@ export class ProductsImportService {
     }
   }
 }
-

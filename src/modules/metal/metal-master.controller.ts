@@ -22,9 +22,9 @@ import {
   RemoveMetalColorSwagger,
 } from './metal.swagger';
 
-@ApiTags('metal-color')
-@Controller('metal-color')
-export class MetalColorController {
+@ApiTags('metal-master')
+@Controller('metal-master')
+export class MetalMasterController {
   constructor(private readonly metalColorService: MetalColorService) {}
 
   @Post()
@@ -36,8 +36,10 @@ export class MetalColorController {
   @Get('combo')
   @ComboMetalColorSwagger()
   combo(
-    @Query('variantId', new ParseIntPipe({ optional: true })) variantId: number = null,
-    @Query('metalPurityId', new ParseIntPipe({ optional: true })) metalPurityId: number = null,
+    @Query('variantId', new ParseIntPipe({ optional: true }))
+    variantId: number = null,
+    @Query('metalPurityId', new ParseIntPipe({ optional: true }))
+    metalPurityId: number = null,
   ) {
     return this.metalColorService.combo(variantId, metalPurityId);
   }

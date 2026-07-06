@@ -2,7 +2,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsString } from 'class-validator';
 
 export class UpdateVariantDto {
-  @ApiProperty({ example: 1, description: 'ID of the product blueprint (variant)' })
+  @ApiProperty({
+    example: 1,
+    description: 'ID of the product blueprint (variant)',
+  })
   @IsNumber()
   variant_id: number;
 
@@ -10,7 +13,10 @@ export class UpdateVariantDto {
   @IsString()
   variant_name: string;
 
-  @ApiProperty({ example: 'unisex', description: 'New target gender of the variant' })
+  @ApiProperty({
+    example: 'unisex',
+    description: 'New target gender of the variant',
+  })
   @IsString()
   target_gender: string;
 }

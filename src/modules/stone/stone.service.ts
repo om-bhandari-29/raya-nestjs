@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Stone } from './entity/stone.entity';
@@ -149,11 +153,15 @@ export class StoneService {
     const stoneMap = new Map<string, Stone>();
     for (const stone of matchingStones) {
       const existing = stoneMap.get(stone.stoneName);
-      const weight = stone.estimatedWeightInCt ? Number(stone.estimatedWeightInCt) : 0;
+      const weight = stone.estimatedWeightInCt
+        ? Number(stone.estimatedWeightInCt)
+        : 0;
       if (!existing) {
         stoneMap.set(stone.stoneName, stone);
       } else {
-        const existingWeight = existing.estimatedWeightInCt ? Number(existing.estimatedWeightInCt) : 0;
+        const existingWeight = existing.estimatedWeightInCt
+          ? Number(existing.estimatedWeightInCt)
+          : 0;
         if (weight > existingWeight) {
           stoneMap.set(stone.stoneName, stone);
         }
@@ -163,9 +171,13 @@ export class StoneService {
     const data = Array.from(stoneMap.values()).map((stone) => ({
       id: stone.id,
       Stone_name: stone.stoneName,
-      Estimated_Weight_Final_ct: stone.estimatedWeightInCt ? Number(stone.estimatedWeightInCt) : null,
+      Estimated_Weight_Final_ct: stone.estimatedWeightInCt
+        ? Number(stone.estimatedWeightInCt)
+        : null,
       Price_per_ct_INR: stone.pricePerCt ? Number(stone.pricePerCt) : null,
-      Price_per_ct_USD: stone.pricePerCtUsd ? Number(stone.pricePerCtUsd) : null,
+      Price_per_ct_USD: stone.pricePerCtUsd
+        ? Number(stone.pricePerCtUsd)
+        : null,
     }));
 
     return {

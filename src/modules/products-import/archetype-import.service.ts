@@ -36,7 +36,7 @@ export class ArchetypeImportService {
 
     let rows: ArchetypeCsvRow[];
     // Detect Excel format via PK header (Zip archive signature)
-    if (buffer[0] === 0x50 && buffer[1] === 0x4B) {
+    if (buffer[0] === 0x50 && buffer[1] === 0x4b) {
       this.logger.log('Detected Excel (.xlsx) format. Parsing via exceljs...');
       rows = await this.parseExcelBuffer(buffer);
     } else {
@@ -49,8 +49,22 @@ export class ArchetypeImportService {
     const groups = new Map<string, ArchetypeCsvRow[]>();
     for (const row of rows) {
       // Robust lookup for design and variant slugs
-      const designSlug = (row.design_slug || row.Design_Slug || row['design_slug'] || '').toString().trim();
-      const variantSlug = (row.variant_slug || row.Variant_Slug || row['variant_slug'] || '').toString().trim();
+      const designSlug = (
+        row.design_slug ||
+        row.Design_Slug ||
+        row['design_slug'] ||
+        ''
+      )
+        .toString()
+        .trim();
+      const variantSlug = (
+        row.variant_slug ||
+        row.Variant_Slug ||
+        row['variant_slug'] ||
+        ''
+      )
+        .toString()
+        .trim();
 
       if (!designSlug || !variantSlug) {
         continue;
@@ -63,7 +77,9 @@ export class ArchetypeImportService {
       groups.get(key).push(row);
     }
 
-    this.logger.log(`Grouped into ${groups.size} distinct design/variant blueprint tracks.`);
+    this.logger.log(
+      `Grouped into ${groups.size} distinct design/variant blueprint tracks.`,
+    );
 
     const result: ImportMetrics = {
       blueprintsProcessed: 0,
@@ -72,7 +88,9 @@ export class ArchetypeImportService {
     };
 
     if (groups.size === 0) {
-      this.logger.warn('No valid groups extracted from CSV data rows. Aborting database run.');
+      this.logger.warn(
+        'No valid groups extracted from CSV data rows. Aborting database run.',
+      );
       return result;
     }
 
@@ -84,7 +102,10 @@ export class ArchetypeImportService {
       for (const [key, groupRows] of groups.entries()) {
         const [designSlug, variantSlug] = key.split('::');
 
-        const designId = await this.upsertProductDesign(queryRunner, designSlug);
+        const designId = await this.upsertProductDesign(
+          queryRunner,
+          designSlug,
+        );
         const blueprintId = await this.upsertArchetypeBlueprint(
           queryRunner,
           designId,
@@ -115,9 +136,14 @@ export class ArchetypeImportService {
       }
 
       await queryRunner.commitTransaction();
-      this.logger.log(`Archetype database transaction successfully committed. Blueprints: ${result.blueprintsProcessed}, Slots: ${result.zoneSlotsInserted}, Matrix Rows: ${result.sizeMatrixRowsInserted}`);
+      this.logger.log(
+        `Archetype database transaction successfully committed. Blueprints: ${result.blueprintsProcessed}, Slots: ${result.zoneSlotsInserted}, Matrix Rows: ${result.sizeMatrixRowsInserted}`,
+      );
     } catch (err) {
-      this.logger.error('Archetype data import failed, rolling back active transaction state...', (err as Error).stack);
+      this.logger.error(
+        'Archetype data import failed, rolling back active transaction state...',
+        (err as Error).stack,
+      );
       await queryRunner.rollbackTransaction();
       throw err;
     } finally {
@@ -137,7 +163,12 @@ export class ArchetypeImportService {
     const headers: string[] = [];
     const headerRow = worksheet.getRow(1);
     headerRow.eachCell((cell, colNumber) => {
-      headers[colNumber] = cell.value ? cell.value.toString().trim().replace(/^\ufeff/, '') : '';
+      headers[colNumber] = cell.value
+        ? cell.value
+            .toString()
+            .trim()
+            .replace(/^\ufeff/, '')
+        : '';
     });
 
     worksheet.eachRow((row, rowNumber) => {
@@ -146,9 +177,12 @@ export class ArchetypeImportService {
       row.eachCell((cell, colNumber) => {
         const header = headers[colNumber];
         if (header) {
-          const val = cell.value && typeof cell.value === 'object' && 'result' in cell.value 
-            ? cell.value.result 
-            : cell.value;
+          const val =
+            cell.value &&
+            typeof cell.value === 'object' &&
+            'result' in cell.value
+              ? cell.value.result
+              : cell.value;
           rowData[header] = val;
         }
       });
@@ -158,14 +192,18 @@ export class ArchetypeImportService {
     return rows;
   }
 
-  private async convertCsvToObjects(buffer: Buffer): Promise<ArchetypeCsvRow[]> {
+  private async convertCsvToObjects(
+    buffer: Buffer,
+  ): Promise<ArchetypeCsvRow[]> {
     return new Promise((resolve, reject) => {
       const results: ArchetypeCsvRow[] = [];
 
       Readable.from(buffer)
-        .pipe(csvParser({
-          mapHeaders: ({ header }) => header.trim().replace(/^\ufeff/, ''),
-        }))
+        .pipe(
+          csvParser({
+            mapHeaders: ({ header }) => header.trim().replace(/^\ufeff/, ''),
+          }),
+        )
         .on('data', (data: ArchetypeCsvRow) => results.push(data))
         .on('end', () => {
           resolve(results);
@@ -193,7 +231,7 @@ export class ArchetypeImportService {
     }
     const selectRes = await queryRunner.query(
       `SELECT id FROM product_designs WHERE design_slug = $1`,
-      [designSlug.trim()]
+      [designSlug.trim()],
     );
     return selectRes[0].id;
   }
@@ -210,7 +248,11 @@ export class ArchetypeImportService {
     DO UPDATE SET variant_name = EXCLUDED.variant_name
     RETURNING id;
   `;
-    const res = await queryRunner.query(sql, [designId, variantName.trim(), 'Women']);
+    const res = await queryRunner.query(sql, [
+      designId,
+      variantName.trim(),
+      'Women',
+    ]);
     return res[0].id;
   }
 
@@ -219,8 +261,19 @@ export class ArchetypeImportService {
     blueprintId: number,
     row: ArchetypeCsvRow,
   ): Promise<number> {
-    const zoneName = (row.zone_name || row.Zone_Name || row['zone_name']).trim();
-    const shapeNormalized = (row.shape_normalized || row.Shape_Normalized || row['shape_normalized'] || 'round').trim().toLowerCase();
+    const zoneName = (
+      row.zone_name ||
+      row.Zone_Name ||
+      row['zone_name']
+    ).trim();
+    const shapeNormalized = (
+      row.shape_normalized ||
+      row.Shape_Normalized ||
+      row['shape_normalized'] ||
+      'round'
+    )
+      .trim()
+      .toLowerCase();
     const dimL = row.dim_l_mm || row.dim_l || '0';
     const dimW = row.dim_w_mm || row.dim_w || '0';
     const qtyModel = row.qty_model || row.Qty_Model || '';
@@ -268,8 +321,27 @@ export class ArchetypeImportService {
     row: ArchetypeCsvRow,
   ): Promise<number> {
     const sizes = [
-      '3.0', '3.5', '4.0', '4.5', '5.0', '5.5', '6.0', '6.5', '7.0', '7.5',
-      '8.0', '8.5', '9.0', '9.5', '10.0', '10.5', '11.0', '11.5', '12.0', '12.5', '13.0'
+      '3.0',
+      '3.5',
+      '4.0',
+      '4.5',
+      '5.0',
+      '5.5',
+      '6.0',
+      '6.5',
+      '7.0',
+      '7.5',
+      '8.0',
+      '8.5',
+      '9.0',
+      '9.5',
+      '10.0',
+      '10.5',
+      '11.0',
+      '11.5',
+      '12.0',
+      '12.5',
+      '13.0',
     ];
 
     let insertedCount = 0;
@@ -300,7 +372,7 @@ export class ArchetypeImportService {
           zoneSlotId,
           parseFloat(size),
           qty,
-          metalWt
+          metalWt,
         ]);
 
         insertedCount++;
@@ -310,7 +382,11 @@ export class ArchetypeImportService {
     return insertedCount;
   }
 
-  async getArchetypesPaginated(page: number = 1, limit: number = 10, search?: string) {
+  async getArchetypesPaginated(
+    page: number = 1,
+    limit: number = 10,
+    search?: string,
+  ) {
     const offset = (page - 1) * limit;
     const countParams: any[] = [];
     const dataParams: any[] = [];
@@ -330,11 +406,11 @@ export class ArchetypeImportService {
       INNER JOIN product_designs pd ON pb.design_id = pd.id
       ${whereClause}
     `;
-    
+
     // Adjust parameter indices for limit and offset in data query
     const limitIdx = dataParams.length + 1;
     const offsetIdx = dataParams.length + 2;
-    
+
     // Get unique designs and order by the latest variant ID descending
     const dataSql = `
       SELECT 

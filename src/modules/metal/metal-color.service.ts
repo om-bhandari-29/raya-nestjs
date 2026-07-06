@@ -33,9 +33,8 @@ export class MetalColorService {
     const query = `
     SELECT DISTINCT
       mc.id,
-      mc.name,
-      mc.code
-    FROM metal_colors mc
+      mc.name
+    FROM metal_master mc
     -- We join the mapping table if we want to filter by variant or purity
     LEFT JOIN design_variant_allowed_metals dvam ON dvam.metal_color_id = mc.id
     WHERE 
@@ -63,11 +62,11 @@ export class MetalColorService {
 
   async create(createMetalColorDto: CreateMetalColorDto) {
     const existing = await this.metalColorRepository.findOne({
-      where: { code: createMetalColorDto.code },
+      where: { name: createMetalColorDto.name },
     });
     if (existing) {
       throw new ConflictException(
-        `Metal color with code '${createMetalColorDto.code}' already exists`,
+        `Metal color with name '${createMetalColorDto.name}' already exists`,
       );
     }
 
@@ -85,7 +84,7 @@ export class MetalColorService {
     const query = this.metalColorRepository.createQueryBuilder('mc');
 
     if (search) {
-      query.where('(mc.name ILIKE :search OR mc.code ILIKE :search)', {
+      query.where('mc.name ILIKE :search', {
         search: `%${search}%`,
       });
     }
@@ -136,15 +135,15 @@ export class MetalColorService {
     }
 
     if (
-      updateMetalColorDto.code &&
-      updateMetalColorDto.code !== metalColor.code
+      updateMetalColorDto.name &&
+      updateMetalColorDto.name !== metalColor.name
     ) {
       const existing = await this.metalColorRepository.findOne({
-        where: { code: updateMetalColorDto.code },
+        where: { name: updateMetalColorDto.name },
       });
       if (existing) {
         throw new ConflictException(
-          `Metal color with code '${updateMetalColorDto.code}' already exists`,
+          `Metal color with name '${updateMetalColorDto.name}' already exists`,
         );
       }
     }

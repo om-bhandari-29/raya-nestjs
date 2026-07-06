@@ -7,10 +7,4 @@ export class CreateMetalColorDto {
   @IsNotEmpty()
   @MaxLength(100)
   name: string;
-
-  @ApiProperty({ example: 'YELLOW' })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(20)
-  code: string;
 }

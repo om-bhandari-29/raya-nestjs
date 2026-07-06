@@ -27,4 +27,3 @@ export class BlueprintListResponseDto {
   @ApiProperty({ type: [BlueprintListItemDto] })
   data: BlueprintListItemDto[];
 }
-

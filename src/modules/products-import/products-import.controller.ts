@@ -31,11 +31,23 @@ import {
   ImportResponseDto,
   ArchetypeImportResponseDto,
 } from './dto/import-result.dto';
-import { ProductDetailResponseDto, VariantDetailResponseDto } from './dto/product-detail.dto';
+import {
+  ProductDetailResponseDto,
+  VariantDetailResponseDto,
+} from './dto/product-detail.dto';
 import { ProductVariantsResponseDto } from './dto/product-variants.dto';
-import { UpdateVariantDto, UpdateVariantResponseDto } from './dto/update-variant.dto';
-import { CreateVariantDto, CreateVariantResponseDto } from './dto/create-variant.dto';
-import { BulkCreateVariantsDto, BulkCreateVariantsResponseDto } from './dto/bulk-create-variants.dto';
+import {
+  UpdateVariantDto,
+  UpdateVariantResponseDto,
+} from './dto/update-variant.dto';
+import {
+  CreateVariantDto,
+  CreateVariantResponseDto,
+} from './dto/create-variant.dto';
+import {
+  BulkCreateVariantsDto,
+  BulkCreateVariantsResponseDto,
+} from './dto/bulk-create-variants.dto';
 import {
   VariantAllowedMetalsDto,
   VariantAllowedMetalsResponseDto,
@@ -49,16 +61,32 @@ export class ProductsImportController {
   constructor(
     private readonly productsImportService: ProductsImportService,
     private readonly archetypeImportService: ArchetypeImportService,
-  ) { }
+  ) {}
 
   @Get('archetypes')
   @ApiOperation({
     summary: 'Get paginated list of archetypes (product blueprints)',
-    description: 'Returns a paginated list of all structural layout blueprints.',
+    description:
+      'Returns a paginated list of all structural layout blueprints.',
   })
-  @ApiQuery({ name: 'page', required: false, example: 1, description: 'Page number' })
-  @ApiQuery({ name: 'limit', required: false, example: 10, description: 'Items per page' })
-  @ApiQuery({ name: 'search', required: false, example: 'ring', description: 'Search by design slug or variant name' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    example: 1,
+    description: 'Page number',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    example: 10,
+    description: 'Items per page',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    example: 'ring',
+    description: 'Search by design slug or variant name',
+  })
   @ApiResponse({
     status: 200,
     description: 'Paginated list of archetypes retrieved successfully.',
@@ -69,7 +97,11 @@ export class ProductsImportController {
     @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10,
     @Query('search') search?: string,
   ): Promise<ArchetypeListPaginatedResponseDto> {
-    return this.archetypeImportService.getArchetypesPaginated(page, limit, search);
+    return this.archetypeImportService.getArchetypesPaginated(
+      page,
+      limit,
+      search,
+    );
   }
 
   @Post('upload')
@@ -221,7 +253,8 @@ export class ProductsImportController {
   @Get('variants/:design_id')
   @ApiOperation({
     summary: 'Get all variants with variantId by design ID',
-    description: 'Returns all variants and their variantId for a given design ID',
+    description:
+      'Returns all variants and their variantId for a given design ID',
   })
   @ApiParam({
     name: 'design_id',
@@ -243,7 +276,8 @@ export class ProductsImportController {
   @Get('variant/:variantId')
   @ApiOperation({
     summary: 'Get variant allowed metals and zone slots by variant ID',
-    description: 'Returns the allowed metals and structural zone slots configured for a specific variant ID',
+    description:
+      'Returns the allowed metals and structural zone slots configured for a specific variant ID',
   })
   @ApiParam({
     name: 'variantId',
@@ -265,7 +299,8 @@ export class ProductsImportController {
   @Get('variant/:variantId/allowed-metals')
   @ApiOperation({
     summary: 'Get allowed metals (purities and colors) by variant ID',
-    description: 'Returns all metal purities mapped with their allowed colors for a given variant ID',
+    description:
+      'Returns all metal purities mapped with their allowed colors for a given variant ID',
   })
   @ApiParam({
     name: 'variantId',
@@ -288,7 +323,8 @@ export class ProductsImportController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Update/set allowed metals (purities and colors) for a variant ID',
-    description: 'Deletes existing allowed metal configurations for a variant, and saves the new list.',
+    description:
+      'Deletes existing allowed metal configurations for a variant, and saves the new list.',
   })
   @ApiResponse({
     status: 200,
@@ -305,7 +341,8 @@ export class ProductsImportController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Update variant name and target gender of a product blueprint',
-    description: 'Finds a product blueprint by its ID and updates its variant name and target gender.',
+    description:
+      'Finds a product blueprint by its ID and updates its variant name and target gender.',
   })
   @ApiResponse({
     status: 200,
@@ -322,7 +359,8 @@ export class ProductsImportController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Create a new variant of a product blueprint',
-    description: 'Creates a new variant with design_slug, variant_name, and target_gender, and returns the newly created variant ID.',
+    description:
+      'Creates a new variant with design_slug, variant_name, and target_gender, and returns the newly created variant ID.',
   })
   @ApiResponse({
     status: 200,
@@ -339,7 +377,8 @@ export class ProductsImportController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Bulk create variants under a design slug',
-    description: 'Registers multiple variants under a design slug and performs unique constraints checks.',
+    description:
+      'Registers multiple variants under a design slug and performs unique constraints checks.',
   })
   @ApiResponse({
     status: 200,
