@@ -5,8 +5,12 @@ import { ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 
 const metalPurityExample = {
   id: 1,
-  name: '14K Gold',
-  code: 'GOLD_14K',
+  purity: '14K Gold',
+  name: '14K Gold Name',
+  metal_id: 1,
+  percentage: 58.33,
+  rate_per_gram_inr: 4500.0,
+  rate_per_gram_usd: 54.5,
   created_at: '2026-07-03T00:00:00.000Z',
   updated_at: '2026-07-03T00:00:00.000Z',
 };
@@ -20,7 +24,7 @@ const metalPurityNotFoundExample = {
 
 const metalPurityConflictExample = {
   status: false,
-  message: "Metal purity with code 'GOLD_14K' already exists",
+  message: "Metal purity with purity '14K Gold' and metal_id '1' already exists",
   statusCode: 409,
   data: null,
 };
@@ -217,7 +221,7 @@ export const GetAllowedMetalsByVariantSwagger = () =>
       summary:
         'Get metal purities and colors for a given variant ID with purity name',
       description:
-        'Returns list containing id, metal_purity_id, metal_color_id, and metal_purity_name.',
+        'Returns list containing id (metal_purity_id) and purity.',
     }),
     ApiParam({
       name: 'variantId',
@@ -235,10 +239,8 @@ export const GetAllowedMetalsByVariantSwagger = () =>
           statusCode: 200,
           data: [
             {
-              id: 1,
-              metal_purity_id: 2,
-              metal_color_id: 3,
-              metal_purity_name: '18K Gold',
+              id: 2,
+              purity: '18K Gold',
             },
           ],
         },

@@ -18,8 +18,16 @@ export class MetalPurityService {
 
   async combo() {
     const data = await this.metalPurityRepository.find({
-      select: ['id', 'name', 'code'],
-      order: { name: 'ASC' },
+      select: [
+        'id',
+        'purity',
+        'name',
+        'metal_id',
+        'percentage',
+        'rate_per_gram_inr',
+        'rate_per_gram_usd',
+      ],
+      order: { purity: 'ASC' },
     });
     return {
       status: true,
@@ -31,11 +39,14 @@ export class MetalPurityService {
 
   async create(createMetalPurityDto: CreateMetalPurityDto) {
     const existing = await this.metalPurityRepository.findOne({
-      where: { code: createMetalPurityDto.code },
+      where: {
+        purity: createMetalPurityDto.purity,
+        metal_id: createMetalPurityDto.metal_id,
+      },
     });
     if (existing) {
       throw new ConflictException(
-        `Metal purity with code '${createMetalPurityDto.code}' already exists`,
+        `Metal purity with purity '${createMetalPurityDto.purity}' and metal_id '${createMetalPurityDto.metal_id}' already exists`,
       );
     }
 
@@ -49,15 +60,27 @@ export class MetalPurityService {
     };
   }
 
-  async findAll(page: number = 1, limit: number = 10, search?: string) {
+  async findAll(
+    page: number = 1,
+    limit: number = 10,
+    search?: string,
+    metal_id: number = 0,
+  ) {
     const query = this.metalPurityRepository.createQueryBuilder('mp');
 
+    // 1. Handle search filter
     if (search) {
-      query.where('(mp.name ILIKE :search OR mp.code ILIKE :search)', {
+      query.where('(mp.purity ILIKE :search OR mp.name ILIKE :search)', {
         search: `%${search}%`,
       });
     }
 
+    // 2. Handle metal_id filter (assuming 0 means "no filter")
+    if (metal_id && metal_id > 0) {
+      query.andWhere('mp.metal_id = :metal_id', { metal_id });
+    }
+
+    // Fetch paginated items and total count
     const [items, total] = await query
       .orderBy('mp.id', 'DESC')
       .skip((page - 1) * limit)
@@ -104,15 +127,19 @@ export class MetalPurityService {
     }
 
     if (
-      updateMetalPurityDto.code &&
-      updateMetalPurityDto.code !== metalPurity.code
+      (updateMetalPurityDto.purity || updateMetalPurityDto.metal_id) &&
+      (updateMetalPurityDto.purity !== metalPurity.purity ||
+        updateMetalPurityDto.metal_id !== metalPurity.metal_id)
     ) {
       const existing = await this.metalPurityRepository.findOne({
-        where: { code: updateMetalPurityDto.code },
+        where: {
+          purity: updateMetalPurityDto.purity ?? metalPurity.purity,
+          metal_id: updateMetalPurityDto.metal_id ?? metalPurity.metal_id,
+        },
       });
-      if (existing) {
+      if (existing && existing.id !== id) {
         throw new ConflictException(
-          `Metal purity with code '${updateMetalPurityDto.code}' already exists`,
+          `Metal purity with purity '${updateMetalPurityDto.purity ?? metalPurity.purity}' and metal_id '${updateMetalPurityDto.metal_id ?? metalPurity.metal_id}' already exists`,
         );
       }
     }
@@ -160,7 +187,7 @@ export class MetalPurityService {
     const rows = await this.metalPurityRepository.query(
       `SELECT DISTINCT
         dvam.metal_purity_id as id, 
-        mp.name
+        mp.purity
      FROM design_variant_allowed_metals dvam
      JOIN metal_purities mp ON dvam.metal_purity_id = mp.id
      WHERE dvam.variant_id = $1`,
@@ -172,6 +199,6 @@ export class MetalPurityService {
       message: 'Allowed metals for variant retrieved successfully',
       statusCode: 200,
       data: rows,
-    }; // <-- Fixed: Changed ) to }
+    };
   }
 }
