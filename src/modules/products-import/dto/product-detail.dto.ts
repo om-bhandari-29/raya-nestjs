@@ -6,7 +6,7 @@ export class AllowedMetalDto {
   metal_purity_id: number;
 
   @ApiProperty({ example: 2 })
-  metal_color_id: number;
+  metal_master_id: number;
 }
 
 export class SizeWeightMatrixEntryDto {

@@ -36,7 +36,7 @@ export class MetalColorService {
       mc.name
     FROM metal_master mc
     -- We join the mapping table if we want to filter by variant or purity
-    LEFT JOIN design_variant_allowed_metals dvam ON dvam.metal_color_id = mc.id
+    LEFT JOIN design_variant_allowed_metals dvam ON dvam.metal_master_id = mc.id
     WHERE 
       -- If variantId is null, skip this condition. Otherwise, match it.
       ($1::integer IS NULL OR dvam.variant_id = $1)
@@ -109,6 +109,62 @@ export class MetalColorService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  async findMetalsWithPurities(
+    page: number = 1,
+    limit: number = 10,
+    search?: string,
+    metal_id?: number,
+    isPagination: boolean = false,
+  ) {
+    const query = this.metalColorRepository.createQueryBuilder('mc')
+      .leftJoinAndSelect('mc.purities', 'mp');
+
+    if (search) {
+      query.andWhere('mc.name ILIKE :search', {
+        search: `%${search}%`,
+      });
+    }
+
+    if (metal_id) {
+      query.andWhere('mc.id = :metal_id', { metal_id });
+    }
+
+    query.orderBy('mc.id', 'DESC')
+         .addOrderBy('mp.id', 'ASC');
+
+    if (isPagination) {
+      const [items, total] = await query
+        .skip((page - 1) * limit)
+        .take(limit)
+        .getManyAndCount();
+
+      return {
+        status: true,
+        message: 'Metals with purities retrieved successfully',
+        statusCode: 200,
+        data: {
+          items,
+        },
+        meta: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    } else {
+      const items = await query.getMany();
+      return {
+        status: true,
+        message: 'Metals with purities retrieved successfully',
+        statusCode: 200,
+        data: {
+          items,
+        },
+      };
+    }
   }
 
   async findOne(id: number) {

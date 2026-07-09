@@ -11,7 +11,7 @@ import { MetalPurity } from '../../metal/entity/metal-purity.entity';
 import { MetalColor } from '../../metal/entity/metal-color.entity';
 
 @Entity('design_variant_allowed_metals')
-@Unique(['variant_id', 'metal_purity_id', 'metal_color_id'])
+@Unique(['variant_id', 'metal_purity_id', 'metal_master_id'])
 export class DesignVariantAllowedMetal {
   @PrimaryGeneratedColumn()
   id: number;
@@ -31,9 +31,9 @@ export class DesignVariantAllowedMetal {
   metal_purity_id: number;
 
   @ManyToOne(() => MetalColor, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'metal_color_id' })
-  metalColor: MetalColor;
+  @JoinColumn({ name: 'metal_master_id' })
+  metalMaster: MetalColor;
 
   @Column({ type: 'int' })
-  metal_color_id: number;
+  metal_master_id: number;
 }

@@ -554,7 +554,7 @@ export class ProductsImportService {
 
     // Query design_variant_allowed_metals table for all fetched blueprints
     const allDesignVariantAllowedMetals = await this.dataSource.query(
-      `SELECT variant_id, metal_purity_id, metal_color_id 
+      `SELECT variant_id, metal_purity_id, metal_master_id 
       FROM design_variant_allowed_metals 
       WHERE variant_id = ANY($1)`,
       [blueprintIds],
@@ -637,7 +637,7 @@ export class ProductsImportService {
         .filter((m) => m.blueprint_id === blueprint.id)
         .map(({ metal_purity, metal_color }) => ({
           metal_purity_id: metal_purity,
-          metal_color_id: metal_color,
+          metal_master_id: metal_color,
         }));
 
       // Build zone_slots as an object keyed by RingComponentZone
@@ -673,7 +673,7 @@ export class ProductsImportService {
             (m) =>
               m.variant_id === blueprint.id && m.metal_purity_id === purityId,
           )
-          .map((m) => m.metal_color_id);
+          .map((m) => m.metal_master_id);
 
         return {
           metal_purity_id: purityId,
@@ -772,7 +772,7 @@ export class ProductsImportService {
 
     // Query design_variant_allowed_metals for the variant ID
     const designVariantAllowedMetalsRaw = await this.dataSource.query(
-      `SELECT metal_purity_id, metal_color_id 
+      `SELECT metal_purity_id, metal_master_id 
        FROM design_variant_allowed_metals 
        WHERE variant_id = $1`,
       [variantId],
@@ -868,7 +868,7 @@ export class ProductsImportService {
         variantId,
         allowed_metals: metalOptions.map(({ metal_purity, metal_color }) => ({
           metal_purity_id: metal_purity,
-          metal_color_id: metal_color,
+          metal_master_id: metal_color,
         })),
         design_variant_allowed_metals: (() => {
           const purityIds = [
@@ -879,7 +879,7 @@ export class ProductsImportService {
           return purityIds.map((purityId) => {
             const allowedColorIds = designVariantAllowedMetalsRaw
               .filter((m) => m.metal_purity_id === purityId)
-              .map((m) => m.metal_color_id);
+              .map((m) => m.metal_master_id);
             return {
               metal_purity_id: purityId,
               allowed_color_ids: allowedColorIds,
@@ -1397,7 +1397,7 @@ export class ProductsImportService {
 
     // 2. Query design_variant_allowed_metals table
     const rows = await this.dataSource.query(
-      `SELECT metal_purity_id, metal_color_id 
+      `SELECT metal_purity_id, metal_master_id 
        FROM design_variant_allowed_metals 
        WHERE variant_id = $1`,
       [variantId],
@@ -1410,7 +1410,7 @@ export class ProductsImportService {
     const data = purityIds.map((purityId) => {
       const allowedColorIds = rows
         .filter((row) => row.metal_purity_id === purityId)
-        .map((row) => row.metal_color_id);
+        .map((row) => row.metal_master_id);
 
       return {
         metal_purity_id: purityId,
@@ -1456,13 +1456,13 @@ export class ProductsImportService {
 
       // 3. Insert new allowed metals
       for (const metal of allowed_metals) {
-        const { metal_purity, metal_color } = metal;
-        for (const colorId of metal_color) {
+        const { metal_master: metalMasterId, metal_purities: metalPurityIds } = metal;
+        for (const purityId of metalPurityIds) {
           await queryRunner.query(
-            `INSERT INTO design_variant_allowed_metals (variant_id, metal_purity_id, metal_color_id)
+            `INSERT INTO design_variant_allowed_metals (variant_id, metal_purity_id, metal_master_id)
              VALUES ($1, $2, $3)
-             ON CONFLICT (variant_id, metal_purity_id, metal_color_id) DO NOTHING`,
-            [variant_id, metal_purity, colorId],
+             ON CONFLICT (variant_id, metal_purity_id, metal_master_id) DO NOTHING`,
+            [variant_id, purityId, metalMasterId],
           );
         }
       }

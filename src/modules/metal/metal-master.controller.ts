@@ -20,6 +20,7 @@ import {
   FindOneMetalColorSwagger,
   UpdateMetalColorSwagger,
   RemoveMetalColorSwagger,
+  FindMetalsWithPuritiesSwagger,
 } from './metal.swagger';
 
 @ApiTags('metal-master')
@@ -52,6 +53,25 @@ export class MetalMasterController {
     @Query('search') search?: string,
   ) {
     return this.metalColorService.findAll(page, limit, search);
+  }
+
+  @Get('purities')
+  @FindMetalsWithPuritiesSwagger()
+  findMetalsWithPurities(
+    @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10,
+    @Query('search') search?: string,
+    @Query('metal_id', new ParseIntPipe({ optional: true })) metal_id?: number,
+    @Query('isPagination') isPagination?: string,
+  ) {
+    const isPaginationActive = isPagination === 'true';
+    return this.metalColorService.findMetalsWithPurities(
+      page,
+      limit,
+      search,
+      metal_id,
+      isPaginationActive,
+    );
   }
 
   @Get(':id')

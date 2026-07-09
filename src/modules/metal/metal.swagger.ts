@@ -422,3 +422,73 @@ export const RemoveMetalColorSwagger = () =>
       schema: { example: metalColorNotFoundExample },
     }),
   );
+
+export const FindMetalsWithPuritiesSwagger = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Get list of metals and their purities' }),
+    ApiQuery({
+      name: 'page',
+      required: false,
+      example: 1,
+      description: 'Page number',
+    }),
+    ApiQuery({
+      name: 'limit',
+      required: false,
+      example: 10,
+      description: 'Items per page',
+    }),
+    ApiQuery({
+      name: 'search',
+      required: false,
+      example: 'Gold',
+      description: 'Search by metal name',
+    }),
+    ApiQuery({
+      name: 'metal_id',
+      required: false,
+      example: 1,
+      description: 'Filter by metal ID',
+    }),
+    ApiQuery({
+      name: 'isPagination',
+      required: false,
+      example: 'true',
+      description: 'Enable pagination if true',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Metals with purities retrieved successfully',
+      schema: {
+        example: {
+          status: true,
+          message: 'Metals with purities retrieved successfully',
+          statusCode: 200,
+          data: {
+            items: [
+              {
+                id: 1,
+                name: 'Gold',
+                created_at: '2026-07-03T00:00:00.000Z',
+                updated_at: '2026-07-03T00:00:00.000Z',
+                purities: [
+                  {
+                    id: 1,
+                    purity: '14K Gold',
+                    name: '14K Gold Name',
+                    metal_id: 1,
+                    percentage: 58.33,
+                    rate_per_gram_inr: 4500.0,
+                    rate_per_gram_usd: 54.5,
+                    created_at: '2026-07-03T00:00:00.000Z',
+                    updated_at: '2026-07-03T00:00:00.000Z',
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    }),
+  );
+

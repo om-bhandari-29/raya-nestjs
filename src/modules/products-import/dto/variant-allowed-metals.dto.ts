@@ -34,7 +34,7 @@ export class AllowedMetalInputDto {
     description: 'The metal purity ID (FK to metal_purities)',
   })
   @IsInt()
-  metal_purity: number;
+  metal_master: number;
 
   @ApiProperty({
     type: [Number],
@@ -43,7 +43,7 @@ export class AllowedMetalInputDto {
   })
   @IsArray()
   @IsInt({ each: true })
-  metal_color: number[];
+  metal_purities: number[];
 }
 
 export class UpdateVariantAllowedMetalsDto {

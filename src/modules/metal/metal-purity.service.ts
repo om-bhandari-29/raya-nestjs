@@ -183,7 +183,7 @@ export class MetalPurityService {
       );
     }
 
-    // Added DISTINCT and removed id / metal_color_id to get unique purities
+    // Added DISTINCT and removed id / metal_master_id to get unique purities
     const rows = await this.metalPurityRepository.query(
       `SELECT DISTINCT
         dvam.metal_purity_id as id, 
