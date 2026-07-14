@@ -130,6 +130,7 @@ export class ArchetypeImportService {
             queryRunner,
             slotId,
             row,
+            blueprintId,
           );
           result.sizeMatrixRowsInserted += matrixCount;
         }
@@ -319,6 +320,7 @@ export class ArchetypeImportService {
     queryRunner: QueryRunner,
     zoneSlotId: number,
     row: ArchetypeCsvRow,
+    blueprintId: number,
   ): Promise<number> {
     const sizes = [
       '3.0',
@@ -357,25 +359,36 @@ export class ArchetypeImportService {
       const qty = parseInt(rawQty, 10);
       const metalWt = parseFloat(rawWt);
 
-      if (qty > 0 || metalWt > 0) {
+      if (qty > 0) {
         const sql = `
         INSERT INTO blueprint_size_matrix 
-          (zone_slot_id, ring_size, stone_quantity, metal_weight)
-        VALUES ($1, $2, $3, $4)
+          (zone_slot_id, ring_size, stone_quantity)
+        VALUES ($1, $2, $3)
         ON CONFLICT (zone_slot_id, ring_size)
         DO UPDATE SET
-          stone_quantity = EXCLUDED.stone_quantity,
-          metal_weight = EXCLUDED.metal_weight;
+          stone_quantity = EXCLUDED.stone_quantity;
       `;
 
-        await queryRunner.query(sql, [
-          zoneSlotId,
-          parseFloat(size),
-          qty,
-          metalWt,
-        ]);
+        await queryRunner.query(sql, [zoneSlotId, parseFloat(size), qty]);
 
         insertedCount++;
+      }
+
+      if (metalWt > 0) {
+        const metalSql = `
+        INSERT INTO metal_weight_matrix 
+          (variant_id, ring_size, base_metal_weight_gm)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (variant_id, ring_size)
+        DO UPDATE SET
+          base_metal_weight_gm = EXCLUDED.base_metal_weight_gm;
+        `;
+
+        await queryRunner.query(metalSql, [
+          blueprintId,
+          parseFloat(size),
+          metalWt,
+        ]);
       }
     }
 

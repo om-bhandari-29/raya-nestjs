@@ -118,7 +118,8 @@ export class MetalColorService {
     metal_id?: number,
     isPagination: boolean = false,
   ) {
-    const query = this.metalColorRepository.createQueryBuilder('mc')
+    const query = this.metalColorRepository
+      .createQueryBuilder('mc')
       .leftJoinAndSelect('mc.purities', 'mp');
 
     if (search) {
@@ -131,8 +132,7 @@ export class MetalColorService {
       query.andWhere('mc.id = :metal_id', { metal_id });
     }
 
-    query.orderBy('mc.id', 'DESC')
-         .addOrderBy('mp.id', 'ASC');
+    query.orderBy('mc.id', 'DESC').addOrderBy('mp.id', 'ASC');
 
     if (isPagination) {
       const [items, total] = await query

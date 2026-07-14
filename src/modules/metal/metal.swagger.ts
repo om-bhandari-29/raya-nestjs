@@ -24,7 +24,8 @@ const metalPurityNotFoundExample = {
 
 const metalPurityConflictExample = {
   status: false,
-  message: "Metal purity with purity '14K Gold' and metal_id '1' already exists",
+  message:
+    "Metal purity with purity '14K Gold' and metal_id '1' already exists",
   statusCode: 409,
   data: null,
 };
@@ -220,8 +221,7 @@ export const GetAllowedMetalsByVariantSwagger = () =>
     ApiOperation({
       summary:
         'Get metal purities and colors for a given variant ID with purity name',
-      description:
-        'Returns list containing id (metal_purity_id) and purity.',
+      description: 'Returns list containing id (metal_purity_id) and purity.',
     }),
     ApiParam({
       name: 'variantId',
@@ -491,4 +491,3 @@ export const FindMetalsWithPuritiesSwagger = () =>
       },
     }),
   );
-

@@ -554,9 +554,16 @@ export class ProductsImportService {
 
     // Query design_variant_allowed_metals table for all fetched blueprints
     const allDesignVariantAllowedMetals = await this.dataSource.query(
-      `SELECT variant_id, metal_purity_id, metal_master_id 
-      FROM design_variant_allowed_metals 
-      WHERE variant_id = ANY($1)`,
+      `SELECT 
+        dvam.variant_id, 
+        dvam.metal_purity_id, 
+        mp.name AS metal_purity_name,
+        dvam.metal_master_id, 
+        mm.name AS metal_master
+       FROM design_variant_allowed_metals dvam
+       LEFT JOIN metal_master mm ON dvam.metal_master_id = mm.id
+       LEFT JOIN metal_purities mp ON dvam.metal_purity_id = mp.id
+       WHERE dvam.variant_id = ANY($1)`,
       [blueprintIds],
     );
 
@@ -566,9 +573,7 @@ export class ProductsImportService {
       FROM blueprint_zone_slots 
       WHERE blueprint_id = ANY($1)`,
       [blueprintIds],
-    );
-
-    // STEP 4: Resolve Sizing Sub-Matrix Array if any slot is dynamic
+    ); // STEP 4: Resolve Sizing Sub-Matrix Array if any slot is dynamic
     const dynamicZoneSlotIds = allZoneSlots
       .filter((slot) => slot.is_dynamic_by_size)
       .map((slot) => slot.zone_slot_id);
@@ -576,7 +581,7 @@ export class ProductsImportService {
     let allMatrices = [];
     if (dynamicZoneSlotIds.length > 0) {
       allMatrices = await this.dataSource.query(
-        `SELECT zone_slot_id, ring_size, stone_quantity, metal_weight 
+        `SELECT zone_slot_id, ring_size, stone_quantity 
         FROM blueprint_size_matrix 
         WHERE zone_slot_id = ANY($1) 
         ORDER BY ring_size ASC`,
@@ -599,14 +604,22 @@ export class ProductsImportService {
         size_wt_matrix: slot.is_dynamic_by_size
           ? allMatrices
               .filter((m) => m.zone_slot_id === slot.zone_slot_id)
-              .map(({ ring_size, stone_quantity, metal_weight }) => ({
+              .map(({ ring_size, stone_quantity }) => ({
                 ring_size,
                 stone_quantity,
-                metal_weight: metal_weight !== null ? Number(metal_weight) : 0,
               }))
           : null,
       };
     });
+
+    // STEP 5.5: Fetch metal weight matrices for all fetched blueprints
+    const allWeightMatrices = await this.dataSource.query(
+      `SELECT variant_id, ring_size, base_metal_weight_gm
+       FROM metal_weight_matrix
+       WHERE variant_id = ANY($1)
+       ORDER BY ring_size ASC`,
+      [blueprintIds],
+    );
 
     // Zone name to RingComponentZone key mapping
     const zoneKeyMap: Record<string, string> = {
@@ -659,27 +672,40 @@ export class ProductsImportService {
         zoneSlots[zoneKey].push(slotData);
       }
 
-      // Group design_variant_allowed_metals by metal_purity_id
-      const purityIds = [
+      // Group design_variant_allowed_metals by metal_master_id
+      const masterIds = [
         ...new Set(
           allDesignVariantAllowedMetals
             .filter((m) => m.variant_id === blueprint.id)
-            .map((m) => m.metal_purity_id),
+            .map((m) => m.metal_master_id),
         ),
       ];
-      const designVariantAllowedMetals = purityIds.map((purityId) => {
-        const allowedColorIds = allDesignVariantAllowedMetals
-          .filter(
-            (m) =>
-              m.variant_id === blueprint.id && m.metal_purity_id === purityId,
-          )
-          .map((m) => m.metal_master_id);
+      const designVariantAllowedMetals = masterIds.map((masterId) => {
+        const matchingRows = allDesignVariantAllowedMetals.filter(
+          (m) =>
+            m.variant_id === blueprint.id && m.metal_master_id === masterId,
+        );
+        const firstRow = matchingRows[0];
+        const metalMasterName = firstRow ? firstRow.metal_master : '';
+
+        const allowedPurities = matchingRows.map((m) => ({
+          metal_purity_id: m.metal_purity_id,
+          metal_purity_name: m.metal_purity_name || '',
+        }));
 
         return {
-          metal_purity_id: purityId,
-          allowed_color_ids: allowedColorIds,
+          metal_master_id: masterId,
+          metal_master: metalMasterName,
+          allowed_metal_purities_id: allowedPurities,
         };
       });
+      const weightMatrix = allWeightMatrices
+        .filter((wm) => wm.variant_id === blueprint.id)
+        .map(({ ring_size, base_metal_weight_gm }) => ({
+          ring_size,
+          base_metal_weight_gm:
+            base_metal_weight_gm !== null ? Number(base_metal_weight_gm) : 0,
+        }));
 
       return {
         variantId: blueprint.id,
@@ -688,6 +714,7 @@ export class ProductsImportService {
         allowed_metals: allowedMetals,
         design_variant_allowed_metals: designVariantAllowedMetals,
         zone_slots: zoneSlots,
+        weight_matrix: weightMatrix,
       };
     });
 
@@ -772,9 +799,15 @@ export class ProductsImportService {
 
     // Query design_variant_allowed_metals for the variant ID
     const designVariantAllowedMetalsRaw = await this.dataSource.query(
-      `SELECT metal_purity_id, metal_master_id 
-       FROM design_variant_allowed_metals 
-       WHERE variant_id = $1`,
+      `SELECT 
+        dvam.metal_purity_id, 
+        mp.name AS metal_purity_name,
+        dvam.metal_master_id, 
+        mm.name AS metal_master
+       FROM design_variant_allowed_metals dvam
+       LEFT JOIN metal_master mm ON dvam.metal_master_id = mm.id
+       LEFT JOIN metal_purities mp ON dvam.metal_purity_id = mp.id
+       WHERE dvam.variant_id = $1`,
       [variantId],
     );
 
@@ -784,9 +817,7 @@ export class ProductsImportService {
        FROM blueprint_zone_slots 
        WHERE blueprint_id = $1`,
       [variantId],
-    );
-
-    // STEP 4: Resolve Sizing Sub-Matrix Array if any slot is dynamic
+    ); // STEP 4: Resolve Sizing Sub-Matrix Array if any slot is dynamic
     const dynamicZoneSlotIds = zoneSlotsQuery
       .filter((slot) => slot.is_dynamic_by_size)
       .map((slot) => slot.zone_slot_id);
@@ -794,7 +825,7 @@ export class ProductsImportService {
     let allMatrices = [];
     if (dynamicZoneSlotIds.length > 0) {
       allMatrices = await this.dataSource.query(
-        `SELECT zone_slot_id, ring_size, stone_quantity, metal_weight 
+        `SELECT zone_slot_id, ring_size, stone_quantity 
          FROM blueprint_size_matrix 
          WHERE zone_slot_id = ANY($1) 
          ORDER BY ring_size ASC`,
@@ -816,14 +847,22 @@ export class ProductsImportService {
         size_wt_matrix: slot.is_dynamic_by_size
           ? allMatrices
               .filter((m) => m.zone_slot_id === slot.zone_slot_id)
-              .map(({ ring_size, stone_quantity, metal_weight }) => ({
+              .map(({ ring_size, stone_quantity }) => ({
                 ring_size,
                 stone_quantity,
-                metal_weight: metal_weight !== null ? Number(metal_weight) : 0,
               }))
           : null,
       };
     });
+
+    // STEP 5.5: Fetch metal weight matrix for the variant
+    const weightMatrix = await this.dataSource.query(
+      `SELECT ring_size, base_metal_weight_gm
+       FROM metal_weight_matrix
+       WHERE variant_id = $1
+       ORDER BY ring_size ASC`,
+      [variantId],
+    );
 
     // Zone name to RingComponentZone key mapping
     const zoneKeyMap: Record<string, string> = {
@@ -861,7 +900,6 @@ export class ProductsImportService {
       const { zone_name, ...slotData } = slot;
       zoneSlots[zoneKey].push(slotData);
     }
-
     return {
       status: true,
       data: {
@@ -871,22 +909,38 @@ export class ProductsImportService {
           metal_master_id: metal_color,
         })),
         design_variant_allowed_metals: (() => {
-          const purityIds = [
+          const masterIds = [
             ...new Set<number>(
-              designVariantAllowedMetalsRaw.map((m) => m.metal_purity_id),
+              designVariantAllowedMetalsRaw.map((m) => m.metal_master_id),
             ),
           ];
-          return purityIds.map((purityId) => {
-            const allowedColorIds = designVariantAllowedMetalsRaw
-              .filter((m) => m.metal_purity_id === purityId)
-              .map((m) => m.metal_master_id);
+          return masterIds.map((masterId) => {
+            const matchingRows = designVariantAllowedMetalsRaw.filter(
+              (m) => m.metal_master_id === masterId,
+            );
+            const firstRow = matchingRows[0];
+            const metalMasterName = firstRow ? firstRow.metal_master : '';
+
+            const allowedPurities = matchingRows.map((m) => ({
+              metal_purity_id: m.metal_purity_id,
+              metal_purity_name: m.metal_purity_name || '',
+            }));
+
             return {
-              metal_purity_id: purityId,
-              allowed_color_ids: allowedColorIds,
+              metal_master_id: masterId,
+              metal_master: metalMasterName,
+              allowed_metal_purities_id: allowedPurities,
             };
           });
         })(),
         zone_slots: zoneSlots as any,
+        weight_matrix: weightMatrix.map(
+          ({ ring_size, base_metal_weight_gm }) => ({
+            ring_size,
+            base_metal_weight_gm:
+              base_metal_weight_gm !== null ? Number(base_metal_weight_gm) : 0,
+          }),
+        ),
       },
     };
   }
@@ -1395,26 +1449,44 @@ export class ProductsImportService {
       );
     }
 
-    // 2. Query design_variant_allowed_metals table
+    // 2. Query design_variant_allowed_metals table with joins for master and purity details
     const rows = await this.dataSource.query(
-      `SELECT metal_purity_id, metal_master_id 
-       FROM design_variant_allowed_metals 
-       WHERE variant_id = $1`,
+      `SELECT 
+        dvam.metal_purity_id, 
+        mp.name AS metal_purity_name,
+        mp.rate_per_gram_inr,
+        mp.rate_per_gram_usd,
+        dvam.metal_master_id, 
+        mm.name AS metal_master
+       FROM design_variant_allowed_metals dvam
+       LEFT JOIN metal_master mm ON dvam.metal_master_id = mm.id
+       LEFT JOIN metal_purities mp ON dvam.metal_purity_id = mp.id
+       WHERE dvam.variant_id = $1`,
       [variantId],
     );
 
-    // 3. Group allowed color IDs by metal_purity_id
-    const purityIds = [
-      ...new Set<number>(rows.map((row) => row.metal_purity_id)),
+    // 3. Group allowed purity details by metal_master_id
+    const masterIds = [
+      ...new Set<number>(rows.map((row) => row.metal_master_id)),
     ];
-    const data = purityIds.map((purityId) => {
-      const allowedColorIds = rows
-        .filter((row) => row.metal_purity_id === purityId)
-        .map((row) => row.metal_master_id);
+    const data = masterIds.map((masterId) => {
+      const matchingRows = rows.filter(
+        (row) => row.metal_master_id === masterId,
+      );
+      const firstRow = matchingRows[0];
+      const metalMasterName = firstRow ? firstRow.metal_master : '';
+
+      const allowedPurities = matchingRows.map((row) => ({
+        metal_purity_id: row.metal_purity_id,
+        metal_purity_name: row.metal_purity_name || '',
+        rate_per_gram_inr: row.rate_per_gram_inr ? Number(row.rate_per_gram_inr) : null,
+        rate_per_gram_usd: row.rate_per_gram_usd ? Number(row.rate_per_gram_usd) : null,
+      }));
 
       return {
-        metal_purity_id: purityId,
-        allowed_color_ids: allowedColorIds,
+        metal_master_id: masterId,
+        metal_master: metalMasterName,
+        allowed_metal_purities_id: allowedPurities,
       };
     });
 
@@ -1456,7 +1528,8 @@ export class ProductsImportService {
 
       // 3. Insert new allowed metals
       for (const metal of allowed_metals) {
-        const { metal_master: metalMasterId, metal_purities: metalPurityIds } = metal;
+        const { metal_master: metalMasterId, metal_purities: metalPurityIds } =
+          metal;
         for (const purityId of metalPurityIds) {
           await queryRunner.query(
             `INSERT INTO design_variant_allowed_metals (variant_id, metal_purity_id, metal_master_id)

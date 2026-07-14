@@ -22,4 +22,3 @@ export class MetalColor {
   })
   updated_at: Date;
 }
-

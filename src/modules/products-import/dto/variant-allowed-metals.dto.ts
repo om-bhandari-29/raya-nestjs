@@ -2,19 +2,52 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class VariantAllowedMetalsDto {
+export class AllowedMetalPurityDto {
   @ApiProperty({
     example: 1,
-    description: 'The metal purity ID (FK to metal_purities)',
+    description: 'The metal purity ID',
   })
   metal_purity_id: number;
 
   @ApiProperty({
-    type: [Number],
-    example: [1, 2],
-    description: 'Allowed metal color IDs for this purity',
+    example: '18k',
+    description: 'The metal purity name/description',
   })
-  allowed_color_ids: number[];
+  metal_purity_name: string;
+
+  @ApiProperty({
+    example: 5200.50,
+    description: 'Rate per gram in INR',
+    nullable: true,
+  })
+  rate_per_gram_inr: number;
+
+  @ApiProperty({
+    example: 65.50,
+    description: 'Rate per gram in USD',
+    nullable: true,
+  })
+  rate_per_gram_usd: number;
+}
+
+export class VariantAllowedMetalsDto {
+  @ApiProperty({
+    example: 1,
+    description: 'The metal master ID',
+  })
+  metal_master_id: number;
+
+  @ApiProperty({
+    example: 'Yellow Gold',
+    description: 'The metal master color name',
+  })
+  metal_master: string;
+
+  @ApiProperty({
+    type: [AllowedMetalPurityDto],
+    description: 'Allowed metal purity IDs and names for this metal master',
+  })
+  allowed_metal_purities_id: AllowedMetalPurityDto[];
 }
 
 export class VariantAllowedMetalsResponseDto {

@@ -1,4 +1,10 @@
-import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { MetalColor } from './metal-color.entity';
 
 @Entity('metal_purities')
@@ -38,4 +44,3 @@ export class MetalPurity {
   })
   updated_at: Date;
 }
-

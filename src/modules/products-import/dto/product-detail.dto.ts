@@ -15,9 +15,14 @@ export class SizeWeightMatrixEntryDto {
 
   @ApiProperty({ example: 20 })
   stone_quantity: number;
+}
 
-  @ApiProperty({ example: 2.35 })
-  metal_weight: number;
+export class WeightMatrixEntryDto {
+  @ApiProperty({ example: '7.0' })
+  ring_size: string;
+
+  @ApiProperty({ example: 3.02 })
+  base_metal_weight_gm: number;
 }
 
 export class ZoneSlotItemDto {
@@ -81,6 +86,12 @@ export class ProductVariantDetailDto {
 
   @ApiProperty({ type: ZoneSlotsDto })
   zone_slots: ZoneSlotsDto;
+
+  @ApiProperty({
+    type: [WeightMatrixEntryDto],
+    description: 'Ring size based baseline mold weight matrix',
+  })
+  weight_matrix: WeightMatrixEntryDto[];
 }
 
 export class ProductDetailDataDto {
@@ -114,6 +125,12 @@ export class VariantDetailDto {
 
   @ApiProperty({ type: ZoneSlotsDto })
   zone_slots: ZoneSlotsDto;
+
+  @ApiProperty({
+    type: [WeightMatrixEntryDto],
+    description: 'Ring size based baseline mold weight matrix',
+  })
+  weight_matrix: WeightMatrixEntryDto[];
 }
 
 export class VariantDetailResponseDto {

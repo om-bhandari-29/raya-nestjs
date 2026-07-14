@@ -1,4 +1,11 @@
-import { IsNotEmpty, IsString, MaxLength, IsNumber, IsInt, IsOptional } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  MaxLength,
+  IsNumber,
+  IsInt,
+  IsOptional,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateMetalPurityDto {
@@ -24,14 +31,13 @@ export class CreateMetalPurityDto {
   @IsOptional()
   percentage?: number;
 
-  @ApiPropertyOptional({ example: 4500.00 })
+  @ApiPropertyOptional({ example: 4500.0 })
   @IsNumber()
   @IsOptional()
   rate_per_gram_inr?: number;
 
-  @ApiPropertyOptional({ example: 54.50 })
+  @ApiPropertyOptional({ example: 54.5 })
   @IsNumber()
   @IsOptional()
   rate_per_gram_usd?: number;
 }
-
