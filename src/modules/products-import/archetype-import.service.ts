@@ -123,18 +123,36 @@ export class ArchetypeImportService {
       let sizeMatrixBatch: SizeMatrixTuple[] = [];
       let metalWeightBatch: MetalWeightTuple[] = [];
 
+      // In-memory ID caches to avoid redundant DB roundtrips
+      const designIdCache = new Map<string, number>();
+      const blueprintIdCache = new Map<string, number>();
+      const zoneSlotIdCache = new Map<string, number>();
+
       for (const [key, groupRows] of groups.entries()) {
         const [designSlug, variantSlug] = key.split('::');
 
-        const designId = await this.upsertProductDesign(
-          queryRunner,
-          designSlug,
-        );
-        const blueprintId = await this.upsertArchetypeBlueprint(
-          queryRunner,
-          designId,
-          variantSlug,
-        );
+        // Cache design IDs — same slug won't hit DB twice
+        let designId: number;
+        if (designIdCache.has(designSlug)) {
+          designId = designIdCache.get(designSlug)!;
+        } else {
+          designId = await this.upsertProductDesign(queryRunner, designSlug);
+          designIdCache.set(designSlug, designId);
+        }
+
+        // Cache blueprint IDs — same (designId, variantSlug) won't hit DB twice
+        const blueprintKey = `${designId}::${variantSlug}`;
+        let blueprintId: number;
+        if (blueprintIdCache.has(blueprintKey)) {
+          blueprintId = blueprintIdCache.get(blueprintKey)!;
+        } else {
+          blueprintId = await this.upsertArchetypeBlueprint(
+            queryRunner,
+            designId,
+            variantSlug,
+          );
+          blueprintIdCache.set(blueprintKey, blueprintId);
+        }
         result.blueprintsProcessed++;
 
         for (const row of groupRows) {
@@ -143,11 +161,30 @@ export class ArchetypeImportService {
             continue;
           }
 
-          const slotId = await this.upsertArchetypeZoneSlot(
-            queryRunner,
-            blueprintId,
-            row,
-          );
+          // Cache zone slot IDs — same (blueprintId, zoneName, shape) won't hit DB twice
+          const zoneName = (validZone as string).trim();
+          const shapeNormalized = (
+            row.shape_normalized ||
+            row.Shape_Normalized ||
+            row['shape_normalized'] ||
+            'round'
+          )
+            .toString()
+            .trim()
+            .toLowerCase();
+          const slotCacheKey = `${blueprintId}::${zoneName}::${shapeNormalized}`;
+
+          let slotId: number;
+          if (zoneSlotIdCache.has(slotCacheKey)) {
+            slotId = zoneSlotIdCache.get(slotCacheKey)!;
+          } else {
+            slotId = await this.upsertArchetypeZoneSlot(
+              queryRunner,
+              blueprintId,
+              row,
+            );
+            zoneSlotIdCache.set(slotCacheKey, slotId);
+          }
           result.zoneSlotsInserted++;
 
           // Collect size matrix and metal weight tuples instead of inserting one-by-one
