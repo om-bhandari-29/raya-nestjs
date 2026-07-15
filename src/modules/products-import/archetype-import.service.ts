@@ -22,6 +22,27 @@ export interface ImportMetrics {
   sizeMatrixRowsInserted: number;
 }
 
+/** Batch size for multi-row INSERT statements */
+const BATCH_SIZE = 500;
+
+const RING_SIZES = [
+  '3.0', '3.5', '4.0', '4.5', '5.0', '5.5', '6.0', '6.5',
+  '7.0', '7.5', '8.0', '8.5', '9.0', '9.5', '10.0', '10.5',
+  '11.0', '11.5', '12.0', '12.5', '13.0',
+];
+
+interface SizeMatrixTuple {
+  zoneSlotId: number;
+  ringSize: number;
+  stoneQuantity: number;
+}
+
+interface MetalWeightTuple {
+  variantId: number;
+  ringSize: number;
+  baseMetalWeightGm: number;
+}
+
 @Injectable()
 export class ArchetypeImportService {
   private readonly logger = new Logger(ArchetypeImportService.name);
@@ -48,7 +69,6 @@ export class ArchetypeImportService {
 
     const groups = new Map<string, ArchetypeCsvRow[]>();
     for (const row of rows) {
-      // Robust lookup for design and variant slugs
       const designSlug = (
         row.design_slug ||
         row.Design_Slug ||
@@ -74,7 +94,7 @@ export class ArchetypeImportService {
       if (!groups.has(key)) {
         groups.set(key, []);
       }
-      groups.get(key).push(row);
+      groups.get(key)!.push(row);
     }
 
     this.logger.log(
@@ -99,6 +119,10 @@ export class ArchetypeImportService {
     await queryRunner.startTransaction();
 
     try {
+      // Accumulators for batched inserts
+      let sizeMatrixBatch: SizeMatrixTuple[] = [];
+      let metalWeightBatch: MetalWeightTuple[] = [];
+
       for (const [key, groupRows] of groups.entries()) {
         const [designSlug, variantSlug] = key.split('::');
 
@@ -126,14 +150,39 @@ export class ArchetypeImportService {
           );
           result.zoneSlotsInserted++;
 
-          const matrixCount = await this.upsertArchetypeSizeMatrix(
-            queryRunner,
+          // Collect size matrix and metal weight tuples instead of inserting one-by-one
+          this.collectSizeMatrixTuples(
             slotId,
             row,
             blueprintId,
+            sizeMatrixBatch,
+            metalWeightBatch,
           );
-          result.sizeMatrixRowsInserted += matrixCount;
+
+          // Flush when batch is full
+          if (sizeMatrixBatch.length >= BATCH_SIZE) {
+            result.sizeMatrixRowsInserted += await this.flushSizeMatrixBatch(
+              queryRunner,
+              sizeMatrixBatch,
+            );
+            sizeMatrixBatch = [];
+          }
+          if (metalWeightBatch.length >= BATCH_SIZE) {
+            await this.flushMetalWeightBatch(queryRunner, metalWeightBatch);
+            metalWeightBatch = [];
+          }
         }
+      }
+
+      // Flush remaining tuples
+      if (sizeMatrixBatch.length > 0) {
+        result.sizeMatrixRowsInserted += await this.flushSizeMatrixBatch(
+          queryRunner,
+          sizeMatrixBatch,
+        );
+      }
+      if (metalWeightBatch.length > 0) {
+        await this.flushMetalWeightBatch(queryRunner, metalWeightBatch);
       }
 
       await queryRunner.commitTransaction();
@@ -154,6 +203,122 @@ export class ArchetypeImportService {
     return result;
   }
 
+  /**
+   * Collects size matrix and metal weight tuples from a row into the batch arrays.
+   * No DB calls happen here — just data accumulation.
+   */
+  private collectSizeMatrixTuples(
+    zoneSlotId: number,
+    row: ArchetypeCsvRow,
+    blueprintId: number,
+    sizeMatrixBatch: SizeMatrixTuple[],
+    metalWeightBatch: MetalWeightTuple[],
+  ): void {
+    for (const size of RING_SIZES) {
+      const colSuffix = size.replace('.', '_');
+      const qtyKey = `qty_${colSuffix}`;
+      const wtKey = `metal_wt_${colSuffix}`;
+
+      const rawQty = row[qtyKey] || row[qtyKey.toUpperCase()] || '0';
+      const rawWt = row[wtKey] || row[wtKey.toUpperCase()] || '0';
+
+      const qty = parseInt(rawQty, 10);
+      const metalWt = parseFloat(rawWt);
+
+      if (qty > 0) {
+        sizeMatrixBatch.push({
+          zoneSlotId,
+          ringSize: parseFloat(size),
+          stoneQuantity: qty,
+        });
+      }
+
+      if (metalWt > 0) {
+        metalWeightBatch.push({
+          variantId: blueprintId,
+          ringSize: parseFloat(size),
+          baseMetalWeightGm: metalWt,
+        });
+      }
+    }
+  }
+
+  /**
+   * Flushes accumulated size matrix tuples as a single multi-row INSERT.
+   * Deduplicates by (zone_slot_id, ring_size) keeping the last occurrence (last write wins).
+   * Returns the number of unique rows inserted.
+   */
+  private async flushSizeMatrixBatch(
+    queryRunner: QueryRunner,
+    batch: SizeMatrixTuple[],
+  ): Promise<number> {
+    if (batch.length === 0) return 0;
+
+    // Deduplicate: keep last occurrence per (zoneSlotId, ringSize)
+    const deduped = new Map<string, SizeMatrixTuple>();
+    for (const tuple of batch) {
+      deduped.set(`${tuple.zoneSlotId}::${tuple.ringSize}`, tuple);
+    }
+
+    const uniqueTuples = Array.from(deduped.values());
+    const values: string[] = [];
+    const params: any[] = [];
+    let paramIdx = 1;
+
+    for (const tuple of uniqueTuples) {
+      values.push(`($${paramIdx}, $${paramIdx + 1}, $${paramIdx + 2})`);
+      params.push(tuple.zoneSlotId, tuple.ringSize, tuple.stoneQuantity);
+      paramIdx += 3;
+    }
+
+    const sql = `
+      INSERT INTO blueprint_size_matrix (zone_slot_id, ring_size, stone_quantity)
+      VALUES ${values.join(', ')}
+      ON CONFLICT (zone_slot_id, ring_size)
+      DO UPDATE SET stone_quantity = EXCLUDED.stone_quantity;
+    `;
+
+    await queryRunner.query(sql, params);
+    return uniqueTuples.length;
+  }
+
+  /**
+   * Flushes accumulated metal weight tuples as a single multi-row INSERT.
+   * Deduplicates by (variant_id, ring_size) keeping the last occurrence (last write wins).
+   */
+  private async flushMetalWeightBatch(
+    queryRunner: QueryRunner,
+    batch: MetalWeightTuple[],
+  ): Promise<void> {
+    if (batch.length === 0) return;
+
+    // Deduplicate: keep last occurrence per (variantId, ringSize)
+    const deduped = new Map<string, MetalWeightTuple>();
+    for (const tuple of batch) {
+      deduped.set(`${tuple.variantId}::${tuple.ringSize}`, tuple);
+    }
+
+    const uniqueTuples = Array.from(deduped.values());
+    const values: string[] = [];
+    const params: any[] = [];
+    let paramIdx = 1;
+
+    for (const tuple of uniqueTuples) {
+      values.push(`($${paramIdx}, $${paramIdx + 1}, $${paramIdx + 2})`);
+      params.push(tuple.variantId, tuple.ringSize, tuple.baseMetalWeightGm);
+      paramIdx += 3;
+    }
+
+    const sql = `
+      INSERT INTO metal_weight_matrix (variant_id, ring_size, base_metal_weight_gm)
+      VALUES ${values.join(', ')}
+      ON CONFLICT (variant_id, ring_size)
+      DO UPDATE SET base_metal_weight_gm = EXCLUDED.base_metal_weight_gm;
+    `;
+
+    await queryRunner.query(sql, params);
+  }
+
   private async parseExcelBuffer(buffer: Buffer): Promise<ArchetypeCsvRow[]> {
     const ExcelJS = require('exceljs');
     const workbook = new ExcelJS.Workbook();
@@ -163,7 +328,7 @@ export class ArchetypeImportService {
 
     const headers: string[] = [];
     const headerRow = worksheet.getRow(1);
-    headerRow.eachCell((cell, colNumber) => {
+    headerRow.eachCell((cell: any, colNumber: number) => {
       headers[colNumber] = cell.value
         ? cell.value
             .toString()
@@ -172,10 +337,10 @@ export class ArchetypeImportService {
         : '';
     });
 
-    worksheet.eachRow((row, rowNumber) => {
+    worksheet.eachRow((row: any, rowNumber: number) => {
       if (rowNumber === 1) return;
       const rowData: ArchetypeCsvRow = {};
-      row.eachCell((cell, colNumber) => {
+      row.eachCell((cell: any, colNumber: number) => {
         const header = headers[colNumber];
         if (header) {
           const val =
@@ -243,12 +408,12 @@ export class ArchetypeImportService {
     variantName: string,
   ): Promise<number> {
     const sql = `
-    INSERT INTO product_blueprints (design_id, variant_name, target_gender)
-    VALUES ($1, $2, $3)
-    ON CONFLICT (design_id, variant_name, target_gender)
-    DO UPDATE SET variant_name = EXCLUDED.variant_name
-    RETURNING id;
-  `;
+      INSERT INTO product_blueprints (design_id, variant_name, target_gender)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (design_id, variant_name, target_gender)
+      DO UPDATE SET variant_name = EXCLUDED.variant_name
+      RETURNING id;
+    `;
     const res = await queryRunner.query(sql, [
       designId,
       variantName.trim(),
@@ -289,18 +454,18 @@ export class ArchetypeImportService {
     const dimWVal = dimW ? parseFloat(dimW.toString()) : null;
 
     const sql = `
-    INSERT INTO blueprint_zone_slots 
-      (blueprint_id, zone_name, shape_normalized, dim_l_mm, dim_w_mm, template_id, is_dynamic_by_size, fixed_quantity)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    ON CONFLICT (blueprint_id, zone_name, shape_normalized)
-    DO UPDATE SET
-      dim_l_mm           = EXCLUDED.dim_l_mm,
-      dim_w_mm           = EXCLUDED.dim_w_mm,
-      template_id        = EXCLUDED.template_id,
-      is_dynamic_by_size = EXCLUDED.is_dynamic_by_size,
-      fixed_quantity     = EXCLUDED.fixed_quantity
-    RETURNING id;
-  `;
+      INSERT INTO blueprint_zone_slots 
+        (blueprint_id, zone_name, shape_normalized, dim_l_mm, dim_w_mm, template_id, is_dynamic_by_size, fixed_quantity)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      ON CONFLICT (blueprint_id, zone_name, shape_normalized)
+      DO UPDATE SET
+        dim_l_mm           = EXCLUDED.dim_l_mm,
+        dim_w_mm           = EXCLUDED.dim_w_mm,
+        template_id        = EXCLUDED.template_id,
+        is_dynamic_by_size = EXCLUDED.is_dynamic_by_size,
+        fixed_quantity     = EXCLUDED.fixed_quantity
+      RETURNING id;
+    `;
 
     const res = await queryRunner.query(sql, [
       blueprintId,
@@ -314,85 +479,6 @@ export class ArchetypeImportService {
     ]);
 
     return res[0].id;
-  }
-
-  private async upsertArchetypeSizeMatrix(
-    queryRunner: QueryRunner,
-    zoneSlotId: number,
-    row: ArchetypeCsvRow,
-    blueprintId: number,
-  ): Promise<number> {
-    const sizes = [
-      '3.0',
-      '3.5',
-      '4.0',
-      '4.5',
-      '5.0',
-      '5.5',
-      '6.0',
-      '6.5',
-      '7.0',
-      '7.5',
-      '8.0',
-      '8.5',
-      '9.0',
-      '9.5',
-      '10.0',
-      '10.5',
-      '11.0',
-      '11.5',
-      '12.0',
-      '12.5',
-      '13.0',
-    ];
-
-    let insertedCount = 0;
-
-    for (const size of sizes) {
-      const colSuffix = size.replace('.', '_');
-      const qtyKey = `qty_${colSuffix}`;
-      const wtKey = `metal_wt_${colSuffix}`;
-
-      const rawQty = row[qtyKey] || row[qtyKey.toUpperCase()] || '0';
-      const rawWt = row[wtKey] || row[wtKey.toUpperCase()] || '0';
-
-      const qty = parseInt(rawQty, 10);
-      const metalWt = parseFloat(rawWt);
-
-      if (qty > 0) {
-        const sql = `
-        INSERT INTO blueprint_size_matrix 
-          (zone_slot_id, ring_size, stone_quantity)
-        VALUES ($1, $2, $3)
-        ON CONFLICT (zone_slot_id, ring_size)
-        DO UPDATE SET
-          stone_quantity = EXCLUDED.stone_quantity;
-      `;
-
-        await queryRunner.query(sql, [zoneSlotId, parseFloat(size), qty]);
-
-        insertedCount++;
-      }
-
-      if (metalWt > 0) {
-        const metalSql = `
-        INSERT INTO metal_weight_matrix 
-          (variant_id, ring_size, base_metal_weight_gm)
-        VALUES ($1, $2, $3)
-        ON CONFLICT (variant_id, ring_size)
-        DO UPDATE SET
-          base_metal_weight_gm = EXCLUDED.base_metal_weight_gm;
-        `;
-
-        await queryRunner.query(metalSql, [
-          blueprintId,
-          parseFloat(size),
-          metalWt,
-        ]);
-      }
-    }
-
-    return insertedCount;
   }
 
   async getArchetypesPaginated(
