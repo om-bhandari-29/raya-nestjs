@@ -1454,6 +1454,7 @@ export class ProductsImportService {
       `SELECT 
         dvam.metal_purity_id, 
         mp.name AS metal_purity_name,
+        mp.percentage,
         mp.rate_per_gram_inr,
         mp.rate_per_gram_usd,
         dvam.metal_master_id, 
@@ -1479,6 +1480,7 @@ export class ProductsImportService {
       const allowedPurities = matchingRows.map((row) => ({
         metal_purity_id: row.metal_purity_id,
         metal_purity_name: row.metal_purity_name || '',
+        percentage: row.percentage ? Number(row.percentage) : null,
         rate_per_gram_inr: row.rate_per_gram_inr ? Number(row.rate_per_gram_inr) : null,
         rate_per_gram_usd: row.rate_per_gram_usd ? Number(row.rate_per_gram_usd) : null,
       }));

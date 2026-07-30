@@ -28,6 +28,13 @@ export class AllowedMetalPurityDto {
     nullable: true,
   })
   rate_per_gram_usd: number;
+
+  @ApiProperty({
+    example: 75.00,
+    description: 'Percentage of the metal purity',
+    nullable: true,
+  })
+  percentage: number;
 }
 
 export class VariantAllowedMetalsDto {
