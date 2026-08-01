@@ -4,8 +4,9 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
-import { MetalColor } from './metal-color.entity';
+import { MetalType } from '../../../core/enum/metal-type.enum';
 
 @Entity('metal_purities')
 export class MetalPurity {
@@ -15,15 +16,15 @@ export class MetalPurity {
   @Column({ length: 100, type: 'varchar' })
   purity: string;
 
+  @Index()
+  @Column({ length: 50, type: 'varchar', nullable: true })
+  purity_code: string;
+
   @Column({ length: 100, type: 'varchar', nullable: true })
   name: string;
 
-  @ManyToOne(() => MetalColor, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'metal_id' })
-  metal: MetalColor;
-
-  @Column({ type: 'int' })
-  metal_id: number;
+  @Column({ type: 'int', enum: MetalType })
+  metal_type: MetalType;
 
   @Column({ type: 'decimal', precision: 10, scale: 4, nullable: true })
   percentage: number;

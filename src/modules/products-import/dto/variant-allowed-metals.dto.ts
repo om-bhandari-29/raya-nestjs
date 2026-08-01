@@ -39,20 +39,14 @@ export class AllowedMetalPurityDto {
 
 export class VariantAllowedMetalsDto {
   @ApiProperty({
-    example: 1,
-    description: 'The metal master ID',
+    example: 0,
+    description: 'The metal type enum value',
   })
-  metal_master_id: number;
-
-  @ApiProperty({
-    example: 'Yellow Gold',
-    description: 'The metal master color name',
-  })
-  metal_master: string;
+  metal_type: number;
 
   @ApiProperty({
     type: [AllowedMetalPurityDto],
-    description: 'Allowed metal purity IDs and names for this metal master',
+    description: 'Allowed metal purity IDs and names for this metal type',
   })
   allowed_metal_purities_id: AllowedMetalPurityDto[];
 }
@@ -70,11 +64,11 @@ export class VariantAllowedMetalsResponseDto {
 
 export class AllowedMetalInputDto {
   @ApiProperty({
-    example: 1,
-    description: 'The metal purity ID (FK to metal_purities)',
+    example: 0,
+    description: 'The metal type enum value',
   })
   @IsInt()
-  metal_master: number;
+  metal_type: number;
 
   @ApiProperty({
     type: [Number],

@@ -558,10 +558,8 @@ export class ProductsImportService {
         dvam.variant_id, 
         dvam.metal_purity_id, 
         mp.name AS metal_purity_name,
-        dvam.metal_master_id, 
-        mm.name AS metal_master
+        mp.metal_type
        FROM design_variant_allowed_metals dvam
-       LEFT JOIN metal_master mm ON dvam.metal_master_id = mm.id
        LEFT JOIN metal_purities mp ON dvam.metal_purity_id = mp.id
        WHERE dvam.variant_id = ANY($1)`,
       [blueprintIds],
@@ -650,7 +648,7 @@ export class ProductsImportService {
         .filter((m) => m.blueprint_id === blueprint.id)
         .map(({ metal_purity, metal_color }) => ({
           metal_purity_id: metal_purity,
-          metal_master_id: metal_color,
+          metal_type: metal_color,
         }));
 
       // Build zone_slots as an object keyed by RingComponentZone
@@ -672,21 +670,19 @@ export class ProductsImportService {
         zoneSlots[zoneKey].push(slotData);
       }
 
-      // Group design_variant_allowed_metals by metal_master_id
-      const masterIds = [
+      // Group design_variant_allowed_metals by metal_type
+      const typeIds = [
         ...new Set(
           allDesignVariantAllowedMetals
             .filter((m) => m.variant_id === blueprint.id)
-            .map((m) => m.metal_master_id),
+            .map((m) => m.metal_type),
         ),
       ];
-      const designVariantAllowedMetals = masterIds.map((masterId) => {
+      const designVariantAllowedMetals = typeIds.map((typeId) => {
         const matchingRows = allDesignVariantAllowedMetals.filter(
           (m) =>
-            m.variant_id === blueprint.id && m.metal_master_id === masterId,
+            m.variant_id === blueprint.id && m.metal_type === typeId,
         );
-        const firstRow = matchingRows[0];
-        const metalMasterName = firstRow ? firstRow.metal_master : '';
 
         const allowedPurities = matchingRows.map((m) => ({
           metal_purity_id: m.metal_purity_id,
@@ -694,8 +690,7 @@ export class ProductsImportService {
         }));
 
         return {
-          metal_master_id: masterId,
-          metal_master: metalMasterName,
+          metal_type: typeId,
           allowed_metal_purities_id: allowedPurities,
         };
       });
@@ -802,10 +797,8 @@ export class ProductsImportService {
       `SELECT 
         dvam.metal_purity_id, 
         mp.name AS metal_purity_name,
-        dvam.metal_master_id, 
-        mm.name AS metal_master
+        mp.metal_type
        FROM design_variant_allowed_metals dvam
-       LEFT JOIN metal_master mm ON dvam.metal_master_id = mm.id
        LEFT JOIN metal_purities mp ON dvam.metal_purity_id = mp.id
        WHERE dvam.variant_id = $1`,
       [variantId],
@@ -906,20 +899,18 @@ export class ProductsImportService {
         variantId,
         allowed_metals: metalOptions.map(({ metal_purity, metal_color }) => ({
           metal_purity_id: metal_purity,
-          metal_master_id: metal_color,
+          metal_type: metal_color,
         })),
         design_variant_allowed_metals: (() => {
-          const masterIds = [
+          const typeIds = [
             ...new Set<number>(
-              designVariantAllowedMetalsRaw.map((m) => m.metal_master_id),
+              designVariantAllowedMetalsRaw.map((m) => m.metal_type),
             ),
           ];
-          return masterIds.map((masterId) => {
+          return typeIds.map((typeId) => {
             const matchingRows = designVariantAllowedMetalsRaw.filter(
-              (m) => m.metal_master_id === masterId,
+              (m) => m.metal_type === typeId,
             );
-            const firstRow = matchingRows[0];
-            const metalMasterName = firstRow ? firstRow.metal_master : '';
 
             const allowedPurities = matchingRows.map((m) => ({
               metal_purity_id: m.metal_purity_id,
@@ -927,8 +918,7 @@ export class ProductsImportService {
             }));
 
             return {
-              metal_master_id: masterId,
-              metal_master: metalMasterName,
+              metal_type: typeId,
               allowed_metal_purities_id: allowedPurities,
             };
           });
@@ -1457,25 +1447,21 @@ export class ProductsImportService {
         mp.percentage,
         mp.rate_per_gram_inr,
         mp.rate_per_gram_usd,
-        dvam.metal_master_id, 
-        mm.name AS metal_master
+        mp.metal_type
        FROM design_variant_allowed_metals dvam
-       LEFT JOIN metal_master mm ON dvam.metal_master_id = mm.id
        LEFT JOIN metal_purities mp ON dvam.metal_purity_id = mp.id
        WHERE dvam.variant_id = $1`,
       [variantId],
     );
 
-    // 3. Group allowed purity details by metal_master_id
-    const masterIds = [
-      ...new Set<number>(rows.map((row) => row.metal_master_id)),
+    // 3. Group allowed purity details by metal_type
+    const typeIds = [
+      ...new Set<number>(rows.map((row) => row.metal_type)),
     ];
-    const data = masterIds.map((masterId) => {
+    const data = typeIds.map((typeId) => {
       const matchingRows = rows.filter(
-        (row) => row.metal_master_id === masterId,
+        (row) => row.metal_type === typeId,
       );
-      const firstRow = matchingRows[0];
-      const metalMasterName = firstRow ? firstRow.metal_master : '';
 
       const allowedPurities = matchingRows.map((row) => ({
         metal_purity_id: row.metal_purity_id,
@@ -1486,8 +1472,7 @@ export class ProductsImportService {
       }));
 
       return {
-        metal_master_id: masterId,
-        metal_master: metalMasterName,
+        metal_type: typeId,
         allowed_metal_purities_id: allowedPurities,
       };
     });
@@ -1530,14 +1515,14 @@ export class ProductsImportService {
 
       // 3. Insert new allowed metals
       for (const metal of allowed_metals) {
-        const { metal_master: metalMasterId, metal_purities: metalPurityIds } =
+        const { metal_type: metalTypeId, metal_purities: metalPurityIds } =
           metal;
         for (const purityId of metalPurityIds) {
           await queryRunner.query(
-            `INSERT INTO design_variant_allowed_metals (variant_id, metal_purity_id, metal_master_id)
-             VALUES ($1, $2, $3)
-             ON CONFLICT (variant_id, metal_purity_id, metal_master_id) DO NOTHING`,
-            [variant_id, purityId, metalMasterId],
+            `INSERT INTO design_variant_allowed_metals (variant_id, metal_purity_id)
+             VALUES ($1, $2)
+             ON CONFLICT (variant_id, metal_purity_id) DO NOTHING`,
+            [variant_id, purityId],
           );
         }
       }

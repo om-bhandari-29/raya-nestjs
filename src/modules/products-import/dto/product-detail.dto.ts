@@ -5,8 +5,8 @@ export class AllowedMetalDto {
   @ApiProperty({ example: 1 })
   metal_purity_id: number;
 
-  @ApiProperty({ example: 2 })
-  metal_master_id: number;
+  @ApiProperty({ example: 0 })
+  metal_type: number;
 }
 
 export class SizeWeightMatrixEntryDto {

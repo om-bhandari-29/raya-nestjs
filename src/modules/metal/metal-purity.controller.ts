@@ -45,11 +45,11 @@ export class MetalPurityController {
   findAll(
     @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
     @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10,
-    @Query('metal_id', new ParseIntPipe({ optional: true }))
-    metal_id: number = 0,
+    @Query('metal_type', new ParseIntPipe({ optional: true }))
+    metal_type: number = -1,
     @Query('search') search?: string,
   ) {
-    return this.metalPurityService.findAll(page, limit, search, metal_id);
+    return this.metalPurityService.findAll(page, limit, search, metal_type);
   }
 
   @Get(':id')

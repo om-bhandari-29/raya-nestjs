@@ -21,8 +21,9 @@ export class MetalPurityService {
       select: [
         'id',
         'purity',
+        'purity_code',
         'name',
-        'metal_id',
+        'metal_type',
         'percentage',
         'rate_per_gram_inr',
         'rate_per_gram_usd',
@@ -41,12 +42,12 @@ export class MetalPurityService {
     const existing = await this.metalPurityRepository.findOne({
       where: {
         purity: createMetalPurityDto.purity,
-        metal_id: createMetalPurityDto.metal_id,
+        metal_type: createMetalPurityDto.metal_type,
       },
     });
     if (existing) {
       throw new ConflictException(
-        `Metal purity with purity '${createMetalPurityDto.purity}' and metal_id '${createMetalPurityDto.metal_id}' already exists`,
+        `Metal purity with purity '${createMetalPurityDto.purity}' and metal_type '${createMetalPurityDto.metal_type}' already exists`,
       );
     }
 
@@ -64,7 +65,7 @@ export class MetalPurityService {
     page: number = 1,
     limit: number = 10,
     search?: string,
-    metal_id: number = 0,
+    metal_type: number = -1,
   ) {
     const query = this.metalPurityRepository.createQueryBuilder('mp');
 
@@ -75,9 +76,9 @@ export class MetalPurityService {
       });
     }
 
-    // 2. Handle metal_id filter (assuming 0 means "no filter")
-    if (metal_id && metal_id > 0) {
-      query.andWhere('mp.metal_id = :metal_id', { metal_id });
+    // 2. Handle metal_type filter (assuming -1 means "no filter")
+    if (metal_type !== undefined && metal_type > -1) {
+      query.andWhere('mp.metal_type = :metal_type', { metal_type });
     }
 
     // Fetch paginated items and total count
@@ -127,19 +128,19 @@ export class MetalPurityService {
     }
 
     if (
-      (updateMetalPurityDto.purity || updateMetalPurityDto.metal_id) &&
+      (updateMetalPurityDto.purity || updateMetalPurityDto.metal_type !== undefined) &&
       (updateMetalPurityDto.purity !== metalPurity.purity ||
-        updateMetalPurityDto.metal_id !== metalPurity.metal_id)
+        updateMetalPurityDto.metal_type !== metalPurity.metal_type)
     ) {
       const existing = await this.metalPurityRepository.findOne({
         where: {
           purity: updateMetalPurityDto.purity ?? metalPurity.purity,
-          metal_id: updateMetalPurityDto.metal_id ?? metalPurity.metal_id,
+          metal_type: updateMetalPurityDto.metal_type ?? metalPurity.metal_type,
         },
       });
       if (existing && existing.id !== id) {
         throw new ConflictException(
-          `Metal purity with purity '${updateMetalPurityDto.purity ?? metalPurity.purity}' and metal_id '${updateMetalPurityDto.metal_id ?? metalPurity.metal_id}' already exists`,
+          `Metal purity with purity '${updateMetalPurityDto.purity ?? metalPurity.purity}' and metal_type '${updateMetalPurityDto.metal_type ?? metalPurity.metal_type}' already exists`,
         );
       }
     }
