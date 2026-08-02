@@ -491,3 +491,40 @@ export const FindMetalsWithPuritiesSwagger = () =>
       },
     }),
   );
+
+export const GroupedByMetalSwagger = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Get all metal purities grouped by metal type' }),
+    ApiQuery({
+      name: 'isPagination',
+      required: false,
+      example: 'false',
+      description: 'Ignored, always returns flat list for dynamic forms',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Metal purities grouped by metal type retrieved successfully',
+      schema: {
+        example: {
+          status: true,
+          message: 'Metal purities grouped by metal type retrieved successfully',
+          statusCode: 200,
+          data: [
+            {
+              metal_type_id: 0,
+              metal_name: 'GOLD',
+              purities: [
+                {
+                  id: 1,
+                  purity: '14K Gold',
+                  purity_code: '14K',
+                  density_multiplier: 1.2
+                }
+              ]
+            }
+          ]
+        }
+      }
+    })
+  );
+

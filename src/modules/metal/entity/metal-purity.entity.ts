@@ -35,6 +35,9 @@ export class MetalPurity {
   @Column({ type: 'decimal', precision: 18, scale: 4, nullable: true })
   rate_per_gram_usd: number;
 
+  @Column({ type: 'decimal', precision: 10, scale: 4, nullable: true })
+  density_multiplier: number;
+
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
 

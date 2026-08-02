@@ -21,6 +21,7 @@ import {
   UpdateMetalPuritySwagger,
   RemoveMetalPuritySwagger,
   GetAllowedMetalsByVariantSwagger,
+  GroupedByMetalSwagger,
 } from './metal.swagger';
 
 @ApiTags('metal-purity')
@@ -38,6 +39,12 @@ export class MetalPurityController {
   @ComboMetalPuritySwagger()
   combo() {
     return this.metalPurityService.combo();
+  }
+
+  @Get('master/purities')
+  @GroupedByMetalSwagger()
+  groupedByMetal(@Query('isPagination') isPagination?: string) {
+    return this.metalPurityService.groupedByMetal();
   }
 
   @Get()

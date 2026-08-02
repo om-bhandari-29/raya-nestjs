@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { MetalPurity } from './entity/metal-purity.entity';
 import { CreateMetalPurityDto } from './dto/create-metal-purity.dto';
 import { UpdateMetalPurityDto } from './dto/update-metal-purity.dto';
+import { MetalType } from '../../core/enum/metal-type.enum';
 
 @Injectable()
 export class MetalPurityService {
@@ -27,6 +28,7 @@ export class MetalPurityService {
         'percentage',
         'rate_per_gram_inr',
         'rate_per_gram_usd',
+        'density_multiplier',
       ],
       order: { purity: 'ASC' },
     });
@@ -200,6 +202,39 @@ export class MetalPurityService {
       message: 'Allowed metals for variant retrieved successfully',
       statusCode: 200,
       data: rows,
+    };
+  }
+
+  async groupedByMetal() {
+    const purities = await this.metalPurityRepository.find({
+      select: ['id', 'purity', 'purity_code', 'name', 'density_multiplier', 'metal_type'],
+      order: { purity: 'ASC' },
+    });
+
+    const data = Object.keys(MetalType)
+      .filter((key) => isNaN(Number(key))) // Filter out numeric reverse mappings
+      .map((key) => {
+        const metalTypeId = MetalType[key as keyof typeof MetalType];
+        return {
+          metal_type_id: metalTypeId,
+          metal_name: key,
+          purities: purities
+            .filter((p) => p.metal_type === metalTypeId)
+            .map((p) => ({
+              id: p.id,
+              purity: p.purity,
+              purity_code: p.purity_code,
+              name: p.name,
+              density_multiplier: p.density_multiplier,
+            })),
+        };
+      });
+
+    return {
+      status: true,
+      message: 'Metal purities grouped by metal type retrieved successfully',
+      statusCode: 200,
+      data,
     };
   }
 }

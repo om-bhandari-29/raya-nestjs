@@ -58,4 +58,9 @@ export class CreateMetalPurityDto {
   @IsNumber()
   @IsOptional()
   rate_per_gram_usd?: number;
+
+  @ApiPropertyOptional({ example: 1.2 })
+  @IsNumber()
+  @IsOptional()
+  density_multiplier?: number;
 }
