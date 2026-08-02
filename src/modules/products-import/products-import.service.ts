@@ -558,6 +558,7 @@ export class ProductsImportService {
         dvam.variant_id, 
         dvam.metal_purity_id, 
         mp.name AS metal_purity_name,
+        mp.purity_code,
         mp.metal_type
        FROM design_variant_allowed_metals dvam
        LEFT JOIN metal_purities mp ON dvam.metal_purity_id = mp.id
@@ -687,6 +688,7 @@ export class ProductsImportService {
         const allowedPurities = matchingRows.map((m) => ({
           metal_purity_id: m.metal_purity_id,
           metal_purity_name: m.metal_purity_name || '',
+          purity_code: m.purity_code || '',
         }));
 
         return {
@@ -797,6 +799,7 @@ export class ProductsImportService {
       `SELECT 
         dvam.metal_purity_id, 
         mp.name AS metal_purity_name,
+        mp.purity_code,
         mp.metal_type
        FROM design_variant_allowed_metals dvam
        LEFT JOIN metal_purities mp ON dvam.metal_purity_id = mp.id
@@ -915,6 +918,7 @@ export class ProductsImportService {
             const allowedPurities = matchingRows.map((m) => ({
               metal_purity_id: m.metal_purity_id,
               metal_purity_name: m.metal_purity_name || '',
+              purity_code: m.purity_code || '',
             }));
 
             return {
@@ -1444,6 +1448,7 @@ export class ProductsImportService {
       `SELECT 
         dvam.metal_purity_id, 
         mp.name AS metal_purity_name,
+        mp.purity_code,
         mp.percentage,
         mp.rate_per_gram_inr,
         mp.rate_per_gram_usd,
@@ -1466,6 +1471,7 @@ export class ProductsImportService {
       const allowedPurities = matchingRows.map((row) => ({
         metal_purity_id: row.metal_purity_id,
         metal_purity_name: row.metal_purity_name || '',
+        purity_code: row.purity_code || '',
         percentage: row.percentage ? Number(row.percentage) : null,
         rate_per_gram_inr: row.rate_per_gram_inr ? Number(row.rate_per_gram_inr) : null,
         rate_per_gram_usd: row.rate_per_gram_usd ? Number(row.rate_per_gram_usd) : null,

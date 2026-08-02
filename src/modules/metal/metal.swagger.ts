@@ -528,3 +528,34 @@ export const GroupedByMetalSwagger = () =>
     })
   );
 
+
+export const CalculateWeightSwagger = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Calculate target weight for a variant across sizes based on density multiplier' }),
+    ApiResponse({
+      status: 200,
+      description: 'Calculated weights retrieved successfully',
+      schema: {
+        example: {
+          status: true,
+          message: 'Target weights calculated successfully',
+          statusCode: 200,
+          data: {
+            variantId: 102,
+            targetPurity: '18K',
+            weights: [
+              { ringSize: '5', targetWeight: 3.078 },
+              { ringSize: '6', targetWeight: 3.433 },
+              { ringSize: '7', targetWeight: 3.784 },
+              { ringSize: '8', targetWeight: 4.139 }
+            ]
+          }
+        }
+      }
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Variant, size matrix, or multiplier not found'
+    })
+  );
+

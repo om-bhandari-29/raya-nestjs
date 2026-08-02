@@ -237,4 +237,83 @@ export class MetalPurityService {
       data,
     };
   }
+
+  async calculateWeight(variantId: number, targetPurity: string) {
+    // 1. Fetch Size Matrix (ring_size, base_metal_weight_gm)
+    const sizeMatrix = await this.metalPurityRepository.query(
+      `SELECT ring_size, base_metal_weight_gm FROM metal_weight_matrix WHERE variant_id = $1 ORDER BY ring_size ASC`,
+      [variantId],
+    );
+
+    if (!sizeMatrix || sizeMatrix.length === 0) {
+      throw new NotFoundException(
+        `No size matrix found for variant ID '${variantId}'`,
+      );
+    }
+
+    // 2. Fetch Base Purity
+    const basePurityRow = await this.metalPurityRepository.query(
+      `SELECT purity FROM variant_base_metal_purity WHERE variant_id = $1`,
+      [variantId],
+    );
+
+    if (!basePurityRow || basePurityRow.length === 0) {
+      throw new NotFoundException(
+        `No base purity found for variant ID '${variantId}'`,
+      );
+    }
+    const basePurityCode = basePurityRow[0].purity;
+
+    // 3. Fetch density multipliers for base and target purities
+    const multipliers = await this.metalPurityRepository.query(
+      `SELECT purity_code, density_multiplier FROM metal_purities WHERE purity_code IN ($1, $2)`,
+      [basePurityCode, targetPurity],
+    );
+
+    const baseMultiplierRow = multipliers.find(
+      (m) => m.purity_code === basePurityCode,
+    );
+    const targetMultiplierRow = multipliers.find(
+      (m) => m.purity_code === targetPurity,
+    );
+
+    if (!baseMultiplierRow || !baseMultiplierRow.density_multiplier) {
+      throw new NotFoundException(
+        `Density multiplier not found for base purity '${basePurityCode}'`,
+      );
+    }
+    if (!targetMultiplierRow || !targetMultiplierRow.density_multiplier) {
+      throw new NotFoundException(
+        `Density multiplier not found for target purity '${targetPurity}'`,
+      );
+    }
+
+    const baseMultiplier = Number(baseMultiplierRow.density_multiplier);
+    const targetMultiplier = Number(targetMultiplierRow.density_multiplier);
+
+    // 4. Calculate
+    const weights = sizeMatrix.map((row) => {
+      const baseWeight = Number(row.base_metal_weight_gm);
+      const targetWeight = baseWeight * (targetMultiplier / baseMultiplier);
+      
+      // format ring_size nicely, removing trailing zero if integer
+      const formattedRingSize = Number(row.ring_size).toString();
+      
+      return {
+        ringSize: formattedRingSize,
+        targetWeight: Number(targetWeight.toFixed(3)),
+      };
+    });
+
+    return {
+      status: true,
+      message: 'Target weights calculated successfully',
+      statusCode: 200,
+      data: {
+        variantId,
+        targetPurity,
+        weights,
+      },
+    };
+  }
 }

@@ -16,6 +16,12 @@ export class AllowedMetalPurityDto {
   metal_purity_name: string;
 
   @ApiProperty({
+    example: '18K',
+    description: 'The metal purity code',
+  })
+  purity_code: string;
+
+  @ApiProperty({
     example: 5200.50,
     description: 'Rate per gram in INR',
     nullable: true,

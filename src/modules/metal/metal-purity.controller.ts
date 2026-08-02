@@ -22,7 +22,9 @@ import {
   RemoveMetalPuritySwagger,
   GetAllowedMetalsByVariantSwagger,
   GroupedByMetalSwagger,
+  CalculateWeightSwagger,
 } from './metal.swagger';
+import { CalculateWeightDto } from './dto/calculate-weight.dto';
 
 @ApiTags('metal-purity')
 @Controller('metal-purity')
@@ -45,6 +47,12 @@ export class MetalPurityController {
   @GroupedByMetalSwagger()
   groupedByMetal(@Query('isPagination') isPagination?: string) {
     return this.metalPurityService.groupedByMetal();
+  }
+
+  @Post('calculate-weight')
+  @CalculateWeightSwagger()
+  calculateWeight(@Body() dto: CalculateWeightDto) {
+    return this.metalPurityService.calculateWeight(dto.variantId, dto.targetPurity);
   }
 
   @Get()
