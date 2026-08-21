@@ -36,6 +36,11 @@ import {
   UpdateVariantAllowedMetalsDto,
   UpdateVariantAllowedMetalsResponseDto,
 } from './dto/variant-allowed-metals.dto';
+import {
+  VariantMetalWeightMatrixBaseDto,
+  VariantMetalWeightMatrixDto,
+  VariantMetalWeightMatrixPostBaseDto,
+} from './dto/variant-metal-weight-matrix.dto';
 
 // ... (rest of imports and constants)
 
@@ -681,8 +686,7 @@ export class ProductsImportService {
       ];
       const designVariantAllowedMetals = typeIds.map((typeId) => {
         const matchingRows = allDesignVariantAllowedMetals.filter(
-          (m) =>
-            m.variant_id === blueprint.id && m.metal_type === typeId,
+          (m) => m.variant_id === blueprint.id && m.metal_type === typeId,
         );
 
         const allowedPurities = matchingRows.map((m) => ({
@@ -766,6 +770,84 @@ export class ProductsImportService {
       design_slug: designSlug,
       data: variants,
     };
+  }
+
+  async getMetalWeightMatrix(
+    variantId: number,
+  ): Promise<VariantMetalWeightMatrixBaseDto> {
+    const blueprints = await this.dataSource.query(
+      `SELECT ring_size, base_metal_weight_gm
+       FROM metal_weight_matrix
+       WHERE variant_id = $1
+       ORDER BY ring_size ASC`,
+      [variantId],
+    );
+    return {
+      status: true,
+      message: 'Successfully fetched metal weight matrix for the variant',
+      data: blueprints,
+    };
+  }
+
+  async postMetalWeightMatrix(
+    variantId: number,
+    weightMatrix: VariantMetalWeightMatrixDto[],
+  ): Promise<VariantMetalWeightMatrixPostBaseDto> {
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // 1. Delete existing matrix for this variant
+      await queryRunner.query(
+        `
+      DELETE FROM metal_weight_matrix
+      WHERE variant_id = $1
+      `,
+        [variantId],
+      );
+
+      // 2. Insert the new matrix
+      if (weightMatrix.length > 0) {
+        const values: any[] = [];
+        const placeholders: string[] = [];
+
+        weightMatrix.forEach((item, index) => {
+          const baseIndex = index * 3;
+
+          placeholders.push(
+            `($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3})`,
+          );
+
+          values.push(variantId, item.ring_size, item.base_metal_weight_gm);
+        });
+
+        await queryRunner.query(
+          `
+        INSERT INTO metal_weight_matrix
+          (variant_id, ring_size, base_metal_weight_gm)
+        VALUES ${placeholders.join(', ')}
+        `,
+          values,
+        );
+      }
+
+      // 3. Commit transaction
+      await queryRunner.commitTransaction();
+
+      return {
+        status: true,
+        message: 'Metal weight matrix successfully updated for the variant',
+        data: null,
+      };
+    } catch (error) {
+      // Rollback if either DELETE or INSERT fails
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async getVariantDetails(
@@ -1460,21 +1542,21 @@ export class ProductsImportService {
     );
 
     // 3. Group allowed purity details by metal_type
-    const typeIds = [
-      ...new Set<number>(rows.map((row) => row.metal_type)),
-    ];
+    const typeIds = [...new Set<number>(rows.map((row) => row.metal_type))];
     const data = typeIds.map((typeId) => {
-      const matchingRows = rows.filter(
-        (row) => row.metal_type === typeId,
-      );
+      const matchingRows = rows.filter((row) => row.metal_type === typeId);
 
       const allowedPurities = matchingRows.map((row) => ({
         metal_purity_id: row.metal_purity_id,
         metal_purity_name: row.metal_purity_name || '',
         purity_code: row.purity_code || '',
         percentage: row.percentage ? Number(row.percentage) : null,
-        rate_per_gram_inr: row.rate_per_gram_inr ? Number(row.rate_per_gram_inr) : null,
-        rate_per_gram_usd: row.rate_per_gram_usd ? Number(row.rate_per_gram_usd) : null,
+        rate_per_gram_inr: row.rate_per_gram_inr
+          ? Number(row.rate_per_gram_inr)
+          : null,
+        rate_per_gram_usd: row.rate_per_gram_usd
+          ? Number(row.rate_per_gram_usd)
+          : null,
       }));
 
       return {

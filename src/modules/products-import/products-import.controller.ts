@@ -54,6 +54,7 @@ import {
   UpdateVariantAllowedMetalsDto,
   UpdateVariantAllowedMetalsResponseDto,
 } from './dto/variant-allowed-metals.dto';
+import { PostMetalWeightMatrixDto } from './dto/variant-metal-weight-matrix.dto';
 
 @ApiTags('Products Import')
 @Controller('products')
@@ -389,5 +390,18 @@ export class ProductsImportController {
     @Body() body: BulkCreateVariantsDto,
   ): Promise<BulkCreateVariantsResponseDto> {
     return this.productsImportService.bulkCreateVariants(body);
+  }
+
+  @Get('metal-weight-matrix')
+  getMetalWeightMatrix(@Query('variantId', ParseIntPipe) variantId: number) {
+    return this.productsImportService.getMetalWeightMatrix(variantId);
+  }
+
+  @Post('metal-weight-matrix')
+  postMetalWeightMatrix(@Body() payload: PostMetalWeightMatrixDto) {
+    return this.productsImportService.postMetalWeightMatrix(
+      payload.variantId,
+      payload.metalWeightMatrix,
+    );
   }
 }
