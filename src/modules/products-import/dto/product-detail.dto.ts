@@ -110,6 +110,14 @@ export class ProductDetailResponseDto {
   data: ProductDetailDataDto;
 }
 
+export class LabourCostDto {
+  @ApiProperty({ example: 0 })
+  labour_cost_in_inr: number;
+
+  @ApiProperty({ example: 0 })
+  labour_cost_in_usd: number;
+}
+
 export class VariantDetailDto {
   @ApiProperty({ example: 42 })
   variantId: number;
@@ -131,6 +139,12 @@ export class VariantDetailDto {
     description: 'Ring size based baseline mold weight matrix',
   })
   weight_matrix: WeightMatrixEntryDto[];
+
+  @ApiProperty({
+    type: [LabourCostDto],
+    description: 'Labour costs for the variant',
+  })
+  labour_costs: LabourCostDto;
 }
 
 export class VariantDetailResponseDto {

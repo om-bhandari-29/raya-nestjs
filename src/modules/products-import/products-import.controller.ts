@@ -361,7 +361,7 @@ export class ProductsImportController {
   @ApiOperation({
     summary: 'Create a new variant of a product blueprint',
     description:
-      'Creates a new variant with design_slug, variant_name, and target_gender, and returns the newly created variant ID.',
+      'Creates a new variant with design_id, variant_name, and target_gender, and returns the newly created variant ID.',
   })
   @ApiResponse({
     status: 200,

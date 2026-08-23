@@ -9,7 +9,7 @@ import { Readable } from 'stream';
 import csvParser from 'csv-parser';
 import { BlueprintListItemDto } from './dto/blueprint-list.dto';
 import { ProductVariantsResponseDto } from './dto/product-variants.dto';
-import { VariantDetailResponseDto } from './dto/product-detail.dto';
+import { LabourCostDto, VariantDetailResponseDto } from './dto/product-detail.dto';
 import {
   UpdateZoneSlotConfigDto,
   UpdateZoneSlotResponseDto,
@@ -855,11 +855,13 @@ export class ProductsImportService {
   ): Promise<VariantDetailResponseDto> {
     // STEP 1: Check if the blueprint variant actually exists
     const blueprints = await this.dataSource.query(
-      `SELECT id, variant_name, target_gender 
+      `SELECT id, variant_name, target_gender, labour_cost_in_inr, labour_cost_in_usd
        FROM product_blueprints 
        WHERE id = $1`,
       [variantId],
     );
+
+    console.log('labourCost', blueprints);
 
     if (!blueprints || blueprints.length === 0) {
       const { NotFoundException } = await import('@nestjs/common');
@@ -1012,11 +1014,15 @@ export class ProductsImportService {
         zone_slots: zoneSlots as any,
         weight_matrix: weightMatrix.map(
           ({ ring_size, base_metal_weight_gm }) => ({
-            ring_size,
+            ring_size: Number(ring_size),
             base_metal_weight_gm:
               base_metal_weight_gm !== null ? Number(base_metal_weight_gm) : 0,
           }),
         ),
+        labour_costs: {
+          labour_cost_in_inr: blueprints[0].labour_cost_in_inr ? Number(blueprints[0].labour_cost_in_inr) : 0,
+          labour_cost_in_usd: blueprints[0].labour_cost_in_usd ? Number(blueprints[0].labour_cost_in_usd) : 0,
+        },
       },
     };
   }
@@ -1274,7 +1280,7 @@ export class ProductsImportService {
   async updateVariant(
     dto: UpdateVariantDto,
   ): Promise<UpdateVariantResponseDto> {
-    const { variant_id, variant_name, target_gender } = dto;
+    const { variant_id, variant_name, target_gender, labour_cost_in_inr, labour_cost_in_usd } = dto;
     const trimmedVariantName = (variant_name ?? '').trim();
     const trimmedTargetGender = (target_gender ?? '').trim();
 
@@ -1287,7 +1293,7 @@ export class ProductsImportService {
 
     // 1. Verify existence of the variant
     const blueprints = await this.dataSource.query(
-      `SELECT pb.id, pb.design_id, pd.design_slug 
+      `SELECT pb.id, pb.design_id, pd.design_slug, pb.labour_cost_in_inr, pb.labour_cost_in_usd 
        FROM product_blueprints pb
        INNER JOIN product_designs pd ON pb.design_id = pd.id
        WHERE pb.id = $1`,
@@ -1303,6 +1309,8 @@ export class ProductsImportService {
 
     const designId = blueprints[0].design_id;
     const designSlug = blueprints[0].design_slug;
+    const currentInr = blueprints[0].labour_cost_in_inr;
+    const currentUsd = blueprints[0].labour_cost_in_usd;
 
     // 2. Check for unique key conflict
     const conflict = await this.dataSource.query(
@@ -1322,12 +1330,21 @@ export class ProductsImportService {
       );
     }
 
-    // 3. Update the blueprint variant name and target gender
+    // 3. Update the blueprint variant
     await this.dataSource.query(
       `UPDATE product_blueprints 
-       SET variant_name = $1, target_gender = $2 
-       WHERE id = $3`,
-      [trimmedVariantName, trimmedTargetGender, variant_id],
+       SET variant_name = $1, 
+           target_gender = $2, 
+           labour_cost_in_inr = $3, 
+           labour_cost_in_usd = $4
+       WHERE id = $5`,
+      [
+        trimmedVariantName,
+        trimmedTargetGender,
+        labour_cost_in_inr ?? currentInr,
+        labour_cost_in_usd ?? currentUsd,
+        variant_id,
+      ],
     );
 
     return {
@@ -1339,39 +1356,27 @@ export class ProductsImportService {
   async createVariant(
     dto: CreateVariantDto,
   ): Promise<CreateVariantResponseDto> {
-    const { design_slug, variant_name, target_gender } = dto;
-    const trimmedDesignSlug = (design_slug ?? '').trim();
+    const { design_id, variant_name, target_gender, labour_costs_in_inr, labour_costs_in_usd } = dto;
     const trimmedVariantName = (variant_name ?? '').trim();
     const trimmedTargetGender = (target_gender ?? '').trim();
 
-    if (!trimmedDesignSlug || !trimmedVariantName || !trimmedTargetGender) {
+    if (!design_id || !trimmedVariantName || !trimmedTargetGender) {
       const { BadRequestException } = await import('@nestjs/common');
       throw new BadRequestException(
-        'design_slug, variant_name, and target_gender cannot be empty',
+        'design_id, variant_name, and target_gender cannot be empty',
       );
     }
 
-    // 1. Upsert product design to get design_id
-    const designSql = `
-      INSERT INTO product_designs (design_slug)
-      VALUES ($1)
-      ON CONFLICT (design_slug)
-      DO NOTHING
-      RETURNING id
-    `;
-    const designRows = await this.dataSource.query(designSql, [
-      trimmedDesignSlug,
-    ]);
-    let designId: number;
-    if (designRows && designRows.length > 0) {
-      designId = designRows[0].id;
-    } else {
-      const selectRes = await this.dataSource.query(
-        `SELECT id FROM product_designs WHERE design_slug = $1`,
-        [trimmedDesignSlug],
-      );
-      designId = selectRes[0].id;
+    // 1. Verify product design exists
+    const designRows = await this.dataSource.query(
+      `SELECT id, design_slug FROM product_designs WHERE id = $1`,
+      [design_id],
+    );
+    if (!designRows || designRows.length === 0) {
+      const { NotFoundException } = await import('@nestjs/common');
+      throw new NotFoundException(`Product design with ID ${design_id} not found`);
     }
+    const designSlug = designRows[0].design_slug;
 
     // 2. Check for unique key conflict
     const conflict = await this.dataSource.query(
@@ -1380,22 +1385,22 @@ export class ProductsImportService {
        WHERE design_id = $1 
          AND variant_name = $2 
          AND target_gender = $3`,
-      [designId, trimmedVariantName, trimmedTargetGender],
+      [design_id, trimmedVariantName, trimmedTargetGender],
     );
 
     if (conflict && conflict.length > 0) {
       const { ConflictException } = await import('@nestjs/common');
       throw new ConflictException(
-        `A variant with name "${trimmedVariantName}" and target gender "${trimmedTargetGender}" already exists for design "${trimmedDesignSlug}"`,
+        `A variant with name "${trimmedVariantName}" and target gender "${trimmedTargetGender}" already exists for design "${designSlug}"`,
       );
     }
 
     // 3. Insert the new blueprint variant
     const insertResult = await this.dataSource.query(
-      `INSERT INTO product_blueprints (design_id, variant_name, target_gender)
-       VALUES ($1, $2, $3)
+      `INSERT INTO product_blueprints (design_id, variant_name, target_gender, labour_cost_in_inr, labour_cost_in_usd)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING id`,
-      [designId, trimmedVariantName, trimmedTargetGender],
+      [design_id, trimmedVariantName, trimmedTargetGender, labour_costs_in_inr ?? 0, labour_costs_in_usd ?? 0],
     );
 
     const variantId = insertResult[0].id;

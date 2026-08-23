@@ -1,14 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { VariantAllowedMetalsDto } from './variant-allowed-metals.dto';
-import { IsInt, ValidateNested } from 'class-validator';
+import { IsInt, ValidateNested, IsNumber } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class VariantMetalWeightMatrixDto {
   @ApiProperty({ example: 3 })
-  ring_size: string;
+  @IsNumber()
+  ring_size: number;
 
-  @ApiProperty({ example: '2.56' })
-  base_metal_weight_gm: string;
+  @ApiProperty({ example: 2.56 })
+  @IsNumber()
+  base_metal_weight_gm: number;
 }
 
 export class VariantMetalWeightMatrixBaseDto {

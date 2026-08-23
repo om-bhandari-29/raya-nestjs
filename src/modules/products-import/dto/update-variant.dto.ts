@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class UpdateVariantDto {
   @ApiProperty({
@@ -19,6 +19,16 @@ export class UpdateVariantDto {
   })
   @IsString()
   target_gender: string;
+
+  @ApiPropertyOptional({ example: 150.0, description: 'New labour costs in INR' })
+  @IsOptional()
+  @IsNumber()
+  labour_cost_in_inr?: number;
+
+  @ApiPropertyOptional({ example: 2.0, description: 'New labour costs in USD' })
+  @IsOptional()
+  @IsNumber()
+  labour_cost_in_usd?: number;
 }
 
 export class UpdateVariantResponseDto {

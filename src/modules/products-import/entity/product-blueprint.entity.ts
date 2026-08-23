@@ -32,6 +32,12 @@ export class ProductBlueprint {
   @Column({ type: 'varchar', length: 20 })
   target_gender: string;
 
+  @Column({ name: 'labour_cost_in_inr', type: 'decimal', precision: 10, scale: 2, default: 0 })
+  labour_cost_in_inr: number;
+  
+  @Column({ name: 'labour_cost_in_usd', type: 'decimal', precision: 10, scale: 2, default: 0 })
+  labour_cost_in_usd: number;
+
   @OneToMany(() => ProductMetalOption, (option) => option.blueprint)
   metal_options: ProductMetalOption[];
 
