@@ -541,7 +541,6 @@ export class ProductsImportService {
       WHERE pb.design_id = $1`,
       [designId],
     );
-    console.log(blueprints);
 
     if (!blueprints || blueprints.length === 0) {
       const { NotFoundException } = await import('@nestjs/common');
@@ -654,6 +653,7 @@ export class ProductsImportService {
 
     // STEP 6: Assemble the final nested structure per variant
     const variantsData = blueprints.map((blueprint) => {
+      console.log(blueprint);
       const allowedMetals = allMetalOptions
         .filter((m) => m.blueprint_id === blueprint.id)
         .map(({ metal_purity, metal_color }) => ({
@@ -721,11 +721,11 @@ export class ProductsImportService {
         zone_slots: zoneSlots,
         weight_matrix: weightMatrix,
         labour_costs: {
-          labour_cost_in_inr: blueprints[0].labour_cost_in_inr
-            ? Number(blueprints[0].labour_cost_in_inr)
+          labour_cost_in_inr: blueprint.labour_cost_in_inr
+            ? Number(blueprint.labour_cost_in_inr)
             : 0,
-          labour_cost_in_usd: blueprints[0].labour_cost_in_usd
-            ? Number(blueprints[0].labour_cost_in_usd)
+          labour_cost_in_usd: blueprint.labour_cost_in_usd
+            ? Number(blueprint.labour_cost_in_usd)
             : 0,
         },
       };
