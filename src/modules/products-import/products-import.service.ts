@@ -9,7 +9,10 @@ import { Readable } from 'stream';
 import csvParser from 'csv-parser';
 import { BlueprintListItemDto } from './dto/blueprint-list.dto';
 import { ProductVariantsResponseDto } from './dto/product-variants.dto';
-import { LabourCostDto, VariantDetailResponseDto } from './dto/product-detail.dto';
+import {
+  LabourCostDto,
+  VariantDetailResponseDto,
+} from './dto/product-detail.dto';
 import {
   UpdateZoneSlotConfigDto,
   UpdateZoneSlotResponseDto,
@@ -532,12 +535,13 @@ export class ProductsImportService {
   async getProductDetails(designId: number) {
     // STEP 1: Query ALL Core Product Blueprint Variants for the ID
     const blueprints = await this.dataSource.query(
-      `SELECT pb.id, pb.variant_name, pb.target_gender, pd.design_slug 
+      `SELECT pb.id, pb.variant_name, pb.target_gender, pd.design_slug, labour_cost_in_inr, labour_cost_in_usd
       FROM product_blueprints pb
       INNER JOIN product_designs pd ON pb.design_id = pd.id
       WHERE pb.design_id = $1`,
       [designId],
     );
+    console.log(blueprints);
 
     if (!blueprints || blueprints.length === 0) {
       const { NotFoundException } = await import('@nestjs/common');
@@ -716,6 +720,14 @@ export class ProductsImportService {
         design_variant_allowed_metals: designVariantAllowedMetals,
         zone_slots: zoneSlots,
         weight_matrix: weightMatrix,
+        labour_costs: {
+          labour_cost_in_inr: blueprints[0].labour_cost_in_inr
+            ? Number(blueprints[0].labour_cost_in_inr)
+            : 0,
+          labour_cost_in_usd: blueprints[0].labour_cost_in_usd
+            ? Number(blueprints[0].labour_cost_in_usd)
+            : 0,
+        },
       };
     });
 
@@ -860,8 +872,6 @@ export class ProductsImportService {
        WHERE id = $1`,
       [variantId],
     );
-
-    console.log('labourCost', blueprints);
 
     if (!blueprints || blueprints.length === 0) {
       const { NotFoundException } = await import('@nestjs/common');
@@ -1020,8 +1030,12 @@ export class ProductsImportService {
           }),
         ),
         labour_costs: {
-          labour_cost_in_inr: blueprints[0].labour_cost_in_inr ? Number(blueprints[0].labour_cost_in_inr) : 0,
-          labour_cost_in_usd: blueprints[0].labour_cost_in_usd ? Number(blueprints[0].labour_cost_in_usd) : 0,
+          labour_cost_in_inr: blueprints[0].labour_cost_in_inr
+            ? Number(blueprints[0].labour_cost_in_inr)
+            : 0,
+          labour_cost_in_usd: blueprints[0].labour_cost_in_usd
+            ? Number(blueprints[0].labour_cost_in_usd)
+            : 0,
         },
       },
     };
@@ -1280,7 +1294,13 @@ export class ProductsImportService {
   async updateVariant(
     dto: UpdateVariantDto,
   ): Promise<UpdateVariantResponseDto> {
-    const { variant_id, variant_name, target_gender, labour_cost_in_inr, labour_cost_in_usd } = dto;
+    const {
+      variant_id,
+      variant_name,
+      target_gender,
+      labour_cost_in_inr,
+      labour_cost_in_usd,
+    } = dto;
     const trimmedVariantName = (variant_name ?? '').trim();
     const trimmedTargetGender = (target_gender ?? '').trim();
 
@@ -1356,7 +1376,13 @@ export class ProductsImportService {
   async createVariant(
     dto: CreateVariantDto,
   ): Promise<CreateVariantResponseDto> {
-    const { design_id, variant_name, target_gender, labour_costs_in_inr, labour_costs_in_usd } = dto;
+    const {
+      design_id,
+      variant_name,
+      target_gender,
+      labour_costs_in_inr,
+      labour_costs_in_usd,
+    } = dto;
     const trimmedVariantName = (variant_name ?? '').trim();
     const trimmedTargetGender = (target_gender ?? '').trim();
 
@@ -1374,7 +1400,9 @@ export class ProductsImportService {
     );
     if (!designRows || designRows.length === 0) {
       const { NotFoundException } = await import('@nestjs/common');
-      throw new NotFoundException(`Product design with ID ${design_id} not found`);
+      throw new NotFoundException(
+        `Product design with ID ${design_id} not found`,
+      );
     }
     const designSlug = designRows[0].design_slug;
 
@@ -1400,7 +1428,13 @@ export class ProductsImportService {
       `INSERT INTO product_blueprints (design_id, variant_name, target_gender, labour_cost_in_inr, labour_cost_in_usd)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id`,
-      [design_id, trimmedVariantName, trimmedTargetGender, labour_costs_in_inr ?? 0, labour_costs_in_usd ?? 0],
+      [
+        design_id,
+        trimmedVariantName,
+        trimmedTargetGender,
+        labour_costs_in_inr ?? 0,
+        labour_costs_in_usd ?? 0,
+      ],
     );
 
     const variantId = insertResult[0].id;
