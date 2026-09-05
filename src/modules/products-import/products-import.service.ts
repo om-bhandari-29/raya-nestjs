@@ -1,18 +1,11 @@
-import {
-  Injectable,
-  Logger,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource, QueryRunner } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { Readable } from 'stream';
 import csvParser from 'csv-parser';
 import { BlueprintListItemDto } from './dto/blueprint-list.dto';
 import { ProductVariantsResponseDto } from './dto/product-variants.dto';
-import {
-  LabourCostDto,
-  VariantDetailResponseDto,
-} from './dto/product-detail.dto';
+import { VariantDetailResponseDto } from './dto/product-detail.dto';
 import {
   UpdateZoneSlotConfigDto,
   UpdateZoneSlotResponseDto,
@@ -34,7 +27,6 @@ import {
   CreateZoneSlotResponseDto,
 } from './dto/create-zone-slot.dto';
 import {
-  VariantAllowedMetalsDto,
   VariantAllowedMetalsResponseDto,
   UpdateVariantAllowedMetalsDto,
   UpdateVariantAllowedMetalsResponseDto,
@@ -1446,10 +1438,112 @@ export class ProductsImportService {
     };
   }
 
+  // async bulkCreateVariants(
+  //   dto: BulkCreateVariantsDto,
+  // ): Promise<BulkCreateVariantsResponseDto> {
+  //   const { design_slug, sub_category_id, variant } = dto;
+  //   const trimmedDesignSlug = (design_slug ?? '').trim();
+
+  //   if (!trimmedDesignSlug || !variant || variant.length === 0) {
+  //     const { BadRequestException } = await import('@nestjs/common');
+  //     throw new BadRequestException(
+  //       'design_slug and variant list cannot be empty',
+  //     );
+  //   }
+
+  //   // 1. Check for duplicates within the input payload itself
+  //   const seen = new Set<string>();
+  //   for (const v of variant) {
+  //     const trimmedName = (v.variant_name ?? '').trim();
+  //     const trimmedGender = (v.target_gender ?? '').trim();
+
+  //     if (!trimmedName || !trimmedGender) {
+  //       const { BadRequestException } = await import('@nestjs/common');
+  //       throw new BadRequestException(
+  //         'variant_name and target_gender cannot be empty for any variant',
+  //       );
+  //     }
+
+  //     const key = `${trimmedName.toLowerCase()}::${trimmedGender.toLowerCase()}`;
+  //     if (seen.has(key)) {
+  //       const { BadRequestException } = await import('@nestjs/common');
+  //       throw new BadRequestException(
+  //         `Duplicate variant detected in payload: name "${trimmedName}" with target_gender "${trimmedGender}"`,
+  //       );
+  //     }
+  //     seen.add(key);
+  //   }
+
+  //   // 2. Save them all in a transaction
+  //   const queryRunner = this.dataSource.createQueryRunner();
+  //   await queryRunner.connect();
+  //   await queryRunner.startTransaction();
+
+  //   try {
+  //     // Find or create the design slug
+  //     const designSql = `
+  //       INSERT INTO product_designs (design_slug)
+  //       VALUES ($1)
+  //       ON CONFLICT (design_slug)
+  //       DO NOTHING
+  //       RETURNING id
+  //     `;
+  //     const designRows = await queryRunner.query(designSql, [
+  //       trimmedDesignSlug,
+  //     ]);
+  //     let designId: number;
+  //     if (designRows && designRows.length > 0) {
+  //       designId = designRows[0].id;
+  //     } else {
+  //       const selectRes = await queryRunner.query(
+  //         `SELECT id FROM product_designs WHERE design_slug = $1`,
+  //         [trimmedDesignSlug],
+  //       );
+  //       designId = selectRes[0].id;
+  //     }
+
+  //     const insertedIds: number[] = [];
+  //     for (const v of variant) {
+  //       // Check database unique constraint conflict
+  //       const conflict = await queryRunner.query(
+  //         `SELECT id FROM product_blueprints WHERE design_id = $1 AND variant_name = $2 AND target_gender = $3`,
+  //         [designId, v.variant_name.trim(), v.target_gender.trim()],
+  //       );
+  //       if (conflict && conflict.length > 0) {
+  //         const { ConflictException } = await import('@nestjs/common');
+  //         throw new ConflictException(
+  //           `A variant with name "${v.variant_name.trim()}" and target gender "${v.target_gender.trim()}" already exists for design "${trimmedDesignSlug}"`,
+  //         );
+  //       }
+
+  //       const res = await queryRunner.query(
+  //         `INSERT INTO product_blueprints (design_id, variant_name, target_gender)
+  //          VALUES ($1, $2, $3)
+  //          RETURNING id`,
+  //         [designId, v.variant_name.trim(), v.target_gender.trim()],
+  //       );
+  //       insertedIds.push(res[0].id);
+  //     }
+
+  //     await queryRunner.commitTransaction();
+
+  //     return {
+  //       status: true,
+  //       message: 'Variants created successfully',
+  //       data: designId,
+  //     };
+  //   } catch (error) {
+  //     await queryRunner.rollbackTransaction();
+  //     throw error;
+  //   } finally {
+  //     await queryRunner.release();
+  //   }
+  // }
+
   async bulkCreateVariants(
     dto: BulkCreateVariantsDto,
   ): Promise<BulkCreateVariantsResponseDto> {
-    const { design_slug, variant } = dto;
+    const { design_slug, sub_category_id, variant } = dto;
     const trimmedDesignSlug = (design_slug ?? '').trim();
 
     if (!trimmedDesignSlug || !variant || variant.length === 0) {
@@ -1488,27 +1582,34 @@ export class ProductsImportService {
     await queryRunner.startTransaction();
 
     try {
-      // Find or create the design slug
+      // Optional: Verify sub_category exists before inserting/updating
+      if (sub_category_id) {
+        const subCat = await queryRunner.query(
+          `SELECT id FROM sub_categories WHERE id = $1`,
+          [sub_category_id],
+        );
+        if (!subCat || subCat.length === 0) {
+          const { NotFoundException } = await import('@nestjs/common');
+          throw new NotFoundException(
+            `SubCategory with ID ${sub_category_id} not found`,
+          );
+        }
+      }
+
+      // Find, create, or update the design slug with sub_category_id
       const designSql = `
-        INSERT INTO product_designs (design_slug)
-        VALUES ($1)
+        INSERT INTO product_designs (design_slug, sub_category_id)
+        VALUES ($1, $2)
         ON CONFLICT (design_slug)
-        DO NOTHING
+        DO UPDATE SET sub_category_id = COALESCE(EXCLUDED.sub_category_id, product_designs.sub_category_id)
         RETURNING id
       `;
       const designRows = await queryRunner.query(designSql, [
         trimmedDesignSlug,
+        sub_category_id ?? null,
       ]);
-      let designId: number;
-      if (designRows && designRows.length > 0) {
-        designId = designRows[0].id;
-      } else {
-        const selectRes = await queryRunner.query(
-          `SELECT id FROM product_designs WHERE design_slug = $1`,
-          [trimmedDesignSlug],
-        );
-        designId = selectRes[0].id;
-      }
+
+      const designId: number = designRows[0].id;
 
       const insertedIds: number[] = [];
       for (const v of variant) {

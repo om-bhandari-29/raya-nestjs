@@ -49,7 +49,6 @@ import {
   BulkCreateVariantsResponseDto,
 } from './dto/bulk-create-variants.dto';
 import {
-  VariantAllowedMetalsDto,
   VariantAllowedMetalsResponseDto,
   UpdateVariantAllowedMetalsDto,
   UpdateVariantAllowedMetalsResponseDto,
